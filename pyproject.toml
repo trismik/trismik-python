@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "trismik"
+version = "0.9.0"
+description = ""
+authors = ["Bartosz Kielczewski <bk352@cam.ac.uk>"]
+readme = "README.md"
+packages = [{ include = "trismik", from = "src" }]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+httpx = "^0.27.2"
+python-dateutil = "^2.9.0.post0"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.2"
+python-dotenv = "^1.0.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
