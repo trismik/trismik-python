@@ -8,7 +8,7 @@ from .types import (
     TrismikResult,
     TrismikMultipleChoiceTextItem,
     TrismikTextChoice,
-    TrismikAuthResponse,
+    TrismikAuth,
     TrismikTest,
     TrismikSession
 )
@@ -17,8 +17,8 @@ from .types import (
 class TrismikResponseMapper:
 
     @staticmethod
-    def to_auth_response(json: dict[str, Any]) -> TrismikAuthResponse:
-        return TrismikAuthResponse(
+    def to_auth(json: dict[str, Any]) -> TrismikAuth:
+        return TrismikAuth(
                 token=json["token"],
                 expires=parse_date(json["expires"]),
         )
