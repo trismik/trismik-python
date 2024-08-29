@@ -1,9 +1,8 @@
-import os
 from typing import List, Any, Optional
 
 import httpx
 
-from .exceptions import TrismikError, TrismikApiError
+from .exceptions import TrismikApiError
 from .mapper import TrismikResponseMapper
 from .types import (
     TrismikTest,
@@ -12,6 +11,7 @@ from .types import (
     TrismikItem,
     TrismikResult
 )
+from .utils import TrismikUtils
 
 
 class Trismik:
@@ -21,10 +21,10 @@ class Trismik:
             api_key: Optional[str] = None,
             http_client: Optional[httpx.Client] | None = None,
     ) -> None:
-        self._service_url = self._validate_option(
+        self._service_url = TrismikUtils.required_option(
                 service_url, "service_url", "TRISMIK_SERVICE_URL"
         )
-        self._api_key = self._validate_option(
+        self._api_key = TrismikUtils.required_option(
                 api_key, "api_key", "TRISMIK_API_KEY"
         )
         self._http_client = http_client or httpx.Client(
@@ -130,18 +130,3 @@ class Trismik:
         except httpx.HTTPStatusError as e:
             raise TrismikApiError(response.json()["message"]) from e
 
-    @staticmethod
-    def _validate_option(
-            value: str,
-            name: str,
-            env: str
-    ) -> str:
-        if value is None:
-            value = os.environ.get(env)
-        if value is None:
-            raise TrismikError(
-                    f"The {name} client option must be set either by passing "
-                    f"{env} to the client or by setting the {env} "
-                    "environment variable"
-            )
-        return value
