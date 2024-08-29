@@ -3,14 +3,14 @@ from unittest.mock import MagicMock
 
 import httpx
 import pytest
-from dotenv import load_dotenv
 
-from src.trismik import (
+from trismik import (
     Trismik,
     TrismikError,
     TrismikApiError,
-    TrismikMultipleChoiceTextItem
+    TrismikMultipleChoiceTextItem,
 )
+from ._mocker import TrismikResponseMocker
 
 
 class TestTrismik:
@@ -122,40 +122,15 @@ class TestTrismik:
         item = client.respond_to_current_item("url", "choice_id_1", "token")
         assert item is None
 
-    @pytest.fixture(scope='session', autouse=True)
-    def load_env(self) -> None:
-        load_dotenv()
+    @pytest.fixture(scope='function', autouse=True)
+    def set_env(self, monkeypatch) -> None:
+        monkeypatch.setenv('TRISMIK_SERVICE_URL', 'service_url')
+        monkeypatch.setenv('TRISMIK_API_KEY', 'api_key')
 
     @staticmethod
     def _mock_auth_response() -> httpx.Client:
         http_client = MagicMock(httpx.Client)
-        response = httpx.Response(
-                request=httpx.Request("method", "url"),
-                status_code=200,
-                json={
-                    "token": "token",
-                    "expires": "2024-08-28T14:18:10.0924006"
-                }
-        )
-        http_client.get.return_value = response
-        http_client.post.return_value = response
-        return http_client
-
-    @staticmethod
-    def _mock_error_response(status) -> httpx.Client:
-        http_client = MagicMock(httpx.Client)
-        response = httpx.Response(
-                request=httpx.Request("method", "url"),
-                status_code=status,
-                json={
-                    "timestamp": "timestamp",
-                    "path": "path",
-                    "status": status,
-                    "error": "error",
-                    "requestId": "request_id",
-                    "message": "message"
-                }
-        )
+        response = TrismikResponseMocker.auth_response()
         http_client.get.return_value = response
         http_client.post.return_value = response
         return http_client
@@ -163,75 +138,29 @@ class TestTrismik:
     @staticmethod
     def _mock_tests_response() -> httpx.Client:
         http_client = MagicMock(httpx.Client)
-        response = httpx.Response(
-                request=httpx.Request("method", "url"),
-                status_code=200,
-                json=[
-                    {
-                        "id": "fluency",
-                        "name": "Fluency"
-                    },
-                    {
-                        "id": "hallucination",
-                        "name": "Hallucination"
-                    },
-                    {
-                        "id": "layman-medical",
-                        "name": "Layman Medical"
-                    },
-                    {
-                        "id": "memorization",
-                        "name": "Memorization"
-                    },
-                    {
-                        "id": "toxicity",
-                        "name": "Toxicity"
-                    }
-                ]
-        )
+        response = TrismikResponseMocker.tests_response()
         http_client.get.return_value = response
         return http_client
 
     @staticmethod
     def _mock_session_response() -> httpx.Client:
         http_client = MagicMock(httpx.Client)
-        response = httpx.Response(
-                request=httpx.Request("method", "url"),
-                status_code=201,
-                json={
-                    "id": "id",
-                    "url": "url",
-                    "status": "status"
-                }
-        )
+        response = TrismikResponseMocker.session_response()
         http_client.post.return_value = response
         return http_client
 
     @staticmethod
     def _mock_item_response() -> httpx.Client:
         http_client = MagicMock(httpx.Client)
-        response = httpx.Response(
-                request=httpx.Request("method", "url"),
-                status_code=200,
-                json={
-                    "type": "multiple_choice_text",
-                    "question": "question",
-                    "choices": [
-                        {
-                            "id": "choice_id_1",
-                            "text": "choice_text_1"
-                        },
-                        {
-                            "id": "choice_id_2",
-                            "text": "choice_text_2"
-                        },
-                        {
-                            "id": "choice_id_3",
-                            "text": "choice_text_3"
-                        }
-                    ]
-                }
-        )
+        response = TrismikResponseMocker.item_response()
+        http_client.get.return_value = response
+        http_client.post.return_value = response
+        return http_client
+
+    @staticmethod
+    def _mock_error_response(status) -> httpx.Client:
+        http_client = MagicMock(httpx.Client)
+        response = TrismikResponseMocker.error_response(status)
         http_client.get.return_value = response
         http_client.post.return_value = response
         return http_client
@@ -239,11 +168,7 @@ class TestTrismik:
     @staticmethod
     def _mock_no_content_response() -> httpx.Client:
         http_client = MagicMock(httpx.Client)
-        response = httpx.Response(
-                request=httpx.Request("method", "url"),
-                status_code=204,
-                json=None
-        )
+        response = TrismikResponseMocker.no_content_response()
         http_client.get.return_value = response
         http_client.post.return_value = response
         return http_client

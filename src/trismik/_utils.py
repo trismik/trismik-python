@@ -1,9 +1,19 @@
 import os
 
+import httpx
+
 from .exceptions import TrismikError
 
 
 class TrismikUtils:
+
+    @staticmethod
+    def get_error_message(response: httpx.Response) -> str:
+        try:
+            return (response.json()).get("message", "Unknown error")
+        except (httpx.RequestError, ValueError):
+            error_message = response.content.decode("utf-8", errors="ignore")
+        return error_message
 
     @staticmethod
     def required_option(

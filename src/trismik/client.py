@@ -3,7 +3,7 @@ from typing import List, Any, Optional
 import httpx
 
 from .exceptions import TrismikApiError
-from .mapper import TrismikResponseMapper
+from ._mapper import TrismikResponseMapper
 from .types import (
     TrismikTest,
     TrismikAuthResponse,
@@ -11,7 +11,7 @@ from .types import (
     TrismikItem,
     TrismikResult
 )
-from .utils import TrismikUtils
+from ._utils import TrismikUtils
 
 
 class Trismik:
@@ -36,48 +36,56 @@ class Trismik:
             body = {"apiKey": self._api_key}
             response = self._http_client.post(url, json=body)
             response.raise_for_status()
-            return TrismikResponseMapper.to_auth_response(response.json())
+            json = response.json()
+            return TrismikResponseMapper.to_auth_response(json)
         except httpx.HTTPStatusError as e:
-            raise TrismikApiError(response.json()["message"]) from e
+            raise TrismikApiError(
+                    TrismikUtils.get_error_message(e.response)) from e
+        except httpx.HTTPError as e:
+            raise TrismikApiError(str(e)) from e
 
     def refresh_token(self, token: str) -> TrismikAuthResponse:
         try:
             url = "/client/token"
-            headers = {
-                "Authorization": f"Bearer {token}"
-            }
+            headers = {"Authorization": f"Bearer {token}"}
             response = self._http_client.get(url, headers=headers)
             response.raise_for_status()
-            return TrismikResponseMapper.to_auth_response(response.json())
+            json = response.json()
+            return TrismikResponseMapper.to_auth_response(json)
         except httpx.HTTPStatusError as e:
-            raise TrismikApiError(response.json()["message"]) from e
+            raise TrismikApiError(
+                    TrismikUtils.get_error_message(e.response)) from e
+        except httpx.HTTPError as e:
+            raise TrismikApiError(str(e)) from e
 
     def available_tests(self, token: str) -> List[TrismikTest]:
         try:
             url = "/client/tests"
-            headers = {
-                "Authorization": f"Bearer {token}"
-            }
+            headers = {"Authorization": f"Bearer {token}"}
             response = self._http_client.get(url, headers=headers)
             response.raise_for_status()
-            return TrismikResponseMapper.to_tests(response.json())
+            json = response.json()
+            return TrismikResponseMapper.to_tests(json)
         except httpx.HTTPStatusError as e:
-            raise TrismikApiError(response.json()["message"]) from e
+            raise TrismikApiError(
+                    TrismikUtils.get_error_message(e.response)) from e
+        except httpx.HTTPError as e:
+            raise TrismikApiError(str(e)) from e
 
     def create_session(self, test_id: str, token: str) -> TrismikSession:
         try:
             url = "/client/sessions"
-            headers = {
-                "Authorization": f"Bearer {token}"
-            }
-            body = {
-                "testId": test_id,
-            }
+            headers = {"Authorization": f"Bearer {token}"}
+            body = {"testId": test_id, }
             response = self._http_client.post(url, headers=headers, json=body)
             response.raise_for_status()
-            return TrismikResponseMapper.to_session(response.json())
+            json = response.json()
+            return TrismikResponseMapper.to_session(json)
         except httpx.HTTPStatusError as e:
-            raise TrismikApiError(response.json()["message"]) from e
+            raise TrismikApiError(
+                    TrismikUtils.get_error_message(e.response)) from e
+        except httpx.HTTPError as e:
+            raise TrismikApiError(str(e)) from e
 
     def current_item(
             self,
@@ -86,14 +94,16 @@ class Trismik:
     ) -> TrismikItem:
         try:
             url = f"{session_url}/item"
-            headers = {
-                "Authorization": f"Bearer {token}"
-            }
+            headers = {"Authorization": f"Bearer {token}"}
             response = self._http_client.get(url, headers=headers)
             response.raise_for_status()
-            return TrismikResponseMapper.to_item(response.json())
+            json = response.json()
+            return TrismikResponseMapper.to_item(json)
         except httpx.HTTPStatusError as e:
-            raise TrismikApiError(response.json()["message"]) from e
+            raise TrismikApiError(
+                    TrismikUtils.get_error_message(e.response)) from e
+        except httpx.HTTPError as e:
+            raise TrismikApiError(str(e)) from e
 
     def respond_to_current_item(
             self,
@@ -103,30 +113,31 @@ class Trismik:
     ) -> TrismikItem | None:
         try:
             url = f"{session_url}/item"
-            body = {
-                "value": value
-            }
-            headers = {
-                "Authorization": f"Bearer {token}"
-            }
+            body = {"value": value}
+            headers = {"Authorization": f"Bearer {token}"}
             response = self._http_client.post(url, headers=headers, json=body)
             response.raise_for_status()
             if response.status_code == 204:
                 return None
             else:
-                return TrismikResponseMapper.to_item(response.json())
+                json = response.json()
+                return TrismikResponseMapper.to_item(json)
         except httpx.HTTPStatusError as e:
-            raise TrismikApiError(response.json()["message"]) from e
+            raise TrismikApiError(
+                    TrismikUtils.get_error_message(e.response)) from e
+        except httpx.HTTPError as e:
+            raise TrismikApiError(str(e)) from e
 
     def results(self, session_url: str, token: str) -> List[TrismikResult]:
         try:
             url = f"{session_url}/results"
-            headers = {
-                "Authorization": f"Bearer {token}"
-            }
+            headers = {"Authorization": f"Bearer {token}"}
             response = self._http_client.get(url, headers=headers)
             response.raise_for_status()
-            return TrismikResponseMapper.to_results(response.json())
+            json = response.json()
+            return TrismikResponseMapper.to_results(json)
         except httpx.HTTPStatusError as e:
-            raise TrismikApiError(response.json()["message"]) from e
-
+            raise TrismikApiError(
+                    TrismikUtils.get_error_message(e.response)) from e
+        except httpx.HTTPError as e:
+            raise TrismikApiError(str(e)) from e
