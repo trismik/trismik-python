@@ -10,7 +10,9 @@ from trismik import (
     TrismikMultipleChoiceTextItem,
     TrismikResult,
     TrismikSession,
-    TrismikTextChoice, TrismikAsyncRunner, TrismikAsyncClient,
+    TrismikTextChoice,
+    TrismikAsyncRunner,
+    TrismikAsyncClient,
 )
 
 
