@@ -17,10 +17,13 @@ Usage
    ```
 
 3. Refer to examples:
-   * `examples/example_runner.py` - run test using high-level `TrismikRunner` class
-   * `examples/example_runner_async.py` - like above, but with async support
-   * `examples/example_client.py` - run test using `TrismikClient` directly
-   * `examples/example_client_async.py` - like above, but with async support
+   * [example_runner.py](./examples/example_runner.py) - run test using high-level `TrismikRunner`
+     class
+   * [example_runner_async.py](./examples/example_runner_async.py) - like above, but with async
+     support
+   * [example_client.py](./examples/example_client.py) - run test using `TrismikClient` directly
+   * [example_client_async.py](./examples/example_client_async.py) - like above, but with async
+     support
 
 Contributing
 ------------
