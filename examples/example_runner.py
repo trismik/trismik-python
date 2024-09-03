@@ -46,6 +46,7 @@ def main():
     """
     load_dotenv()
     runner = TrismikRunner(process_item)
+
     print("\nStarting test...")
     results = runner.run("toxicity")  # Assuming it is available
     print_results(results)
