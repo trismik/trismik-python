@@ -70,13 +70,12 @@ def main():
     if not tests:
         raise RuntimeError("No tests available")
 
+    print_tests(tests)
     test_id = "toxicity"  # Assuming it is available
     session_url = client.create_session(test_id, token).url
 
     run_test(client, session_url, token)
-
     results = client.results(session_url, token)
-
     print_results(results)
 
 
