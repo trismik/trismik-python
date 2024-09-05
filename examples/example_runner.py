@@ -7,6 +7,7 @@ from trismik import (
     TrismikItem,
     TrismikMultipleChoiceTextItem,
     TrismikResult,
+    TrismikResponse,
 )
 
 
@@ -25,7 +26,7 @@ def process_item(item: TrismikItem) -> Any:
         # For TrismikMultipleChoiceTextItem, expected response is a choice id.
         # In reality, you would probably want to process the item in a more
         # sophisticated way than just always answering with the first choice.
-        print(f"Processing item: {item.question[:20]}...")
+        print(f"Processing item: {item.id}...")
         return item.choices[0].id
     else:
         raise RuntimeError("Encountered unknown item type")
@@ -35,6 +36,13 @@ def print_results(results: List[TrismikResult]) -> None:
     print("\nResults...")
     for result in results:
         print(f"{result.trait} ({result.name}): {result.value}")
+
+
+def print_responses(responses: List[TrismikResponse]) -> None:
+    print("\nResponses...")
+    for response in responses:
+        correct = "correct" if response.score > 0 else "incorrect"
+        print(f"{response.item_id}: {correct}")
 
 
 def main():
@@ -47,8 +55,10 @@ def main():
     load_dotenv()
     runner = TrismikRunner(process_item)
     print("\nStarting test...")
-    results = runner.run("toxicity")  # Assuming it is available
-    print_results(results)
+    results_and_responses = runner.run("toxicity",
+                                       with_responses=True)  # Assuming it is available
+    print_results(results_and_responses.results)
+    print_responses(results_and_responses.responses)
 
 
 if __name__ == "__main__":

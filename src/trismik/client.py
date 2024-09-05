@@ -10,7 +10,8 @@ from .types import (
     TrismikAuth,
     TrismikSession,
     TrismikItem,
-    TrismikResult
+    TrismikResult,
+    TrismikResponse,
 )
 
 
@@ -234,6 +235,36 @@ class TrismikClient:
             response.raise_for_status()
             json = response.json()
             return TrismikResponseMapper.to_results(json)
+        except httpx.HTTPStatusError as e:
+            raise TrismikApiError(
+                    TrismikUtils.get_error_message(e.response)) from e
+        except httpx.HTTPError as e:
+            raise TrismikApiError(str(e)) from e
+
+    def responses(self,
+            session_url: str,
+            token: str
+    ) -> List[TrismikResponse]:
+        """
+        Retrieves responses to session items.
+
+        Args:
+            session_url (str): URL of the session.
+            token (str): Authentication token.
+
+        Returns:
+            List[TrismikResponse]: Responses of the session.
+
+        Raises:
+            TrismikApiError: If API request fails.
+        """
+        try:
+            url = f"{session_url}/responses"
+            headers = {"Authorization": f"Bearer {token}"}
+            response = self._http_client.get(url, headers=headers)
+            response.raise_for_status()
+            json = response.json()
+            return TrismikResponseMapper.to_responses(json)
         except httpx.HTTPStatusError as e:
             raise TrismikApiError(
                     TrismikUtils.get_error_message(e.response)) from e

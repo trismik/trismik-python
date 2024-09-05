@@ -1,14 +1,11 @@
 from .client import TrismikClient
-from .runner import TrismikRunner
-
 from .client_async import TrismikAsyncClient
-from .runner_async import TrismikAsyncRunner
-
 from .exceptions import (
     TrismikError,
     TrismikApiError
 )
-
+from .runner import TrismikRunner
+from .runner_async import TrismikAsyncRunner
 from .types import (
     TrismikTest,
     TrismikAuth,
@@ -17,5 +14,7 @@ from .types import (
     TrismikMultipleChoiceTextItem,
     TrismikChoice,
     TrismikTextChoice,
-    TrismikResult
+    TrismikResult,
+    TrismikResponse,
+    TrismikResultsAndResponses,
 )

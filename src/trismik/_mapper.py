@@ -10,7 +10,8 @@ from .types import (
     TrismikTextChoice,
     TrismikAuth,
     TrismikTest,
-    TrismikSession
+    TrismikSession,
+    TrismikResponse,
 )
 
 
@@ -44,6 +45,7 @@ class TrismikResponseMapper:
     def to_item(json: dict[str, Any]) -> TrismikItem:
         if json["type"] == "multiple_choice_text":
             return TrismikMultipleChoiceTextItem(
+                    id=json["id"],
                     question=json["question"],
                     choices=[
                         TrismikTextChoice(
@@ -64,4 +66,14 @@ class TrismikResponseMapper:
                     name=item["name"],
                     value=item["value"],
             ) for item in json
+        ]
+
+    @staticmethod
+    def to_responses(json: List[dict[str, Any]]) -> List[TrismikResponse]:
+        return [
+            TrismikResponse(
+                    item_id=response["itemId"],
+                    value=response["value"],
+                    score=response["score"],
+            ) for response in json
         ]

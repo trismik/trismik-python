@@ -142,6 +142,36 @@ class TestTrismikClient:
                     "url", "choice_id_1", "token"
             )
 
+    def test_should_get_results(self) -> None:
+        client = TrismikClient(http_client=self._mock_results_response())
+        results = client.results("url", "token")
+        assert len(results) == 1
+        assert results[0].trait == "trait"
+        assert results[0].name == "name"
+        assert results[0].value == "value"
+
+    def test_should_fail_get_results_when_api_returned_error(
+            self
+    ) -> None:
+        with pytest.raises(TrismikApiError, match="message"):
+            client = TrismikClient(http_client=self._mock_error_response(401))
+            client.results("url", "token")
+
+    def test_should_get_responses(self) -> None:
+        client = TrismikClient(http_client=self._mock_responses_response())
+        responses = client.responses("url", "token")
+        assert len(responses) == 1
+        assert responses[0].item_id == "item_id"
+        assert responses[0].value == "value"
+        assert responses[0].score == 1.0
+
+    def test_should_fail_get_responses_when_api_returned_error(
+            self
+    ) -> None:
+        with pytest.raises(TrismikApiError, match="message"):
+            client = TrismikClient(http_client=self._mock_error_response(401))
+            client.responses("url", "token")
+
     @pytest.fixture(scope='function', autouse=True)
     def set_env(self, monkeypatch) -> None:
         monkeypatch.setenv('TRISMIK_SERVICE_URL', 'service_url')
@@ -150,7 +180,7 @@ class TestTrismikClient:
     @staticmethod
     def _mock_auth_response() -> httpx.Client:
         http_client = MagicMock(httpx.Client)
-        response = TrismikResponseMocker.auth_response()
+        response = TrismikResponseMocker.auth()
         http_client.get.return_value = response
         http_client.post.return_value = response
         return http_client
@@ -158,21 +188,21 @@ class TestTrismikClient:
     @staticmethod
     def _mock_tests_response() -> httpx.Client:
         http_client = MagicMock(httpx.Client)
-        response = TrismikResponseMocker.tests_response()
+        response = TrismikResponseMocker.tests()
         http_client.get.return_value = response
         return http_client
 
     @staticmethod
     def _mock_session_response() -> httpx.Client:
         http_client = MagicMock(httpx.Client)
-        response = TrismikResponseMocker.session_response()
+        response = TrismikResponseMocker.session()
         http_client.post.return_value = response
         return http_client
 
     @staticmethod
     def _mock_item_response() -> httpx.Client:
         http_client = MagicMock(httpx.Client)
-        response = TrismikResponseMocker.item_response()
+        response = TrismikResponseMocker.item()
         http_client.get.return_value = response
         http_client.post.return_value = response
         return http_client
@@ -180,15 +210,29 @@ class TestTrismikClient:
     @staticmethod
     def _mock_error_response(status) -> httpx.Client:
         http_client = MagicMock(httpx.Client)
-        response = TrismikResponseMocker.error_response(status)
+        response = TrismikResponseMocker.error(status)
         http_client.get.return_value = response
         http_client.post.return_value = response
         return http_client
 
     @staticmethod
+    def _mock_results_response() -> httpx.Client:
+        http_client = MagicMock(httpx.Client)
+        response = TrismikResponseMocker.results()
+        http_client.get.return_value = response
+        return http_client
+
+    @staticmethod
+    def _mock_responses_response() -> httpx.Client:
+        http_client = MagicMock(httpx.Client)
+        response = TrismikResponseMocker.responses()
+        http_client.get.return_value = response
+        return http_client
+
+    @staticmethod
     def _mock_no_content_response() -> httpx.Client:
         http_client = MagicMock(httpx.Client)
-        response = TrismikResponseMocker.no_content_response()
+        response = TrismikResponseMocker.no_content()
         http_client.get.return_value = response
         http_client.post.return_value = response
         return http_client

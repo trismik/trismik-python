@@ -167,6 +167,42 @@ class TestTrismikAsyncClient:
                     "url", "choice_id_1", "token"
             )
 
+    @pytest.mark.asyncio
+    async def test_should_get_results(self) -> None:
+        client = TrismikAsyncClient(http_client=self._mock_results_response())
+        results = await client.results("url", "token")
+        assert len(results) == 1
+        assert results[0].trait == "trait"
+        assert results[0].name == "name"
+        assert results[0].value == "value"
+
+    @pytest.mark.asyncio
+    async def test_should_fail_get_results_when_api_returned_error(
+            self
+    ) -> None:
+        with pytest.raises(TrismikApiError, match="message"):
+            client = TrismikAsyncClient(
+                http_client=self._mock_error_response(401))
+            await client.results("url", "token")
+
+    @pytest.mark.asyncio
+    async def test_should_get_responses(self) -> None:
+        client = TrismikAsyncClient(http_client=self._mock_responses_response())
+        responses = await client.responses("url", "token")
+        assert len(responses) == 1
+        assert responses[0].item_id == "item_id"
+        assert responses[0].value == "value"
+        assert responses[0].score == 1.0
+
+    @pytest.mark.asyncio
+    async def test_should_fail_get_responses_when_api_returned_error(
+            self
+    ) -> None:
+        with pytest.raises(TrismikApiError, match="message"):
+            client = TrismikAsyncClient(
+                http_client=self._mock_error_response(401))
+            await client.responses("url", "token")
+
     @pytest.fixture(scope='function', autouse=True)
     def set_env(self, monkeypatch) -> None:
         monkeypatch.setenv('TRISMIK_SERVICE_URL', 'service_url')
@@ -175,7 +211,7 @@ class TestTrismikAsyncClient:
     @staticmethod
     def _mock_auth_response() -> httpx.AsyncClient:
         http_client = MagicMock(httpx.AsyncClient)
-        response = TrismikResponseMocker.auth_response()
+        response = TrismikResponseMocker.auth()
         http_client.get.return_value = response
         http_client.post.return_value = response
         return http_client
@@ -183,21 +219,21 @@ class TestTrismikAsyncClient:
     @staticmethod
     def _mock_tests_response() -> httpx.AsyncClient:
         http_client = MagicMock(httpx.AsyncClient)
-        response = TrismikResponseMocker.tests_response()
+        response = TrismikResponseMocker.tests()
         http_client.get.return_value = response
         return http_client
 
     @staticmethod
     def _mock_session_response() -> httpx.AsyncClient:
         http_client = MagicMock(httpx.AsyncClient)
-        response = TrismikResponseMocker.session_response()
+        response = TrismikResponseMocker.session()
         http_client.post.return_value = response
         return http_client
 
     @staticmethod
     def _mock_item_response() -> httpx.AsyncClient:
         http_client = MagicMock(httpx.AsyncClient)
-        response = TrismikResponseMocker.item_response()
+        response = TrismikResponseMocker.item()
         http_client.get.return_value = response
         http_client.post.return_value = response
         return http_client
@@ -205,15 +241,29 @@ class TestTrismikAsyncClient:
     @staticmethod
     def _mock_error_response(status: int) -> httpx.AsyncClient:
         http_client = MagicMock(httpx.AsyncClient)
-        response = TrismikResponseMocker.error_response(status)
+        response = TrismikResponseMocker.error(status)
         http_client.get.return_value = response
         http_client.post.return_value = response
         return http_client
 
     @staticmethod
+    def _mock_results_response() -> httpx.AsyncClient:
+        http_client = MagicMock(httpx.AsyncClient)
+        response = TrismikResponseMocker.results()
+        http_client.get.return_value = response
+        return http_client
+
+    @staticmethod
+    def _mock_responses_response() -> httpx.AsyncClient:
+        http_client = MagicMock(httpx.AsyncClient)
+        response = TrismikResponseMocker.responses()
+        http_client.get.return_value = response
+        return http_client
+
+    @staticmethod
     def _mock_no_content_response() -> httpx.AsyncClient:
         http_client = MagicMock(httpx.AsyncClient)
-        response = TrismikResponseMocker.no_content_response()
+        response = TrismikResponseMocker.no_content()
         http_client.get.return_value = response
         http_client.post.return_value = response
         return http_client

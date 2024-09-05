@@ -2,7 +2,12 @@ from datetime import datetime, timedelta
 from typing import List, Callable, Any, Awaitable, Optional
 
 from .client_async import TrismikAsyncClient
-from .types import TrismikAuth, TrismikResult, TrismikItem
+from .types import (
+    TrismikAuth,
+    TrismikItem,
+    TrismikResult,
+    TrismikResultsAndResponses,
+)
 
 
 class TrismikAsyncRunner:
@@ -27,15 +32,19 @@ class TrismikAsyncRunner:
         self._client = client
         self._auth = auth
 
-    async def run(self, test_id: str) -> List[TrismikResult]:
+    async def run(self,
+            test_id: str,
+            with_responses: bool = False,
+    ) -> List[TrismikResult] | TrismikResultsAndResponses:
         """
         Runs a test.
 
         Args:
             test_id (str): ID of the test to run.
+            with_responses (bool): If True, responses will be included with the results.
 
         Returns:
-            List[TrismikResult]: Results of the test.
+            List[TrismikResult] | TrismikResultsAndResponses: Either just test results, or with responses.
 
         Raises:
             TrismikApiError: If API request fails.
@@ -43,9 +52,17 @@ class TrismikAsyncRunner:
         await self._init()
         await self._refresh_token_if_needed()
         session = await self._client.create_session(test_id, self._auth.token)
-        return await self._run_session(session.url)
+        await self._run_session(session.url)
+        results = await self._client.results(session.url, self._auth.token)
 
-    async def _run_session(self, session_url: str) -> List[TrismikResult]:
+        if with_responses:
+            responses = await self._client.responses(session.url,
+                                                     self._auth.token)
+            return TrismikResultsAndResponses(results, responses)
+        else:
+            return results
+
+    async def _run_session(self, session_url: str) -> None:
         await self._init()
         await self._refresh_token_if_needed()
         item = await self._client.current_item(session_url, self._auth.token)
@@ -54,7 +71,6 @@ class TrismikAsyncRunner:
             response = await self._item_processor(item)
             item = await self._client.respond_to_current_item(
                     session_url, response, self._auth.token)
-        return await self._client.results(session_url, self._auth.token)
 
     async def _init(self) -> None:
         if self._client is None:

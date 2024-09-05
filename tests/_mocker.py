@@ -4,7 +4,7 @@ import httpx
 class TrismikResponseMocker:
 
     @staticmethod
-    def auth_response() -> httpx.Response:
+    def auth() -> httpx.Response:
         return httpx.Response(
                 request=httpx.Request("method", "url"),
                 status_code=200,
@@ -15,7 +15,7 @@ class TrismikResponseMocker:
         )
 
     @staticmethod
-    def error_response(status: int) -> httpx.Response:
+    def error(status: int) -> httpx.Response:
         return httpx.Response(
                 request=httpx.Request("method", "url"),
                 status_code=status,
@@ -30,7 +30,7 @@ class TrismikResponseMocker:
         )
 
     @staticmethod
-    def tests_response() -> httpx.Response:
+    def tests() -> httpx.Response:
         return httpx.Response(
                 request=httpx.Request("method", "url"),
                 status_code=200,
@@ -59,7 +59,7 @@ class TrismikResponseMocker:
         )
 
     @staticmethod
-    def session_response() -> httpx.Response:
+    def session() -> httpx.Response:
         return httpx.Response(
                 request=httpx.Request("method", "url"),
                 status_code=201,
@@ -71,11 +71,12 @@ class TrismikResponseMocker:
         )
 
     @staticmethod
-    def item_response() -> httpx.Response:
+    def item() -> httpx.Response:
         return httpx.Response(
                 request=httpx.Request("method", "url"),
                 status_code=200,
                 json={
+                    "id": "id",
                     "type": "multiple_choice_text",
                     "question": "question",
                     "choices": [
@@ -96,7 +97,35 @@ class TrismikResponseMocker:
         )
 
     @staticmethod
-    def no_content_response() -> httpx.Response:
+    def results() -> httpx.Response:
+        return httpx.Response(
+                request=httpx.Request("method", "url"),
+                status_code=200,
+                json=[
+                    {
+                        "trait": "trait",
+                        "name": "name",
+                        "value": "value",
+                    },
+                ]
+        )
+
+    @staticmethod
+    def responses() -> httpx.Response:
+        return httpx.Response(
+                request=httpx.Request("method", "url"),
+                status_code=200,
+                json=[
+                    {
+                        "itemId": "item_id",
+                        "value": "value",
+                        "score": 1.0,
+                    }
+                ]
+        )
+
+    @staticmethod
+    def no_content() -> httpx.Response:
         return httpx.Response(
                 request=httpx.Request("method", "url"),
                 status_code=204,

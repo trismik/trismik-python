@@ -2,7 +2,12 @@ from datetime import datetime, timedelta
 from typing import List, Callable, Any, Optional
 
 from .client import TrismikClient
-from .types import TrismikAuth, TrismikResult, TrismikItem
+from .types import (
+    TrismikAuth,
+    TrismikItem,
+    TrismikResult,
+    TrismikResultsAndResponses,
+)
 
 
 class TrismikRunner:
@@ -27,15 +32,19 @@ class TrismikRunner:
         self._client = client
         self._auth = auth
 
-    def run(self, test_id: str) -> List[TrismikResult]:
+    def run(self,
+            test_id: str,
+            with_responses: bool = False,
+    ) -> List[TrismikResult] | TrismikResultsAndResponses:
         """
         Runs a test.
 
         Args:
             test_id (str): ID of the test to run.
+            with_responses (bool): If True, responses will be included with the results.
 
         Returns:
-            List[TrismikResult]: Results of the test.
+            List[TrismikResult] | TrismikResultsAndResponses: Either just test results, or with responses.
 
         Raises:
             TrismikApiError: If API request fails.
@@ -43,9 +52,16 @@ class TrismikRunner:
         self._init()
         self._refresh_token_if_needed()
         session = self._client.create_session(test_id, self._auth.token)
-        return self._run_session(session.url)
+        self._run_session(session.url)
+        results = self._client.results(session.url, self._auth.token)
 
-    def _run_session(self, session_url: str) -> List[TrismikResult]:
+        if with_responses:
+            responses = self._client.responses(session.url, self._auth.token)
+            return TrismikResultsAndResponses(results, responses)
+        else:
+            return results
+
+    def _run_session(self, session_url: str) -> None:
         item = self._client.current_item(session_url, self._auth.token)
         while item is not None:
             self._refresh_token_if_needed()
@@ -53,7 +69,6 @@ class TrismikRunner:
             item = self._client.respond_to_current_item(
                     session_url, response, self._auth.token
             )
-        return self._client.results(session_url, self._auth.token)
 
     def _init(self) -> None:
         if self._client is None:

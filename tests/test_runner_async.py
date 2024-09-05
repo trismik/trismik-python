@@ -13,6 +13,7 @@ from trismik import (
     TrismikTextChoice,
     TrismikAsyncRunner,
     TrismikAsyncClient,
+    TrismikResultsAndResponses, TrismikResponse,
 )
 
 
@@ -33,6 +34,25 @@ class TestTrismikAsyncRunner:
         assert mock_client.respond_to_current_item.call_count == 2
         mock_client.results.assert_called_once_with("url", "token")
         assert len(results) == 1
+
+    # noinspection PyUnresolvedReferences
+    @pytest.mark.asyncio
+    async def test_should_run_test_with_responses(self, runner, mock_client):
+        results = await runner.run("test_id", with_responses=True)
+
+        mock_client.authenticate.assert_not_called()
+        mock_client.refresh_token.assert_not_called()
+        mock_client.create_session.assert_called_once_with("test_id", "token")
+        mock_client.current_item.assert_called_once_with("url", "token")
+        mock_client.respond_to_current_item.assert_called_with(
+                "url", "processed_response", "token"
+        )
+        assert mock_client.respond_to_current_item.call_count == 2
+        mock_client.results.assert_called_once_with("url", "token")
+        mock_client.responses.assert_called_once_with("url", "token")
+        assert isinstance(results, TrismikResultsAndResponses)
+        assert len(results.results) == 1
+        assert len(results.responses) == 1
 
     # noinspection PyUnresolvedReferences
     @pytest.mark.asyncio
@@ -69,6 +89,7 @@ class TestTrismikAsyncRunner:
     @pytest.fixture
     def item(self) -> TrismikItem:
         return TrismikMultipleChoiceTextItem(
+                id="id",
                 question="question",
                 choices=[
                     TrismikTextChoice(id="id", text="text")
@@ -89,6 +110,9 @@ class TestTrismikAsyncRunner:
         client.respond_to_current_item.side_effect = [item, None]
         client.results.return_value = [
             TrismikResult(trait="example", name="test", value="value")
+        ]
+        client.responses.return_value = [
+            TrismikResponse(item_id="item_id", value="value", score=1.0)
         ]
         return client
 

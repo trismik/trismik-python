@@ -45,26 +45,14 @@ class TrismikSession:
 
 
 @dataclass
-class TrismikResult:
-    """
-    Test result.
-
-    Attributes:
-        trait (str): Trait name.
-        name (str): Result name/type.
-        value (Any): Result value.
-    """
-    trait: str
-    name: str
-    value: Any
-
-
-@dataclass
 class TrismikItem:
     """
     Base class for test items.
+
+    Attributes:
+        id (str): Item ID.
     """
-    pass
+    id: str
 
 
 @dataclass
@@ -100,3 +88,46 @@ class TrismikMultipleChoiceTextItem(TrismikItem):
     """
     question: str
     choices: List[TrismikTextChoice]
+
+
+@dataclass
+class TrismikResult:
+    """
+    Test result.
+
+    Attributes:
+        trait (str): Trait name.
+        name (str): Result name/type.
+        value (Any): Result value.
+    """
+    trait: str
+    name: str
+    value: Any
+
+
+@dataclass
+class TrismikResponse:
+    """
+    Test result.
+
+    Attributes:
+        item_id (str): Item ID.
+        value (Any): Result value.
+        score (float): Score.
+    """
+    item_id: str
+    value: Any
+    score: float
+
+
+@dataclass
+class TrismikResultsAndResponses:
+    """
+    Test results and responses.
+
+    Attributes:
+        results (List[TrismikResult]): Results.
+        responses (List[TrismikResponse]): Responses.
+    """
+    results: List[TrismikResult]
+    responses: List[TrismikResponse]
