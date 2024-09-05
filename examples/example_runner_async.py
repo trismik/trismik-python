@@ -55,6 +55,7 @@ async def main():
     """
     load_dotenv()
     runner = TrismikAsyncRunner(process_item)
+
     print("\nStarting test...")
     results_and_responses = await runner.run("toxicity",
                                              with_responses=True)  # Assuming it is available

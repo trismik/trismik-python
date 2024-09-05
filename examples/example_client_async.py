@@ -80,6 +80,7 @@ async def main():
     if not tests:
         raise RuntimeError("No tests available")
 
+    print_tests(tests)
     test_id = "toxicity"  # Assuming it is available
     session_url = (await client.create_session(test_id, token)).url
 
