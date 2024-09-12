@@ -56,7 +56,7 @@ def main():
     runner = TrismikRunner(process_item)
 
     print("\nStarting test...")
-    results_and_responses = runner.run("toxicity",
+    results_and_responses = runner.run("Tox2024",
                                        with_responses=True)  # Assuming it is available
     print_results(results_and_responses.results)
     print_responses(results_and_responses.responses)

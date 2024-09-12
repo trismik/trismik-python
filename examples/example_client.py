@@ -79,7 +79,7 @@ def main():
         raise RuntimeError("No tests available")
 
     print_tests(tests)
-    test_id = "toxicity"  # Assuming it is available
+    test_id = "Tox2024"  # Assuming it is available
     session_url = client.create_session(test_id, token).url
 
     run_test(client, session_url, token)
