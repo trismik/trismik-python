@@ -16,6 +16,8 @@ from .types import (
 
 
 class TrismikAsyncClient:
+    _serviceUrl: str = "https://trismik.e-psychometrics.com/api"
+
     def __init__(
             self,
             service_url: Optional[str] = None,
@@ -34,8 +36,8 @@ class TrismikAsyncClient:
             TrismikError: If service_url or api_key are not provided and not found in environment.
             TrismikApiError: If API request fails.
         """
-        self._service_url = TrismikUtils.required_option(
-                service_url, "service_url", "TRISMIK_SERVICE_URL"
+        self._service_url = TrismikUtils.option(
+                service_url, self._serviceUrl, "TRISMIK_SERVICE_URL"
         )
         self._api_key = TrismikUtils.required_option(
                 api_key, "api_key", "TRISMIK_API_KEY"

@@ -17,7 +17,7 @@ class TrismikUtils:
 
     @staticmethod
     def required_option(
-            value: str,
+            value: str | None,
             name: str,
             env: str
     ) -> str:
@@ -29,4 +29,16 @@ class TrismikUtils:
                     f"{env} to the client or by setting the {env} "
                     "environment variable"
             )
+        return value
+
+    @staticmethod
+    def option(
+            value: str | None,
+            default: str,
+            env: str,
+    ) -> str:
+        if value is None:
+            value = os.environ.get(env)
+        if value is None:
+            return default
         return value

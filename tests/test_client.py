@@ -29,17 +29,15 @@ class TestTrismikClient:
                 api_key=None,
         )
 
-    def test_should_fail_initialize_when_service_url_not_provided(
+    def test_should_initialize_with_default_when_service_url_not_provided(
             self,
             monkeypatch
     ) -> None:
         monkeypatch.delenv('TRISMIK_SERVICE_URL', raising=False)
-        with pytest.raises(TrismikError,
-                           match="service_url client option must be set"):
-            TrismikClient(
-                    service_url=None,
-                    api_key="api_key"
-            )
+        TrismikClient(
+                service_url=None,
+                api_key="api_key"
+        )
 
     def test_should_fail_initialize_when_api_key_not_provided(
             self,
