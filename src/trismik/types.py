@@ -131,3 +131,18 @@ class TrismikResultsAndResponses:
     """
     results: List[TrismikResult]
     responses: List[TrismikResponse]
+
+@dataclass
+class TrismikSessionMetadata:
+    """
+    Metadata associated to a session
+
+    Attributes:
+        model_metadata (dict[str, Any]): Metadata about the model.
+        test_configuration (dict[str, Any]): Metadata about the test.
+        inference_setup (dict[str, Any]): Metadata about the inference setup.
+    """   
+
+    model_metadata: dict[str, Any]
+    test_configuration: dict[str, Any]
+    inference_setup: dict[str, Any]

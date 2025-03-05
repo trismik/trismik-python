@@ -12,6 +12,7 @@ from .types import (
     TrismikItem,
     TrismikResult,
     TrismikResponse,
+    TrismikSessionMetadata
 )
 
 
@@ -142,6 +143,37 @@ class TrismikClient:
             response.raise_for_status()
             json = response.json()
             return TrismikResponseMapper.to_session(json)
+        except httpx.HTTPStatusError as e:
+            raise TrismikApiError(
+                    TrismikUtils.get_error_message(e.response)) from e
+        except httpx.HTTPError as e:
+            raise TrismikApiError(str(e)) from e
+
+    def add_metadata(self, session_id: str, metadata: TrismikSessionMetadata, token: str) -> None:
+        """
+        Adds metadata to the session, merging it with any already stored
+
+        Args:
+            session_id (str): id of the session object
+            metadata: object cotaining the metadata to add
+            token (str): Authentication token.
+
+        Returns:
+            None
+
+        Raises:
+            TrismikApiError: If API request fails.
+        """
+        try:
+            url = f"/client/sessions/{session_id}/metadata"
+            headers = {"Authorization": f"Bearer {token}"}
+            body = {
+                "model_metadata": metadata.model_metadata,
+                "inference_setup": metadata.inference_setup,
+                "test_configuration": metadata.test_configuration
+                }
+            response = self._http_client.post(url, headers=headers, json=body)
+            response.raise_for_status()
         except httpx.HTTPStatusError as e:
             raise TrismikApiError(
                     TrismikUtils.get_error_message(e.response)) from e
