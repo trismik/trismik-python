@@ -8,6 +8,7 @@ from trismik import (
     TrismikMultipleChoiceTextItem,
     TrismikResult,
     TrismikResponse,
+    TrismikSessionMetadata,
 )
 
 
@@ -55,9 +56,23 @@ def main():
     load_dotenv()
     runner = TrismikRunner(process_item)
 
+    metadata = TrismikSessionMetadata(
+        model_metadata={
+            "name": "Give first response"
+        },
+        test_configuration={
+            "task_name": "Tox2024",
+        },
+        inference_setup={
+            "type": "None",
+            "network_size": 0
+        }
+        )
+
     print("\nStarting test...")
-    results_and_responses = runner.run("Tox2024",
-                                       with_responses=True)  # Assuming it is available
+    results_and_responses = runner.run("Tox2024", # Assuming it is available
+                                       with_responses=True, 
+                                       session_metadata=metadata)  
     print_results(results_and_responses.results)
     print_responses(results_and_responses.responses)
 
