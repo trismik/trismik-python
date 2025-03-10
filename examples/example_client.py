@@ -8,8 +8,9 @@ from trismik import (
     TrismikMultipleChoiceTextItem,
     TrismikResult,
     TrismikResponse,
-    TrismikSessionMetadata
 )
+
+from _sample_metadata import ( sample_metadata )
 
 
 def print_tests(tests) -> None:
@@ -83,19 +84,7 @@ def main():
     test_id = "Tox2024"  # Assuming it is available
     session = client.create_session(test_id, token)
 
-    client.add_metadata(session.id, TrismikSessionMetadata(
-        model_metadata={
-            "name": "Give first response"
-        },
-        test_configuration={
-            "task_name": "Tox2024",
-        },
-        inference_setup={
-            "type": "None",
-            "network_size": 0
-        }
-        )
-        , token)
+    client.add_metadata(session.id, sample_metadata, token)
 
     run_test(client, session.url, token)
     results = client.results(session.url, token)

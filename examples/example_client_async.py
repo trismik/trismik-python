@@ -10,8 +10,8 @@ from trismik import (
     TrismikResult,
     TrismikResponse,
 )
-from trismik.types import TrismikSessionMetadata
 
+from _sample_metadata import ( sample_metadata )
 
 def print_tests(tests) -> None:
     print("Available tests:")
@@ -85,19 +85,7 @@ async def main():
     test_id = "Tox2024"  # Assuming it is available
     session = await client.create_session(test_id, token)
 
-    await client.add_metadata(session.id, TrismikSessionMetadata(
-        model_metadata={
-            "name": "Give first response"
-        },
-        test_configuration={
-            "task_name": "Tox2024",
-        },
-        inference_setup={
-            "type": "None",
-            "network_size": 0
-        }
-        )
-        , token)
+    await client.add_metadata(session.id, sample_metadata, token)
 
     await run_test(client, session.url, token)
     results = await client.results(session.url, token)
