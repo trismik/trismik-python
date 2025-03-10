@@ -7,6 +7,7 @@ from .types import (
     TrismikItem,
     TrismikResult,
     TrismikResultsAndResponses,
+    TrismikSessionMetadata,
 )
 
 
@@ -35,6 +36,7 @@ class TrismikRunner:
     def run(self,
             test_id: str,
             with_responses: bool = False,
+            session_metadata: Optional[TrismikSessionMetadata] = None
     ) -> List[TrismikResult] | TrismikResultsAndResponses:
         """
         Runs a test.
@@ -52,6 +54,10 @@ class TrismikRunner:
         self._init()
         self._refresh_token_if_needed()
         session = self._client.create_session(test_id, self._auth.token)
+
+        if session_metadata is not None:
+            self._client.add_metadata(session.id, session_metadata, self._auth.token)
+
         self._run_session(session.url)
         results = self._client.results(session.url, self._auth.token)
 

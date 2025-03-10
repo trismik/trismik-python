@@ -11,6 +11,7 @@ from trismik import (
     TrismikResponse,
 )
 
+from _sample_metadata import ( sample_metadata )
 
 def print_tests(tests) -> None:
     print("Available tests:")
@@ -82,12 +83,14 @@ async def main():
 
     print_tests(tests)
     test_id = "Tox2024"  # Assuming it is available
-    session_url = (await client.create_session(test_id, token)).url
+    session = await client.create_session(test_id, token)
 
-    await run_test(client, session_url, token)
-    results = await client.results(session_url, token)
+    await client.add_metadata(session.id, sample_metadata, token)
+
+    await run_test(client, session.url, token)
+    results = await client.results(session.url, token)
     print_results(results)
-    responses = await client.responses(session_url, token)
+    responses = await client.responses(session.url, token)
     print_responses(responses)
 
 

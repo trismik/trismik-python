@@ -11,6 +11,7 @@ from trismik import (
     TrismikResponse,
 )
 
+from _sample_metadata import ( sample_metadata )
 
 async def process_item(item: TrismikItem) -> Any:
     """
@@ -57,8 +58,9 @@ async def main():
     runner = TrismikAsyncRunner(process_item)
 
     print("\nStarting test...")
-    results_and_responses = await runner.run("Tox2024",
-                                             with_responses=True)  # Assuming it is available
+    results_and_responses = await runner.run("Tox2024", # Assuming it is available
+                                             with_responses=True, 
+                                             session_metadata=sample_metadata)  
     print_results(results_and_responses.results)
     print_responses(results_and_responses.responses)
 

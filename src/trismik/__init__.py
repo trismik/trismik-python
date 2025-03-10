@@ -17,4 +17,5 @@ from .types import (
     TrismikResult,
     TrismikResponse,
     TrismikResultsAndResponses,
+    TrismikSessionMetadata,
 )
