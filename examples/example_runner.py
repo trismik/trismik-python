@@ -48,7 +48,7 @@ def print_responses(responses: List[TrismikResponse]) -> None:
 
 def main():
     """
-    Runs a test using the TrismikRunner class.
+    Runs a test using the TrismikRunner class and then replays it.
 
     Assumes TRISMIK_SERVICE_URL and TRISMIK_API_KEY are set either in
     environment or in .env file.
@@ -57,12 +57,17 @@ def main():
     runner = TrismikRunner(process_item)
 
     print("\nStarting test...")
-    results_and_responses = runner.run("Tox2024", # Assuming it is available
+    results = runner.run("Tox2024", # Assuming it is available
                                        with_responses=True, 
                                        session_metadata=sample_metadata)  
-    print_results(results_and_responses.results)
-    print_responses(results_and_responses.responses)
+    print_results(results.results)
+    print_responses(results.responses)
 
+    print("\nReplay run")
+
+    results = runner.run_replay(results.session_id, with_responses=True)
+    print_results(results.results)
+    print_responses(results.responses)
 
 if __name__ == "__main__":
     main()

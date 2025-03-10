@@ -6,7 +6,7 @@ from .types import (
     TrismikAuth,
     TrismikItem,
     TrismikResult,
-    TrismikResultsAndResponses,
+    TrismikRunResults,
     TrismikSessionMetadata,
 )
 
@@ -37,7 +37,7 @@ class TrismikRunner:
             test_id: str,
             with_responses: bool = False,
             session_metadata: Optional[TrismikSessionMetadata] = None
-    ) -> List[TrismikResult] | TrismikResultsAndResponses:
+    ) -> TrismikRunResults:
         """
         Runs a test.
 
@@ -46,7 +46,7 @@ class TrismikRunner:
             with_responses (bool): If True, responses will be included with the results.
 
         Returns:
-            List[TrismikResult] | TrismikResultsAndResponses: Either just test results, or with responses.
+            TrismikRunResults: Either just test results, or with responses.
 
         Raises:
             TrismikApiError: If API request fails.
@@ -63,9 +63,9 @@ class TrismikRunner:
 
         if with_responses:
             responses = self._client.responses(session.url, self._auth.token)
-            return TrismikResultsAndResponses(results, responses)
+            return TrismikRunResults(session.id, results, responses)
         else:
-            return results
+            return TrismikRunResults(session.id, results)
 
     def _run_session(self, session_url: str) -> None:
         item = self._client.current_item(session_url, self._auth.token)
@@ -75,6 +75,40 @@ class TrismikRunner:
             item = self._client.respond_to_current_item(
                     session_url, response, self._auth.token
             )
+
+    def run_replay(self,
+            previous_session_id: str,
+            with_responses: bool = False,
+            session_metadata: Optional[TrismikSessionMetadata] = None
+    ) -> TrismikRunResults:
+        """
+        Replay the exact sequence of questions from a previous session
+
+        Args:
+            previous_session_id (str): ID of a previous session to replay
+            with_responses (bool): If True, responses will be included with the results.
+
+        Returns:
+            TrismikRunResults: Either just test results, or with responses.
+
+        Raises:
+            TrismikApiError: If API request fails.
+        """
+        self._init()
+        self._refresh_token_if_needed()
+        session = self._client.create_replay_session(previous_session_id, self._auth.token)
+
+        if session_metadata is not None:
+            self._client.add_metadata(session.id, session_metadata, self._auth.token)
+
+        self._run_session(session.url)
+        results = self._client.results(session.url, self._auth.token)
+
+        if with_responses:
+            responses = self._client.responses(session.url, self._auth.token)
+            return TrismikRunResults(session.id, results, responses)
+        else:
+            return TrismikRunResults(session.id, results)
 
     def _init(self) -> None:
         if self._client is None:

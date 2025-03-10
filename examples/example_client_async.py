@@ -68,7 +68,7 @@ def print_responses(responses: List[TrismikResponse]) -> None:
 
 async def main():
     """
-    Runs a test using the TrismikClient class.
+    Runs a test using the TrismikClient class and then replays it
 
     Assumes TRISMIK_SERVICE_URL and TRISMIK_API_KEY are set either in
     environment or in .env file.
@@ -91,6 +91,15 @@ async def main():
     results = await client.results(session.url, token)
     print_results(results)
     responses = await client.responses(session.url, token)
+    print_responses(responses)
+
+    print("\nReplay run")
+
+    replay_session = await client.create_replay_session(session.id, token)
+    await run_test(client, replay_session.url, token)
+    results = await client.results(replay_session.url, token)
+    print_results(results)
+    responses = await client.responses(replay_session.url, token)
     print_responses(responses)
 
 
