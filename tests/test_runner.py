@@ -13,7 +13,7 @@ from trismik import (
     TrismikRunner,
     TrismikSession,
     TrismikTextChoice,
-    TrismikResultsAndResponses, TrismikResponse,
+    TrismikRunResults, TrismikResponse,
 )
 
 
@@ -48,7 +48,7 @@ class TestTrismikRunner:
         assert mock_client.respond_to_current_item.call_count == 2
         mock_client.results.assert_called_once_with("url", "token")
         mock_client.responses.assert_called_once_with("url", "token")
-        assert isinstance(results, TrismikResultsAndResponses)
+        assert isinstance(results, TrismikRunResults)
         assert len(results.results) == 1
         assert len(results.responses) == 1
 

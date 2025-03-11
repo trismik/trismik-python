@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List, Any
+from typing import List, Any, Optional
 
 
 @dataclass
@@ -121,7 +121,7 @@ class TrismikResponse:
 
 
 @dataclass
-class TrismikResultsAndResponses:
+class TrismikRunResults:
     """
     Test results and responses.
 
@@ -129,8 +129,9 @@ class TrismikResultsAndResponses:
         results (List[TrismikResult]): Results.
         responses (List[TrismikResponse]): Responses.
     """
+    session_id: str
     results: List[TrismikResult]
-    responses: List[TrismikResponse]
+    responses: Optional[List[TrismikResponse]]
 
 @dataclass
 class TrismikSessionMetadata:

@@ -16,6 +16,6 @@ from .types import (
     TrismikTextChoice,
     TrismikResult,
     TrismikResponse,
-    TrismikResultsAndResponses,
+    TrismikRunResults,
     TrismikSessionMetadata,
 )
