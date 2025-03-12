@@ -121,7 +121,7 @@ class TrismikAsyncClient:
         except httpx.HTTPError as e:
             raise TrismikApiError(str(e)) from e
 
-    async def create_session(self, test_id: str, token: str) -> TrismikSession:
+    async def create_session(self, test_id: str, metadata: TrismikSessionMetadata, token: str) -> TrismikSession:
         """
         Creates a new session for a test.
 
@@ -138,7 +138,7 @@ class TrismikAsyncClient:
         try:
             url = "/client/sessions"
             headers = {"Authorization": f"Bearer {token}"}
-            body = {"testId": test_id}
+            body = {"testId": test_id, "metadata": metadata.toDict()}
             response = await self._http_client.post(url, headers=headers,
                                                     json=body)
             response.raise_for_status()
@@ -150,7 +150,7 @@ class TrismikAsyncClient:
         except httpx.HTTPError as e:
             raise TrismikApiError(str(e)) from e
         
-    async def create_replay_session(self, previous_session_id: str, token: str) -> TrismikSession:
+    async def create_replay_session(self, previous_session_id: str, metadata: TrismikSessionMetadata, token: str) -> TrismikSession:
         """
         Creates a new session that replays exactly the question sequence of a previous session
 
@@ -167,7 +167,7 @@ class TrismikAsyncClient:
         try:
             url = "/client/sessions/replay"
             headers = {"Authorization": f"Bearer {token}"}
-            body = {"previousSessionToken": previous_session_id, }
+            body = {"previousSessionToken": previous_session_id, "metadata": metadata.toDict(), }
             response = await self._http_client.post(url, headers=headers,
                                                     json=body)
             response.raise_for_status()
@@ -197,11 +197,7 @@ class TrismikAsyncClient:
         try:
             url = f"/client/sessions/{session_id}/metadata"
             headers = {"Authorization": f"Bearer {token}"}
-            body = {
-                "model_metadata": metadata.model_metadata,
-                "inference_setup": metadata.inference_setup,
-                "test_configuration": metadata.test_configuration
-                }
+            body = metadata.toDict()
             response = await self._http_client.post(url, headers=headers,
                                                     json=body)
             response.raise_for_status()

@@ -83,7 +83,7 @@ async def main():
 
     print_tests(tests)
     test_id = "Tox2024"  # Assuming it is available
-    session = await client.create_session(test_id, token)
+    session = await client.create_session(test_id, sample_metadata, token)
 
     await client.add_metadata(session.id, sample_metadata, token)
 
@@ -95,7 +95,7 @@ async def main():
 
     print("\nReplay run")
 
-    replay_session = await client.create_replay_session(session.id, token)
+    replay_session = await client.create_replay_session(session.id, sample_metadata, token)
     await run_test(client, replay_session.url, token)
     results = await client.results(replay_session.url, token)
     print_results(results)

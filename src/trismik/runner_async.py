@@ -35,8 +35,8 @@ class TrismikAsyncRunner:
 
     async def run(self,
             test_id: str,
+            session_metadata: TrismikSessionMetadata,
             with_responses: bool = False,
-            session_metadata: Optional[TrismikSessionMetadata] = None,
     ) -> TrismikRunResults:
         """
         Runs a test.
@@ -53,10 +53,7 @@ class TrismikAsyncRunner:
         """
         await self._init()
         await self._refresh_token_if_needed()
-        session = await self._client.create_session(test_id, self._auth.token)
-
-        if session_metadata is not None:
-            await self._client.add_metadata(session.id, session_metadata, self._auth.token)
+        session = await self._client.create_session(test_id, session_metadata, self._auth.token)
 
         await self._run_session(session.url)
         results = await self._client.results(session.url, self._auth.token)
@@ -70,8 +67,8 @@ class TrismikAsyncRunner:
         
     async def run_replay(self,
             previous_session_id: str,
+            session_metadata: TrismikSessionMetadata,
             with_responses: bool = False,
-            session_metadata: Optional[TrismikSessionMetadata] = None
     ) -> TrismikRunResults:
         """
         Replay the exact sequence of questions from a previous session
@@ -88,10 +85,7 @@ class TrismikAsyncRunner:
         """
         await self._init()
         await self._refresh_token_if_needed()
-        session = await self._client.create_replay_session(previous_session_id, self._auth.token)
-
-        if session_metadata is not None:
-            await self._client.add_metadata(session.id, session_metadata, self._auth.token)
+        session = await self._client.create_replay_session(previous_session_id, session_metadata, self._auth.token)
 
         await self._run_session(session.url)
         results = await self._client.results(session.url, self._auth.token)
