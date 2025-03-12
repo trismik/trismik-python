@@ -82,7 +82,7 @@ def main():
 
     print_tests(tests)
     test_id = "Tox2024"  # Assuming it is available
-    session = client.create_session(test_id, token)
+    session = client.create_session(test_id, sample_metadata, token)
 
     client.add_metadata(session.id, sample_metadata, token)
 
@@ -94,7 +94,7 @@ def main():
 
     print("\nReplay run")
 
-    replay_session = client.create_replay_session(session.id, token)
+    replay_session = client.create_replay_session(session.id, sample_metadata, token)
     run_test(client, replay_session.url, token)
     results = client.results(replay_session.url, token)
     print_results(results)

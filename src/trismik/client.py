@@ -121,7 +121,7 @@ class TrismikClient:
         except httpx.HTTPError as e:
             raise TrismikApiError(str(e)) from e
 
-    def create_session(self, test_id: str, token: str) -> TrismikSession:
+    def create_session(self, test_id: str, metadata: TrismikSessionMetadata, token: str) -> TrismikSession:
         """
         Creates a new session for a test.
 
@@ -138,7 +138,7 @@ class TrismikClient:
         try:
             url = "/client/sessions"
             headers = {"Authorization": f"Bearer {token}"}
-            body = {"testId": test_id, }
+            body = {"testId": test_id, "metadata": metadata.toDict() }
             response = self._http_client.post(url, headers=headers, json=body)
             response.raise_for_status()
             json = response.json()
@@ -149,7 +149,7 @@ class TrismikClient:
         except httpx.HTTPError as e:
             raise TrismikApiError(str(e)) from e
         
-    def create_replay_session(self, previous_session_id: str, token: str) -> TrismikSession:
+    def create_replay_session(self, previous_session_id: str, metadata: TrismikSessionMetadata, token: str) -> TrismikSession:
         """
         Creates a new session that replays exactly the question sequence of a previous session
 
@@ -166,7 +166,7 @@ class TrismikClient:
         try:
             url = "/client/sessions/replay"
             headers = {"Authorization": f"Bearer {token}"}
-            body = {"previousSessionToken": previous_session_id, }
+            body = {"previousSessionToken": previous_session_id, "metadata": metadata.toDict(), }
             response = self._http_client.post(url, headers=headers, json=body)
             response.raise_for_status()
             json = response.json()
@@ -195,11 +195,7 @@ class TrismikClient:
         try:
             url = f"/client/sessions/{session_id}/metadata"
             headers = {"Authorization": f"Bearer {token}"}
-            body = {
-                "model_metadata": metadata.model_metadata,
-                "inference_setup": metadata.inference_setup,
-                "test_configuration": metadata.test_configuration
-                }
+            body = metadata.toDict()
             response = self._http_client.post(url, headers=headers, json=body)
             response.raise_for_status()
         except httpx.HTTPStatusError as e:

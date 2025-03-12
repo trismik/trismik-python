@@ -40,7 +40,11 @@ def print_results(results: List[TrismikResult]) -> None:
         print(f"{result.trait} ({result.name}): {result.value}")
 
 
-def print_responses(responses: List[TrismikResponse]) -> None:
+def print_responses(responses: List[TrismikResponse] | None) -> None:
+
+    if responses is None:
+        return
+
     print("\nResponses...")
     for response in responses:
         correct = "correct" if response.score > 0 else "incorrect"
@@ -66,7 +70,7 @@ async def main():
 
     print("\nReplay run")
 
-    results = await runner.run_replay(results.session_id, with_responses=True)
+    results = await runner.run_replay(results.session_id, sample_metadata, with_responses=True)
     print_results(results.results)
     print_responses(results.responses)
 
