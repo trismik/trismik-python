@@ -34,6 +34,8 @@ Contributing
 4. ```poetry install```
 5. ```poetry run pytest```
 
+To test the latest source code as a package without publishing to TestPyPi, run `pip install -e .` from the repo root folder for `pip` to use local source files.
+
 Publishing to TestPyPi
 ----------------------
 
