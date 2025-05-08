@@ -6,6 +6,7 @@ from ._mapper import TrismikResponseMapper
 from ._utils import TrismikUtils
 from .exceptions import TrismikApiError
 from .types import (
+    TrismikSessionMetadata,
     TrismikTest,
     TrismikAuth,
     TrismikSession,
@@ -120,7 +121,7 @@ class TrismikAsyncClient:
         except httpx.HTTPError as e:
             raise TrismikApiError(str(e)) from e
 
-    async def create_session(self, test_id: str, token: str) -> TrismikSession:
+    async def create_session(self, test_id: str, metadata: TrismikSessionMetadata, token: str) -> TrismikSession:
         """
         Creates a new session for a test.
 
@@ -137,12 +138,69 @@ class TrismikAsyncClient:
         try:
             url = "/client/sessions"
             headers = {"Authorization": f"Bearer {token}"}
-            body = {"testId": test_id}
+            body = {"testId": test_id, "metadata": metadata.toDict()}
             response = await self._http_client.post(url, headers=headers,
                                                     json=body)
             response.raise_for_status()
             json = response.json()
             return TrismikResponseMapper.to_session(json)
+        except httpx.HTTPStatusError as e:
+            raise TrismikApiError(
+                    TrismikUtils.get_error_message(e.response)) from e
+        except httpx.HTTPError as e:
+            raise TrismikApiError(str(e)) from e
+        
+    async def create_replay_session(self, previous_session_id: str, metadata: TrismikSessionMetadata, token: str) -> TrismikSession:
+        """
+        Creates a new session that replays exactly the question sequence of a previous session
+
+        Args:
+            previous_session_id (str): Session id of the session to replay.
+            token (str): Authentication token.
+
+        Returns:
+            TrismikSession: New session
+
+        Raises:
+            TrismikApiError: If API request fails.
+        """
+        try:
+            url = "/client/sessions/replay"
+            headers = {"Authorization": f"Bearer {token}"}
+            body = {"previousSessionToken": previous_session_id, "metadata": metadata.toDict(), }
+            response = await self._http_client.post(url, headers=headers,
+                                                    json=body)
+            response.raise_for_status()
+            json = response.json()
+            return TrismikResponseMapper.to_session(json)
+        except httpx.HTTPStatusError as e:
+            raise TrismikApiError(
+                    TrismikUtils.get_error_message(e.response)) from e
+        except httpx.HTTPError as e:
+            raise TrismikApiError(str(e)) from e
+        
+    async def add_metadata(self, session_id: str, metadata: TrismikSessionMetadata, token: str) -> None:
+        """
+        Adds metadata to the session, merging it with any already stored
+
+        Args:
+            session_id (str): id of the session object
+            metadata: object cotaining the metadata to add
+            token (str): Authentication token.
+
+        Returns:
+            None
+
+        Raises:
+            TrismikApiError: If API request fails.
+        """ 
+        try:
+            url = f"/client/sessions/{session_id}/metadata"
+            headers = {"Authorization": f"Bearer {token}"}
+            body = metadata.toDict()
+            response = await self._http_client.post(url, headers=headers,
+                                                    json=body)
+            response.raise_for_status()
         except httpx.HTTPStatusError as e:
             raise TrismikApiError(
                     TrismikUtils.get_error_message(e.response)) from e

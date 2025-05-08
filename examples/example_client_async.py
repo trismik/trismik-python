@@ -11,6 +11,7 @@ from trismik import (
     TrismikResponse,
 )
 
+from _sample_metadata import ( sample_metadata )
 
 def print_tests(tests) -> None:
     print("Available tests:")
@@ -67,7 +68,7 @@ def print_responses(responses: List[TrismikResponse]) -> None:
 
 async def main():
     """
-    Runs a test using the TrismikClient class.
+    Runs a test using the TrismikClient class and then replays it
 
     Assumes TRISMIK_SERVICE_URL and TRISMIK_API_KEY are set either in
     environment or in .env file.
@@ -82,12 +83,23 @@ async def main():
 
     print_tests(tests)
     test_id = "Tox2024"  # Assuming it is available
-    session_url = (await client.create_session(test_id, token)).url
+    session = await client.create_session(test_id, sample_metadata, token)
 
-    await run_test(client, session_url, token)
-    results = await client.results(session_url, token)
+    await client.add_metadata(session.id, sample_metadata, token)
+
+    await run_test(client, session.url, token)
+    results = await client.results(session.url, token)
     print_results(results)
-    responses = await client.responses(session_url, token)
+    responses = await client.responses(session.url, token)
+    print_responses(responses)
+
+    print("\nReplay run")
+
+    replay_session = await client.create_replay_session(session.id, sample_metadata, token)
+    await run_test(client, replay_session.url, token)
+    results = await client.results(replay_session.url, token)
+    print_results(results)
+    responses = await client.responses(replay_session.url, token)
     print_responses(responses)
 
 

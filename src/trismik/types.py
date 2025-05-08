@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List, Any
+from typing import Dict, List, Any, Optional
 
 
 @dataclass
@@ -121,7 +121,7 @@ class TrismikResponse:
 
 
 @dataclass
-class TrismikResultsAndResponses:
+class TrismikRunResults:
     """
     Test results and responses.
 
@@ -129,5 +129,35 @@ class TrismikResultsAndResponses:
         results (List[TrismikResult]): Results.
         responses (List[TrismikResponse]): Responses.
     """
+    session_id: str
     results: List[TrismikResult]
-    responses: List[TrismikResponse]
+    responses: Optional[List[TrismikResponse]] = None
+
+@dataclass
+class TrismikSessionMetadata:
+    """
+    Metadata associated to a session
+
+    Attributes:
+        model_metadata (dict[str, Any]): Metadata about the model.
+        test_configuration (dict[str, Any]): Metadata about the test.
+        inference_setup (dict[str, Any]): Metadata about the inference setup.
+    """   
+
+    class ModelMetadata:
+        def __init__(self, name: str, **kwargs: Any):
+            self.name = name
+            for key, value in kwargs.items():
+                setattr(self, key, value)                
+
+    model_metadata: ModelMetadata
+    test_configuration: dict[str, Any]
+    inference_setup: dict[str, Any]
+
+    def toDict(self) -> Dict[str, Any]:
+        return {
+            "model_metadata": vars(self.model_metadata),
+            "test_configuration": self.test_configuration,
+            "inference_setup": self.inference_setup,
+        }
+

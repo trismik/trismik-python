@@ -1,8 +1,12 @@
 [tool.poetry]
 name = "trismik"
-version = "0.9.0"
+version = "0.9.1"
 description = ""
-authors = ["Bartosz Kielczewski <bk352@cam.ac.uk>"]
+authors = [
+    { name = "Bartosz Kielczewski", email = "bk352@cam.ac.uk" },
+    { name = "Peter Monks", email = "peter.monks@systemc.com" },
+    { name = "Greg Holdridge", email = "greg.holdridge@systemc.com" }
+]
 readme = "README.md"
 packages = [{ include = "trismik", from = "src" }]
 

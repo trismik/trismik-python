@@ -10,6 +10,7 @@ from trismik import (
     TrismikResponse,
 )
 
+from _sample_metadata import ( sample_metadata )
 
 def process_item(item: TrismikItem) -> Any:
     """
@@ -38,7 +39,11 @@ def print_results(results: List[TrismikResult]) -> None:
         print(f"{result.trait} ({result.name}): {result.value}")
 
 
-def print_responses(responses: List[TrismikResponse]) -> None:
+def print_responses(responses: List[TrismikResponse] | None) -> None:
+
+    if responses is None:
+        return
+
     print("\nResponses...")
     for response in responses:
         correct = "correct" if response.score > 0 else "incorrect"
@@ -47,7 +52,7 @@ def print_responses(responses: List[TrismikResponse]) -> None:
 
 def main():
     """
-    Runs a test using the TrismikRunner class.
+    Runs a test using the TrismikRunner class and then replays it.
 
     Assumes TRISMIK_SERVICE_URL and TRISMIK_API_KEY are set either in
     environment or in .env file.
@@ -56,11 +61,17 @@ def main():
     runner = TrismikRunner(process_item)
 
     print("\nStarting test...")
-    results_and_responses = runner.run("Tox2024",
-                                       with_responses=True)  # Assuming it is available
-    print_results(results_and_responses.results)
-    print_responses(results_and_responses.responses)
+    results = runner.run("Tox2024", # Assuming it is available
+                                       with_responses=True, 
+                                       session_metadata=sample_metadata)  
+    print_results(results.results)
+    print_responses(results.responses)
 
+    print("\nReplay run")
+
+    results = runner.run_replay(results.session_id, sample_metadata, with_responses=True)
+    print_results(results.results)
+    print_responses(results.responses)
 
 if __name__ == "__main__":
     main()
