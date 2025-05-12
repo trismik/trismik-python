@@ -1,6 +1,6 @@
-[tool.poetry]
+[project]
 name = "trismik"
-version = "0.9.1"
+dynamic = ["version"]
 description = ""
 authors = [
     { name = "Bartosz Kielczewski", email = "bk352@cam.ac.uk" },
@@ -8,13 +8,15 @@ authors = [
     { name = "Greg Holdridge", email = "greg.holdridge@systemc.com" }
 ]
 readme = "README.md"
+requires-python = ">=3.8"
+
+[tool.poetry]
+version = "0.9.1"  # base version
 packages = [{ include = "trismik", from = "src" }]
 
 [tool.poetry.dependencies]
-python = ">=3.8"
 httpx = "^0.27.2"
 python-dateutil = "^2.9.0.post0"
-
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.2"

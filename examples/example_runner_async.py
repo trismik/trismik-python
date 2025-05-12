@@ -3,15 +3,15 @@ from typing import Any, List
 
 from dotenv import load_dotenv
 
-from trismik import (
-    TrismikAsyncRunner,
+from trismik.runner_async import TrismikAsyncRunner
+from trismik.types import (
     TrismikItem,
     TrismikMultipleChoiceTextItem,
     TrismikResult,
     TrismikResponse,
 )
 
-from _sample_metadata import ( sample_metadata )
+from _sample_metadata import sample_metadata
 
 async def process_item(item: TrismikItem) -> Any:
     """
@@ -62,7 +62,7 @@ async def main():
     runner = TrismikAsyncRunner(process_item)
 
     print("\nStarting test...")
-    results = await runner.run("Tox2024", # Assuming it is available
+    results = await runner.run("MMLUPro2024", # Assuming it is available
                                              with_responses=True, 
                                              session_metadata=sample_metadata)  
     print_results(results.results)

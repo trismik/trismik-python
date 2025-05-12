@@ -3,13 +3,10 @@ from unittest.mock import MagicMock
 
 import httpx
 import pytest
+from trismik.client import TrismikClient
+from trismik.exceptions import TrismikApiError, TrismikError
+from trismik.types import TrismikMultipleChoiceTextItem, TrismikSessionMetadata
 
-from trismik import (
-    TrismikApiError,
-    TrismikClient,
-    TrismikError,
-    TrismikMultipleChoiceTextItem,
-)
 from ._mocker import TrismikResponseMocker
 
 
@@ -89,7 +86,12 @@ class TestTrismikClient:
 
     def test_should_create_session(self) -> None:
         client = TrismikClient(http_client=self._mock_session_response())
-        session = client.create_session("fluency", "token")
+        metadata = TrismikSessionMetadata(
+            model_metadata=TrismikSessionMetadata.ModelMetadata(name="test_model"),
+            test_configuration={},
+            inference_setup={}
+        )
+        session = client.create_session("fluency", metadata, "token")
         assert session.id == "id"
         assert session.url == "url"
         assert session.status == "status"
@@ -97,7 +99,12 @@ class TestTrismikClient:
     def test_should_fail_create_session_when_api_returned_error(self) -> None:
         with pytest.raises(TrismikApiError, match="message"):
             client = TrismikClient(http_client=self._mock_error_response(401))
-            client.create_session("fluency", "token")
+            metadata = TrismikSessionMetadata(
+                model_metadata=TrismikSessionMetadata.ModelMetadata(name="test_model"),
+                test_configuration={},
+                inference_setup={}
+            )
+            client.create_session("fluency", metadata, "token")
 
     def test_should_get_current_item(self) -> None:
         client = TrismikClient(http_client=self._mock_item_response())

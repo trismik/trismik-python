@@ -2,15 +2,15 @@ from typing import Any, List
 
 from dotenv import load_dotenv
 
-from trismik import (
-    TrismikClient,
+from trismik.client import TrismikClient
+from trismik.types import (
     TrismikItem,
     TrismikMultipleChoiceTextItem,
     TrismikResult,
     TrismikResponse,
 )
 
-from _sample_metadata import ( sample_metadata )
+from _sample_metadata import sample_metadata
 
 
 def print_tests(tests) -> None:
@@ -81,7 +81,7 @@ def main():
         raise RuntimeError("No tests available")
 
     print_tests(tests)
-    test_id = "Tox2024"  # Assuming it is available
+    test_id = "MMLUPro2024"  # Assuming it is available
     session = client.create_session(test_id, sample_metadata, token)
 
     client.add_metadata(session.id, sample_metadata, token)

@@ -2,3 +2,6 @@
 dist
 .env
 *.iml
+
+# Python
+__pycache__/

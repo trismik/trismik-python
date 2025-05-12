@@ -3,17 +3,10 @@ from typing import Any, Callable, Awaitable
 from unittest.mock import MagicMock
 
 import pytest
-
-from trismik import (
-    TrismikAuth,
-    TrismikItem,
-    TrismikMultipleChoiceTextItem,
-    TrismikResult,
-    TrismikSession,
-    TrismikTextChoice,
-    TrismikAsyncRunner,
-    TrismikAsyncClient,
-    TrismikRunResults, TrismikResponse,
+from trismik.client_async import TrismikAsyncClient
+from trismik.runner_async import TrismikAsyncRunner
+from trismik.types import (
+    TrismikAuth, TrismikItem, TrismikMultipleChoiceTextItem, TrismikResult, TrismikResponse, TrismikRunResults, TrismikSession, TrismikTextChoice, TrismikSessionMetadata 
 )
 
 
@@ -22,27 +15,38 @@ class TestTrismikAsyncRunner:
     # noinspection PyUnresolvedReferences
     @pytest.mark.asyncio
     async def test_should_run_test(self, runner, mock_client):
-        results = await runner.run("test_id")
+        metadata = TrismikSessionMetadata(
+            model_metadata=TrismikSessionMetadata.ModelMetadata(name="test_model"),
+            test_configuration={},
+            inference_setup={}
+        )
+        results = await runner.run("test_id", metadata)
 
         mock_client.authenticate.assert_not_called()
         mock_client.refresh_token.assert_not_called()
-        mock_client.create_session.assert_called_once_with("test_id", "token")
+        mock_client.create_session.assert_called_once_with("test_id", metadata, "token")
         mock_client.current_item.assert_called_once_with("url", "token")
         mock_client.respond_to_current_item.assert_called_with(
                 "url", "processed_response", "token"
         )
         assert mock_client.respond_to_current_item.call_count == 2
         mock_client.results.assert_called_once_with("url", "token")
-        assert len(results) == 1
+        assert isinstance(results, TrismikRunResults)
+        assert len(results.results) == 1
 
     # noinspection PyUnresolvedReferences
     @pytest.mark.asyncio
     async def test_should_run_test_with_responses(self, runner, mock_client):
-        results = await runner.run("test_id", with_responses=True)
+        metadata = TrismikSessionMetadata(
+            model_metadata=TrismikSessionMetadata.ModelMetadata(name="test_model"),
+            test_configuration={},
+            inference_setup={}
+        )
+        results = await runner.run("test_id", metadata, with_responses=True)
 
         mock_client.authenticate.assert_not_called()
         mock_client.refresh_token.assert_not_called()
-        mock_client.create_session.assert_called_once_with("test_id", "token")
+        mock_client.create_session.assert_called_once_with("test_id", metadata, "token")
         mock_client.current_item.assert_called_once_with("url", "token")
         mock_client.respond_to_current_item.assert_called_with(
                 "url", "processed_response", "token"
@@ -65,7 +69,13 @@ class TestTrismikAsyncRunner:
                 item_processor=item_processor,
                 client=mock_client,
         )
-        await runner.run("test_id")
+        metadata = TrismikSessionMetadata(
+            model_metadata=TrismikSessionMetadata.ModelMetadata(name="test_model"),
+            test_configuration={},
+            inference_setup={}
+        )
+        await runner.run("test_id", metadata)
+
         mock_client.authenticate.assert_called_once()
 
     # noinspection PyUnresolvedReferences
@@ -83,7 +93,14 @@ class TestTrismikAsyncRunner:
                         expires=datetime.now() + timedelta(minutes=1)
                 )
         )
-        await runner.run("test_id")
+        metadata = TrismikSessionMetadata(
+            model_metadata=TrismikSessionMetadata.ModelMetadata(name="test_model"),
+            test_configuration={},
+            inference_setup={}
+        )
+        await runner.run("test_id", metadata)
+
+        mock_client.authenticate.assert_not_called()
         mock_client.refresh_token.assert_called_once_with("token")
 
     @pytest.fixture

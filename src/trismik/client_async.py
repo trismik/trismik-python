@@ -2,22 +2,22 @@ from typing import List, Any, Optional
 
 import httpx
 
-from ._mapper import TrismikResponseMapper
-from ._utils import TrismikUtils
-from .exceptions import TrismikApiError
-from .types import (
-    TrismikSessionMetadata,
+from trismik._mapper import TrismikResponseMapper
+from trismik._utils import TrismikUtils
+from trismik.exceptions import TrismikApiError
+from trismik.types import (
     TrismikTest,
     TrismikAuth,
     TrismikSession,
     TrismikItem,
     TrismikResult,
     TrismikResponse,
+    TrismikSessionMetadata
 )
 
 
 class TrismikAsyncClient:
-    _serviceUrl: str = "https://trismik.e-psychometrics.com/api"
+    _serviceUrl: str = "https://zoo-dashboard.trismik.com/api"
 
     def __init__(
             self,

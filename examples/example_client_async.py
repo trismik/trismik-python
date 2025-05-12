@@ -3,15 +3,15 @@ from typing import Any, List
 
 from dotenv import load_dotenv
 
-from trismik import (
-    TrismikAsyncClient,
+from trismik.client_async import TrismikAsyncClient
+from trismik.types import (
     TrismikItem,
     TrismikMultipleChoiceTextItem,
     TrismikResult,
     TrismikResponse,
 )
 
-from _sample_metadata import ( sample_metadata )
+from _sample_metadata import sample_metadata
 
 def print_tests(tests) -> None:
     print("Available tests:")
@@ -82,7 +82,7 @@ async def main():
         raise RuntimeError("No tests available")
 
     print_tests(tests)
-    test_id = "Tox2024"  # Assuming it is available
+    test_id = "MMLUPro2024"  # Assuming it is available
     session = await client.create_session(test_id, sample_metadata, token)
 
     await client.add_metadata(session.id, sample_metadata, token)

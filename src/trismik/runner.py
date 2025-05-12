@@ -1,13 +1,16 @@
 from datetime import datetime, timedelta
 from typing import List, Callable, Any, Optional
 
-from .client import TrismikClient
-from .types import (
+from trismik.client import TrismikClient
+from trismik.types import (
+    TrismikTest,
     TrismikAuth,
+    TrismikSession,
     TrismikItem,
     TrismikResult,
-    TrismikRunResults,
+    TrismikResponse,
     TrismikSessionMetadata,
+    TrismikRunResults,
 )
 
 

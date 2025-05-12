@@ -1,9 +1,9 @@
-from typing import List, Any
+from typing import List, Any, Dict
 
 from dateutil.parser import parse as parse_date
 
-from .exceptions import TrismikApiError
-from .types import (
+from trismik.exceptions import TrismikApiError
+from trismik.types import (
     TrismikItem,
     TrismikResult,
     TrismikMultipleChoiceTextItem,
@@ -12,6 +12,7 @@ from .types import (
     TrismikTest,
     TrismikSession,
     TrismikResponse,
+    TrismikSessionMetadata
 )
 
 
