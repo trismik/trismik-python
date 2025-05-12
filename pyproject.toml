@@ -5,7 +5,8 @@ description = ""
 authors = [
     { name = "Bartosz Kielczewski", email = "bk352@cam.ac.uk" },
     { name = "Peter Monks", email = "peter.monks@systemc.com" },
-    { name = "Greg Holdridge", email = "greg.holdridge@systemc.com" }
+    { name = "Greg Holdridge", email = "greg.holdridge@systemc.com" },
+    { name = "Marco Basaldella", email = "marco@trismik.com" }
 ]
 readme = "README.md"
 requires-python = ">=3.8"
