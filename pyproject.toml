@@ -18,6 +18,7 @@ packages = [{ include = "trismik", from = "src" }]
 [tool.poetry.dependencies]
 httpx = "^0.27.2"
 python-dateutil = "^2.9.0.post0"
+nest-asyncio = "^1.6.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.2"

@@ -1,7 +1,10 @@
 from datetime import datetime, timedelta
 from typing import List, Callable, Any, Optional
+import asyncio
+import nest_asyncio
 
 from trismik.client import TrismikClient
+from trismik.client_async import TrismikAsyncClient
 from trismik.types import (
     TrismikTest,
     TrismikAuth,
@@ -12,6 +15,7 @@ from trismik.types import (
     TrismikSessionMetadata,
     TrismikRunResults,
 )
+from trismik.runner_async import TrismikAsyncRunner
 
 
 class TrismikRunner:
@@ -35,6 +39,43 @@ class TrismikRunner:
         self._item_processor = item_processor
         self._client = client
         self._auth = auth
+        self._loop = None
+        self._async_runner = None
+
+    def _get_loop(self) -> asyncio.AbstractEventLoop:
+        """Get or create an event loop, handling nested loops if needed"""
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            # No event loop in this thread, create one
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        
+        # Allow nested event loops (needed for Jupyter, etc)
+        nest_asyncio.apply(loop)
+        return loop
+
+    def _get_async_runner(self) -> TrismikAsyncRunner:
+        """Get or create the async runner instance"""
+        if self._async_runner is None:
+            # Create a wrapper for the sync item processor to make it async
+            async def async_item_processor(item: TrismikItem) -> Any:
+                return self._item_processor(item)
+
+            # Create a new async client with the same configuration as the sync client
+            async_client = None
+            if self._client:
+                async_client = TrismikAsyncClient(
+                    service_url=self._client.service_url,
+                    api_key=self._client.api_key
+                )
+
+            self._async_runner = TrismikAsyncRunner(
+                item_processor=async_item_processor,
+                client=async_client,
+                auth=self._auth
+            )
+        return self._async_runner
 
     def run(self,
             test_id: str,
@@ -54,27 +95,11 @@ class TrismikRunner:
         Raises:
             TrismikApiError: If API request fails.
         """
-        self._init()
-        self._refresh_token_if_needed()
-        session = self._client.create_session(test_id, session_metadata, self._auth.token)
-
-        self._run_session(session.url)
-        results = self._client.results(session.url, self._auth.token)
-
-        if with_responses:
-            responses = self._client.responses(session.url, self._auth.token)
-            return TrismikRunResults(session.id, results, responses)
-        else:
-            return TrismikRunResults(session.id, results)
-
-    def _run_session(self, session_url: str) -> None:
-        item = self._client.current_item(session_url, self._auth.token)
-        while item is not None:
-            self._refresh_token_if_needed()
-            response = self._item_processor(item)
-            item = self._client.respond_to_current_item(
-                    session_url, response, self._auth.token
-            )
+        loop = self._get_loop()
+        async_runner = self._get_async_runner()
+        return loop.run_until_complete(
+            async_runner.run(test_id, session_metadata, with_responses)
+        )
 
     def run_replay(self,
             previous_session_id: str,
@@ -94,29 +119,8 @@ class TrismikRunner:
         Raises:
             TrismikApiError: If API request fails.
         """
-        self._init()
-        self._refresh_token_if_needed()
-        session = self._client.create_replay_session(previous_session_id, session_metadata, self._auth.token)
-
-        self._run_session(session.url)
-        results = self._client.results(session.url, self._auth.token)
-
-        if with_responses:
-            responses = self._client.responses(session.url, self._auth.token)
-            return TrismikRunResults(session.id, results, responses)
-        else:
-            return TrismikRunResults(session.id, results)
-
-    def _init(self) -> None:
-        if self._client is None:
-            self._client = TrismikClient()
-
-        if self._auth is None:
-            self._auth = self._client.authenticate()
-
-    def _refresh_token_if_needed(self) -> None:
-        if self._token_needs_refresh():
-            self._auth = self._client.refresh_token(self._auth.token)
-
-    def _token_needs_refresh(self) -> bool:
-        return self._auth.expires < (datetime.now() + timedelta(minutes=5))
+        loop = self._get_loop()
+        async_runner = self._get_async_runner()
+        return loop.run_until_complete(
+            async_runner.run_replay(previous_session_id, session_metadata, with_responses)
+        )
