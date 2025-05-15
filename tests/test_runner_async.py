@@ -1,12 +1,21 @@
 from datetime import datetime, timedelta
-from typing import Any, Callable, Awaitable
+from typing import Any, Awaitable, Callable
 from unittest.mock import MagicMock
 
 import pytest
+
 from trismik.client_async import TrismikAsyncClient
 from trismik.runner_async import TrismikAsyncRunner
 from trismik.types import (
-    TrismikAuth, TrismikItem, TrismikMultipleChoiceTextItem, TrismikResult, TrismikResponse, TrismikRunResults, TrismikSession, TrismikTextChoice, TrismikSessionMetadata 
+    TrismikAuth,
+    TrismikItem,
+    TrismikMultipleChoiceTextItem,
+    TrismikResponse,
+    TrismikResult,
+    TrismikRunResults,
+    TrismikSession,
+    TrismikSessionMetadata,
+    TrismikTextChoice,
 )
 
 
@@ -16,18 +25,22 @@ class TestTrismikAsyncRunner:
     @pytest.mark.asyncio
     async def test_should_run_test(self, runner, mock_client):
         metadata = TrismikSessionMetadata(
-            model_metadata=TrismikSessionMetadata.ModelMetadata(name="test_model"),
+            model_metadata=TrismikSessionMetadata.ModelMetadata(
+                name="test_model"
+            ),
             test_configuration={},
-            inference_setup={}
+            inference_setup={},
         )
         results = await runner.run("test_id", metadata)
 
         mock_client.authenticate.assert_not_called()
         mock_client.refresh_token.assert_not_called()
-        mock_client.create_session.assert_called_once_with("test_id", metadata, "token")
+        mock_client.create_session.assert_called_once_with(
+            "test_id", metadata, "token"
+        )
         mock_client.current_item.assert_called_once_with("url", "token")
         mock_client.respond_to_current_item.assert_called_with(
-                "url", "processed_response", "token"
+            "url", "processed_response", "token"
         )
         assert mock_client.respond_to_current_item.call_count == 2
         mock_client.results.assert_called_once_with("url", "token")
@@ -38,18 +51,22 @@ class TestTrismikAsyncRunner:
     @pytest.mark.asyncio
     async def test_should_run_test_with_responses(self, runner, mock_client):
         metadata = TrismikSessionMetadata(
-            model_metadata=TrismikSessionMetadata.ModelMetadata(name="test_model"),
+            model_metadata=TrismikSessionMetadata.ModelMetadata(
+                name="test_model"
+            ),
             test_configuration={},
-            inference_setup={}
+            inference_setup={},
         )
         results = await runner.run("test_id", metadata, with_responses=True)
 
         mock_client.authenticate.assert_not_called()
         mock_client.refresh_token.assert_not_called()
-        mock_client.create_session.assert_called_once_with("test_id", metadata, "token")
+        mock_client.create_session.assert_called_once_with(
+            "test_id", metadata, "token"
+        )
         mock_client.current_item.assert_called_once_with("url", "token")
         mock_client.respond_to_current_item.assert_called_with(
-                "url", "processed_response", "token"
+            "url", "processed_response", "token"
         )
         assert mock_client.respond_to_current_item.call_count == 2
         mock_client.results.assert_called_once_with("url", "token")
@@ -61,18 +78,18 @@ class TestTrismikAsyncRunner:
     # noinspection PyUnresolvedReferences
     @pytest.mark.asyncio
     async def test_should_authenticate_itself_when_auth_was_not_provided(
-            self,
-            item_processor,
-            mock_client
+        self, item_processor, mock_client
     ) -> None:
         runner = TrismikAsyncRunner(
-                item_processor=item_processor,
-                client=mock_client,
+            item_processor=item_processor,
+            client=mock_client,
         )
         metadata = TrismikSessionMetadata(
-            model_metadata=TrismikSessionMetadata.ModelMetadata(name="test_model"),
+            model_metadata=TrismikSessionMetadata.ModelMetadata(
+                name="test_model"
+            ),
             test_configuration={},
-            inference_setup={}
+            inference_setup={},
         )
         await runner.run("test_id", metadata)
 
@@ -81,22 +98,21 @@ class TestTrismikAsyncRunner:
     # noinspection PyUnresolvedReferences
     @pytest.mark.asyncio
     async def test_should_refresh_token_when_close_to_expiration(
-            self,
-            item_processor,
-            mock_client
+        self, item_processor, mock_client
     ) -> None:
         runner = TrismikAsyncRunner(
-                item_processor=item_processor,
-                client=mock_client,
-                auth=TrismikAuth(
-                        token="token",
-                        expires=datetime.now() + timedelta(minutes=1)
-                )
+            item_processor=item_processor,
+            client=mock_client,
+            auth=TrismikAuth(
+                token="token", expires=datetime.now() + timedelta(minutes=1)
+            ),
         )
         metadata = TrismikSessionMetadata(
-            model_metadata=TrismikSessionMetadata.ModelMetadata(name="test_model"),
+            model_metadata=TrismikSessionMetadata.ModelMetadata(
+                name="test_model"
+            ),
             test_configuration={},
-            inference_setup={}
+            inference_setup={},
         )
         await runner.run("test_id", metadata)
 
@@ -106,11 +122,9 @@ class TestTrismikAsyncRunner:
     @pytest.fixture
     def item(self) -> TrismikItem:
         return TrismikMultipleChoiceTextItem(
-                id="id",
-                question="question",
-                choices=[
-                    TrismikTextChoice(id="id", text="text")
-                ]
+            id="id",
+            question="question",
+            choices=[TrismikTextChoice(id="id", text="text")],
         )
 
     @pytest.fixture
@@ -119,9 +133,7 @@ class TestTrismikAsyncRunner:
         client.authenticate.return_value = auth
         client.refresh_token.return_value = auth
         client.create_session.return_value = TrismikSession(
-                id="id",
-                url="url",
-                status="status"
+            id="id", url="url", status="status"
         )
         client.current_item.return_value = item
         client.respond_to_current_item.side_effect = [item, None]
@@ -143,14 +155,11 @@ class TestTrismikAsyncRunner:
     @pytest.fixture
     def auth(self) -> TrismikAuth:
         return TrismikAuth(
-                token="token",
-                expires=datetime.now() + timedelta(hours=1)
+            token="token", expires=datetime.now() + timedelta(hours=1)
         )
 
     @pytest.fixture
     def runner(self, mock_client, auth, item_processor) -> TrismikAsyncRunner:
         return TrismikAsyncRunner(
-                item_processor=item_processor,
-                client=mock_client,
-                auth=auth
+            item_processor=item_processor, client=mock_client, auth=auth
         )

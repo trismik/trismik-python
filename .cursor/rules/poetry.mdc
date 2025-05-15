@@ -1,0 +1,6 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+Remember this is a poetry project; you should always use `poetry run` when running files.

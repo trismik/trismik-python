@@ -1,5 +1,5 @@
 """
-Trismik Python Client
+Trismik Python Client.
 
 A Python client for the Trismik API.
 """

@@ -1,0 +1,6 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+Remember this project uses pre-commit hooks to run tools like `black`, `flake8`, `mypi`, and `isort`. Do not run these tools directly but always through pre-commit hooks, like `poetry run pre-commit run [command]`.

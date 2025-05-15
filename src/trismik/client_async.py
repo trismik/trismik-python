@@ -1,4 +1,11 @@
-from typing import List, Any, Optional
+"""
+Trismik async client for interacting with the Trismik API.
+
+This module provides an asynchronous client for interacting with the Trismik
+API. It uses httpx for making HTTP requests.
+"""
+
+from typing import Any, List, Optional
 
 import httpx
 
@@ -6,49 +13,59 @@ from trismik._mapper import TrismikResponseMapper
 from trismik._utils import TrismikUtils
 from trismik.exceptions import TrismikApiError
 from trismik.types import (
-    TrismikTest,
     TrismikAuth,
-    TrismikSession,
     TrismikItem,
-    TrismikResult,
     TrismikResponse,
-    TrismikSessionMetadata
+    TrismikResult,
+    TrismikSession,
+    TrismikSessionMetadata,
+    TrismikTest,
 )
 
 
 class TrismikAsyncClient:
+    """
+    Asynchronous client for the Trismik API.
+
+    This class provides an asynchronous interface to interact with the Trismik
+    API, handling authentication, test sessions, and responses.
+    """
+
     _serviceUrl: str = "https://zoo-dashboard.trismik.com/api"
 
     def __init__(
-            self,
-            service_url: Optional[str] = None,
-            api_key: Optional[str] = None,
-            http_client: Optional[httpx.AsyncClient] | None = None,
+        self,
+        service_url: Optional[str] = None,
+        api_key: Optional[str] = None,
+        http_client: Optional[httpx.AsyncClient] = None,
     ) -> None:
         """
-        Initializes a new Trismik client (async version).
+        Initialize the Trismik async client.
 
         Args:
             service_url (Optional[str]): URL of the Trismik service.
             api_key (Optional[str]): API key for the Trismik service.
-            http_client (Optional[httpx.Client]): HTTP client to use for requests.
+            http_client (Optional[httpx.Client]): HTTP client to use for
+                requests.
 
         Raises:
-            TrismikError: If service_url or api_key are not provided and not found in environment.
+            TrismikError: If service_url or api_key are not provided and not
+                found in environment.
             TrismikApiError: If API request fails.
         """
         self._service_url = TrismikUtils.option(
-                service_url, self._serviceUrl, "TRISMIK_SERVICE_URL"
+            service_url, self._serviceUrl, "TRISMIK_SERVICE_URL"
         )
         self._api_key = TrismikUtils.required_option(
-                api_key, "api_key", "TRISMIK_API_KEY"
+            api_key, "api_key", "TRISMIK_API_KEY"
         )
         self._http_client = http_client or httpx.AsyncClient(
-                base_url=self._service_url)
+            base_url=self._service_url
+        )
 
     async def authenticate(self) -> TrismikAuth:
         """
-        Authenticates with the Trismik service.
+        Authenticate with the Trismik service.
 
         Returns:
             TrismikAuth: Authentication token.
@@ -65,13 +82,14 @@ class TrismikAsyncClient:
             return TrismikResponseMapper.to_auth(json)
         except httpx.HTTPStatusError as e:
             raise TrismikApiError(
-                    TrismikUtils.get_error_message(e.response)) from e
+                TrismikUtils.get_error_message(e.response)
+            ) from e
         except httpx.HTTPError as e:
             raise TrismikApiError(str(e)) from e
 
     async def refresh_token(self, token: str) -> TrismikAuth:
         """
-        Refreshes the authentication token.
+        Refresh the authentication token.
 
         Args:
             token (str): Current authentication token.
@@ -91,13 +109,14 @@ class TrismikAsyncClient:
             return TrismikResponseMapper.to_auth(json)
         except httpx.HTTPStatusError as e:
             raise TrismikApiError(
-                    TrismikUtils.get_error_message(e.response)) from e
+                TrismikUtils.get_error_message(e.response)
+            ) from e
         except httpx.HTTPError as e:
             raise TrismikApiError(str(e)) from e
 
     async def available_tests(self, token: str) -> List[TrismikTest]:
         """
-        Retrieves a list of available tests.
+        Get a list of available tests.
 
         Args:
             token (str): Authentication token.
@@ -117,20 +136,24 @@ class TrismikAsyncClient:
             return TrismikResponseMapper.to_tests(json)
         except httpx.HTTPStatusError as e:
             raise TrismikApiError(
-                    TrismikUtils.get_error_message(e.response)) from e
+                TrismikUtils.get_error_message(e.response)
+            ) from e
         except httpx.HTTPError as e:
             raise TrismikApiError(str(e)) from e
 
-    async def create_session(self, test_id: str, metadata: TrismikSessionMetadata, token: str) -> TrismikSession:
+    async def create_session(
+        self, test_id: str, metadata: TrismikSessionMetadata, token: str
+    ) -> TrismikSession:
         """
-        Creates a new session for a test.
+        Create a new session for a test.
 
         Args:
             test_id (str): ID of the test.
+            metadata (TrismikSessionMetadata): Metadata for the session.
             token (str): Authentication token.
 
         Returns:
-            TrismikSession: New session
+            TrismikSession: New session.
 
         Raises:
             TrismikApiError: If API request fails.
@@ -139,27 +162,38 @@ class TrismikAsyncClient:
             url = "/client/sessions"
             headers = {"Authorization": f"Bearer {token}"}
             body = {"testId": test_id, "metadata": metadata.toDict()}
-            response = await self._http_client.post(url, headers=headers,
-                                                    json=body)
+            response = await self._http_client.post(
+                url, headers=headers, json=body
+            )
             response.raise_for_status()
             json = response.json()
             return TrismikResponseMapper.to_session(json)
         except httpx.HTTPStatusError as e:
             raise TrismikApiError(
-                    TrismikUtils.get_error_message(e.response)) from e
+                TrismikUtils.get_error_message(e.response)
+            ) from e
         except httpx.HTTPError as e:
             raise TrismikApiError(str(e)) from e
-        
-    async def create_replay_session(self, previous_session_id: str, metadata: TrismikSessionMetadata, token: str) -> TrismikSession:
+
+    async def create_replay_session(
+        self,
+        previous_session_id: str,
+        metadata: TrismikSessionMetadata,
+        token: str,
+    ) -> TrismikSession:
         """
-        Creates a new session that replays exactly the question sequence of a previous session
+        Create a new session that replays a previous session.
+
+        Create a new session that replays exactly the question sequence of a
+        previous session.
 
         Args:
             previous_session_id (str): Session id of the session to replay.
+            metadata (TrismikSessionMetadata): Metadata for the session.
             token (str): Authentication token.
 
         Returns:
-            TrismikSession: New session
+            TrismikSession: New session.
 
         Raises:
             TrismikApiError: If API request fails.
@@ -167,53 +201,56 @@ class TrismikAsyncClient:
         try:
             url = "/client/sessions/replay"
             headers = {"Authorization": f"Bearer {token}"}
-            body = {"previousSessionToken": previous_session_id, "metadata": metadata.toDict(), }
-            response = await self._http_client.post(url, headers=headers,
-                                                    json=body)
+            body = {
+                "previousSessionToken": previous_session_id,
+                "metadata": metadata.toDict(),
+            }
+            response = await self._http_client.post(
+                url, headers=headers, json=body
+            )
             response.raise_for_status()
             json = response.json()
             return TrismikResponseMapper.to_session(json)
         except httpx.HTTPStatusError as e:
             raise TrismikApiError(
-                    TrismikUtils.get_error_message(e.response)) from e
+                TrismikUtils.get_error_message(e.response)
+            ) from e
         except httpx.HTTPError as e:
             raise TrismikApiError(str(e)) from e
-        
-    async def add_metadata(self, session_id: str, metadata: TrismikSessionMetadata, token: str) -> None:
+
+    async def add_metadata(
+        self, session_id: str, metadata: TrismikSessionMetadata, token: str
+    ) -> None:
         """
-        Adds metadata to the session, merging it with any already stored
+        Add metadata to the session, merging it with any already stored.
 
         Args:
-            session_id (str): id of the session object
-            metadata: object cotaining the metadata to add
+            session_id (str): ID of the session object.
+            metadata (TrismikSessionMetadata): Object containing the metadata
+                to add.
             token (str): Authentication token.
-
-        Returns:
-            None
 
         Raises:
             TrismikApiError: If API request fails.
-        """ 
+        """
         try:
             url = f"/client/sessions/{session_id}/metadata"
             headers = {"Authorization": f"Bearer {token}"}
             body = metadata.toDict()
-            response = await self._http_client.post(url, headers=headers,
-                                                    json=body)
+            response = await self._http_client.post(
+                url, headers=headers, json=body
+            )
             response.raise_for_status()
         except httpx.HTTPStatusError as e:
             raise TrismikApiError(
-                    TrismikUtils.get_error_message(e.response)) from e
+                TrismikUtils.get_error_message(e.response)
+            ) from e
         except httpx.HTTPError as e:
             raise TrismikApiError(str(e)) from e
 
-    async def current_item(
-            self,
-            session_url: str,
-            token: str
-    ) -> TrismikItem:
+    async def current_item(self, session_url: str, token: str) -> TrismikItem:
         """
-        Retrieves the current test item.
+        Get the current test item.
 
         Args:
             session_url (str): URL of the session.
@@ -234,18 +271,16 @@ class TrismikAsyncClient:
             return TrismikResponseMapper.to_item(json)
         except httpx.HTTPStatusError as e:
             raise TrismikApiError(
-                    TrismikUtils.get_error_message(e.response)) from e
+                TrismikUtils.get_error_message(e.response)
+            ) from e
         except httpx.HTTPError as e:
             raise TrismikApiError(str(e)) from e
 
     async def respond_to_current_item(
-            self,
-            session_url: str,
-            value: Any,
-            token: str
-    ) -> TrismikItem | None:
+        self, session_url: str, value: Any, token: str
+    ) -> Optional[TrismikItem]:
         """
-        Responds to the current test item.
+        Respond to the current test item.
 
         Args:
             session_url (str): URL of the session.
@@ -253,7 +288,8 @@ class TrismikAsyncClient:
             token (str): Authentication token.
 
         Returns:
-            TrismikItem | None: Next test item or None if session is finished.
+            Optional[TrismikItem]: Next test item or None if session is
+            finished.
 
         Raises:
             TrismikApiError: If API request fails.
@@ -263,7 +299,7 @@ class TrismikAsyncClient:
             body = {"value": value}
             headers = {"Authorization": f"Bearer {token}"}
             response = await self._http_client.post(
-                    url, headers=headers, json=body
+                url, headers=headers, json=body
             )
             response.raise_for_status()
             if response.status_code == 204:
@@ -273,16 +309,16 @@ class TrismikAsyncClient:
                 return TrismikResponseMapper.to_item(json)
         except httpx.HTTPStatusError as e:
             raise TrismikApiError(
-                    TrismikUtils.get_error_message(e.response)) from e
+                TrismikUtils.get_error_message(e.response)
+            ) from e
         except httpx.HTTPError as e:
             raise TrismikApiError(str(e)) from e
 
-    async def results(self,
-            session_url: str,
-            token: str
+    async def results(
+        self, session_url: str, token: str
     ) -> List[TrismikResult]:
         """
-        Retrieves the results of a session.
+        Get the results of a session.
 
         Args:
             session_url (str): URL of the session.
@@ -303,16 +339,16 @@ class TrismikAsyncClient:
             return TrismikResponseMapper.to_results(json)
         except httpx.HTTPStatusError as e:
             raise TrismikApiError(
-                    TrismikUtils.get_error_message(e.response)) from e
+                TrismikUtils.get_error_message(e.response)
+            ) from e
         except httpx.HTTPError as e:
             raise TrismikApiError(str(e)) from e
 
-    async def responses(self,
-            session_url: str,
-            token: str
+    async def responses(
+        self, session_url: str, token: str
     ) -> List[TrismikResponse]:
         """
-        Retrieves responses to session items.
+        Get responses to session items.
 
         Args:
             session_url (str): URL of the session.
@@ -333,6 +369,7 @@ class TrismikAsyncClient:
             return TrismikResponseMapper.to_responses(json)
         except httpx.HTTPStatusError as e:
             raise TrismikApiError(
-                    TrismikUtils.get_error_message(e.response)) from e
+                TrismikUtils.get_error_message(e.response)
+            ) from e
         except httpx.HTTPError as e:
             raise TrismikApiError(str(e)) from e

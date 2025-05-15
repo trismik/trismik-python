@@ -1,44 +1,35 @@
+"""
+Type definitions for the Trismik client.
+
+This module defines the data structures used throughout the Trismik client
+library.
+"""
+
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, List, Any, Optional
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
 class TrismikAuth:
-    """
-    Authentication token.
+    """Authentication token and expiration time."""
 
-    Attributes:
-        token (str): Authentication token value.
-        expires (datetime): Expiration date.
-    """
     token: str
     expires: datetime
 
 
 @dataclass
 class TrismikTest:
-    """
-    Available test.
+    """Test metadata including ID and name."""
 
-    Attributes:
-        id (str): Test ID.
-        name (str): Test name.
-    """
     id: str
     name: str
 
 
 @dataclass
 class TrismikSession:
-    """
-    Test session.
+    """Session metadata including ID, URL, and status."""
 
-    Attributes:
-        id (str): Session ID.
-        url (str): Session URL.
-        status (str): Session status
-    """
     id: str
     url: str
     status: str
@@ -46,60 +37,37 @@ class TrismikSession:
 
 @dataclass
 class TrismikItem:
-    """
-    Base class for test items.
+    """Base class for test items."""
 
-    Attributes:
-        id (str): Item ID.
-    """
     id: str
 
 
 @dataclass
 class TrismikChoice:
-    """
-    Base class for choices in items that use them.
+    """Base class for choices in items that use them."""
 
-    Attributes:
-        id (str): Choice ID.
-    """
     id: str
 
 
 @dataclass
 class TrismikTextChoice(TrismikChoice):
-    """
-    Text choice.
+    """Text choice for multiple choice questions."""
 
-    Attributes:
-        text (str): Choice text.
-    """
     text: str
 
 
 @dataclass
 class TrismikMultipleChoiceTextItem(TrismikItem):
-    """
-    Multiple choice text item.
+    """Multiple choice text question."""
 
-    Attributes:
-        question (str): Question text.
-        choices (List[TrismikTextChoice]): List of choices.
-    """
     question: str
     choices: List[TrismikTextChoice]
 
 
 @dataclass
 class TrismikResult:
-    """
-    Test result.
+    """Test result for a specific trait."""
 
-    Attributes:
-        trait (str): Trait name.
-        name (str): Result name/type.
-        value (Any): Result value.
-    """
     trait: str
     name: str
     value: Any
@@ -107,14 +75,8 @@ class TrismikResult:
 
 @dataclass
 class TrismikResponse:
-    """
-    Test result.
+    """Response to a test item."""
 
-    Attributes:
-        item_id (str): Item ID.
-        value (Any): Result value.
-        score (float): Score.
-    """
     item_id: str
     value: Any
     score: float
@@ -122,42 +84,34 @@ class TrismikResponse:
 
 @dataclass
 class TrismikRunResults:
-    """
-    Test results and responses.
+    """Test results and responses."""
 
-    Attributes:
-        results (List[TrismikResult]): Results.
-        responses (List[TrismikResponse]): Responses.
-    """
     session_id: str
     results: List[TrismikResult]
     responses: Optional[List[TrismikResponse]] = None
 
+
 @dataclass
 class TrismikSessionMetadata:
-    """
-    Metadata associated to a session
-
-    Attributes:
-        model_metadata (dict[str, Any]): Metadata about the model.
-        test_configuration (dict[str, Any]): Metadata about the test.
-        inference_setup (dict[str, Any]): Metadata about the inference setup.
-    """   
+    """Metadata for a test session."""
 
     class ModelMetadata:
+        """Model metadata for a test session."""
+
         def __init__(self, name: str, **kwargs: Any):
+            """Initialize ModelMetadata with a name and optional attributes."""
             self.name = name
             for key, value in kwargs.items():
-                setattr(self, key, value)                
+                setattr(self, key, value)
 
     model_metadata: ModelMetadata
     test_configuration: dict[str, Any]
     inference_setup: dict[str, Any]
 
     def toDict(self) -> Dict[str, Any]:
+        """Convert session metadata to a dictionary."""
         return {
             "model_metadata": vars(self.model_metadata),
             "test_configuration": self.test_configuration,
             "inference_setup": self.inference_setup,
         }
-
