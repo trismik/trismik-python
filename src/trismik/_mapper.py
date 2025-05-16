@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any, Dict, List
 
 from dateutil.parser import parse as parse_date
 
@@ -24,12 +24,12 @@ class TrismikResponseMapper:
     """
 
     @staticmethod
-    def to_auth(json: dict[str, Any]) -> TrismikAuth:
+    def to_auth(json: Dict[str, Any]) -> TrismikAuth:
         """
         Convert JSON response to a TrismikAuth object.
 
         Args:
-            json (dict[str, Any]): JSON response containing auth data.
+            json (Dict[str, Any]): JSON response containing auth data.
 
         Returns:
             TrismikAuth: Authentication object with token and expiration.
@@ -40,12 +40,12 @@ class TrismikResponseMapper:
         )
 
     @staticmethod
-    def to_tests(json: List[dict[str, Any]]) -> List[TrismikTest]:
+    def to_tests(json: List[Dict[str, Any]]) -> List[TrismikTest]:
         """
         Convert JSON response to a list of TrismikTest objects.
 
         Args:
-            json (List[dict[str, Any]]): JSON response containing test data.
+            json (List[Dict[str, Any]]): JSON response containing test data.
 
         Returns:
             List[TrismikTest]: List of test objects with IDs and names.
@@ -59,12 +59,12 @@ class TrismikResponseMapper:
         ]
 
     @staticmethod
-    def to_session(json: dict[str, Any]) -> TrismikSession:
+    def to_session(json: Dict[str, Any]) -> TrismikSession:
         """
         Convert JSON response to a TrismikSession object.
 
         Args:
-            json (dict[str, Any]): JSON response containing session data.
+            json (Dict[str, Any]): JSON response containing session data.
 
         Returns:
             TrismikSession: Session object with ID, URL, and status.
@@ -76,12 +76,12 @@ class TrismikResponseMapper:
         )
 
     @staticmethod
-    def to_item(json: dict[str, Any]) -> TrismikItem:
+    def to_item(json: Dict[str, Any]) -> TrismikItem:
         """
         Convert JSON response to a TrismikItem object.
 
         Args:
-            json (dict[str, Any]): JSON response containing item data.
+            json (Dict[str, Any]): JSON response containing item data.
 
         Returns:
             TrismikItem: Item object with question and choices.
@@ -107,12 +107,12 @@ class TrismikResponseMapper:
             )
 
     @staticmethod
-    def to_results(json: List[dict[str, Any]]) -> List[TrismikResult]:
+    def to_results(json: List[Dict[str, Any]]) -> List[TrismikResult]:
         """
         Convert JSON response to a list of TrismikResult objects.
 
         Args:
-            json (List[dict[str, Any]]): JSON response containing result data.
+            json (List[Dict[str, Any]]): JSON response containing result data.
 
         Returns:
             List[TrismikResult]: List of result objects with trait, name, and
@@ -128,12 +128,12 @@ class TrismikResponseMapper:
         ]
 
     @staticmethod
-    def to_responses(json: List[dict[str, Any]]) -> List[TrismikResponse]:
+    def to_responses(json: List[Dict[str, Any]]) -> List[TrismikResponse]:
         """
         Convert JSON response to a list of TrismikResponse objects.
 
         Args:
-            json (List[dict[str, Any]]): JSON response containing response data.
+            json (List[Dict[str, Any]]): JSON response containing response data.
 
         Returns:
             List[TrismikResponse]: List of response objects with item ID, value,

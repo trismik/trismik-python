@@ -54,7 +54,7 @@ class TrismikRunner:
         self._client = client
         self._auth = auth
         self._loop = None
-        self._async_runner = None
+        self._async_runner: Optional[TrismikAsyncRunner] = None
 
     def _get_loop(self) -> asyncio.AbstractEventLoop:
         """
@@ -91,8 +91,8 @@ class TrismikRunner:
             async_client = None
             if self._client:
                 async_client = TrismikAsyncClient(
-                    service_url=self._client.service_url,
-                    api_key=self._client.api_key,
+                    service_url=self._client._async_client._service_url,
+                    api_key=self._client._async_client._api_key,
                 )
 
             self._async_runner = TrismikAsyncRunner(

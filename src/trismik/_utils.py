@@ -26,10 +26,14 @@ class TrismikUtils:
             str: The error message from the response JSON or content.
         """
         try:
-            return (response.json()).get("message", "Unknown error")
+            json_data = response.json()
+            message = json_data.get("message", "Unknown error")
+            return str(message)  # Ensure we return a string
         except (httpx.RequestError, ValueError):
-            error_message = response.content.decode("utf-8", errors="ignore")
-        return error_message
+            error_message: str = response.content.decode(
+                "utf-8", errors="ignore"
+            )
+            return error_message
 
     @staticmethod
     def required_option(value: Optional[str], name: str, env: str) -> str:

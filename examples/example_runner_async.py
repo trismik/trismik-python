@@ -6,7 +6,7 @@ replay sessions asynchronously.
 """
 
 import asyncio
-from typing import Any, List
+from typing import Any, List, Optional
 
 from _sample_metadata import sample_metadata
 from dotenv import load_dotenv
@@ -48,7 +48,7 @@ def print_results(results: List[TrismikResult]) -> None:
         print(f"{result.trait} ({result.name}): {result.value}")
 
 
-def print_responses(responses: List[TrismikResponse] | None) -> None:
+def print_responses(responses: Optional[List[TrismikResponse]]) -> None:
     """Print test responses with item ID and correctness."""
     if responses is None:
         return
@@ -67,10 +67,7 @@ async def main() -> None:
     environment or in .env file.
     """
     load_dotenv()
-    runner = TrismikAsyncRunner(
-        service_url="https://api.trismik.com",
-        api_key="your-api-key",
-    )
+    runner = TrismikAsyncRunner(process_item)
 
     print("\nStarting test...")
     results = await runner.run(

@@ -72,6 +72,10 @@ class TrismikAsyncRunner:
             TrismikApiError: If API request fails.
         """
         await self._init()
+        assert (
+            self._client is not None
+        ), "Client should be initialized by _init()"
+        assert self._auth is not None, "Auth should be initialized by _init()"
         await self._refresh_token_if_needed()
         session = await self._client.create_session(
             test_id, session_metadata, self._auth.token
@@ -111,6 +115,10 @@ class TrismikAsyncRunner:
             TrismikApiError: If API request fails.
         """
         await self._init()
+        assert (
+            self._client is not None
+        ), "Client should be initialized by _init()"
+        assert self._auth is not None, "Auth should be initialized by _init()"
         await self._refresh_token_if_needed()
         session = await self._client.create_replay_session(
             previous_session_id, session_metadata, self._auth.token
@@ -138,14 +146,21 @@ class TrismikAsyncRunner:
             TrismikApiError: If API request fails.
         """
         await self._init()
+        assert (
+            self._client is not None
+        ), "Client should be initialized by _init()"
+        assert self._auth is not None, "Auth should be initialized by _init()"
         await self._refresh_token_if_needed()
         item = await self._client.current_item(session_url, self._auth.token)
         while item is not None:
             await self._refresh_token_if_needed()
             response = await self._item_processor(item)
-            item = await self._client.respond_to_current_item(
+            next_item = await self._client.respond_to_current_item(
                 session_url, response, self._auth.token
             )
+            if next_item is None:
+                break
+            item = next_item
 
     async def _init(self) -> None:
         """
@@ -167,6 +182,10 @@ class TrismikAsyncRunner:
         Raises:
             TrismikApiError: If API request fails.
         """
+        assert (
+            self._client is not None
+        ), "Client should be initialized by _init()"
+        assert self._auth is not None, "Auth should be initialized by _init()"
         if self._token_needs_refresh():
             self._auth = await self._client.refresh_token(self._auth.token)
 
@@ -177,4 +196,5 @@ class TrismikAsyncRunner:
         Returns:
             bool: True if the token needs to be refreshed, False otherwise.
         """
+        assert self._auth is not None, "Auth should be initialized by _init()"
         return self._auth.expires < (datetime.now() + timedelta(minutes=5))

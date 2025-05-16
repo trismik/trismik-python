@@ -105,8 +105,8 @@ class TrismikSessionMetadata:
                 setattr(self, key, value)
 
     model_metadata: ModelMetadata
-    test_configuration: dict[str, Any]
-    inference_setup: dict[str, Any]
+    test_configuration: Dict[str, Any]
+    inference_setup: Dict[str, Any]
 
     def toDict(self) -> Dict[str, Any]:
         """Convert session metadata to a dictionary."""

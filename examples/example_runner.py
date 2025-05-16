@@ -5,7 +5,7 @@ This module demonstrates how to use the TrismikRunner to run tests and
 replay sessions.
 """
 
-from typing import Any, List
+from typing import Any, List, Optional
 
 from _sample_metadata import sample_metadata
 from dotenv import load_dotenv
@@ -47,7 +47,7 @@ def print_results(results: List[TrismikResult]) -> None:
         print(f"{result.trait} ({result.name}): {result.value}")
 
 
-def print_responses(responses: List[TrismikResponse] | None) -> None:
+def print_responses(responses: Optional[List[TrismikResponse]]) -> None:
     """Print test responses with item ID and correctness."""
     if responses is None:
         return

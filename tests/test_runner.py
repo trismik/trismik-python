@@ -69,7 +69,10 @@ class TestTrismikRunner:
         client.responses.return_value = [
             TrismikResponse(item_id="id", value="value", score=1.0)
         ]
-        client._client = MagicMock()
+        async_client_mock = MagicMock()
+        async_client_mock._service_url = "http://test.service.url"
+        async_client_mock._api_key = "test_api_key"
+        client._async_client = async_client_mock
         return client
 
     @pytest.fixture
