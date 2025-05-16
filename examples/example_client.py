@@ -5,7 +5,7 @@ This module demonstrates how to use the TrismikClient to run tests and
 replay sessions.
 """
 
-from typing import Any, List
+from typing import Any, List, Optional
 
 from _sample_metadata import sample_metadata
 from dotenv import load_dotenv
@@ -16,10 +16,11 @@ from trismik.types import (
     TrismikMultipleChoiceTextItem,
     TrismikResponse,
     TrismikResult,
+    TrismikTest,
 )
 
 
-def print_tests(tests) -> None:
+def print_tests(tests: List[TrismikTest]) -> None:
     """Print available tests with their IDs and names."""
     print("Available tests:")
     for test in tests:
@@ -29,7 +30,7 @@ def print_tests(tests) -> None:
 def run_test(client: TrismikClient, session_url: str, token: str) -> None:
     """Run a test session by processing items until completion."""
     print("\nStarting test...")
-    item = client.current_item(session_url, token)
+    item: Optional[TrismikItem] = client.current_item(session_url, token)
     while item:
         response = process_item(item)
         item = client.respond_to_current_item(session_url, response, token)
@@ -71,7 +72,7 @@ def print_responses(responses: List[TrismikResponse]) -> None:
         print(f"{response.item_id}: {correct}")
 
 
-def main():
+def main() -> None:
     """
     Run a test using the TrismikClient class and then replay it.
 

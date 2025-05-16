@@ -58,7 +58,7 @@ def print_responses(responses: Optional[List[TrismikResponse]]) -> None:
         print(f"{response.item_id}: {correct}")
 
 
-def main():
+def main() -> None:
     """
     Run a test using the TrismikRunner class and then replay it.
 
