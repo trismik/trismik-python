@@ -45,6 +45,8 @@ repos:
     hooks:
     -   id: mypy
         additional_dependencies: [types-python-dateutil]
+        exclude: "tests/.*\\.py"
+
 -   repo: local
     hooks:
     -   id: pytest
