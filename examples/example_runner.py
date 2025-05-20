@@ -1,8 +1,10 @@
 """
 Example usage of the TrismikRunner class.
 
-This module demonstrates how to use the TrismikRunner to run tests and
-replay sessions.
+.. deprecated:: 0.9.2
+    This example is deprecated and will be removed in a future version.
+    Please use examples/example_adaptive_test.py instead, which demonstrates
+    both synchronous and asynchronous usage of the new AdaptiveTest class.
 """
 
 from typing import Any, List, Optional
@@ -31,10 +33,9 @@ def process_item(item: TrismikItem) -> Any:
     """
     # Concrete type is determined by checking against its class.
     if isinstance(item, TrismikMultipleChoiceTextItem):
-        # For TrismikMultipleChoiceTextItem, expected response is a choice id.
-        # In reality, you would probably want to process the item in a more
-        # sophisticated way than just always answering with the first choice.
-        print(f"Processing item: {item.id}...")
+        # For TrismikMultipleChoiceTextItem, the expected response is a choice
+        # id. Here we just pick the first choice. In a real application, here
+        # is where you would call a model to get the response.
         return item.choices[0].id
     else:
         raise RuntimeError("Encountered unknown item type")

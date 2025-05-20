@@ -1,8 +1,10 @@
 """
 Example usage of the TrismikAsyncRunner class.
 
-This module demonstrates how to use the TrismikAsyncRunner to run tests and
-replay sessions asynchronously.
+.. deprecated:: 0.9.2
+    This example is deprecated and will be removed in a future version.
+    Please use examples/example_adaptive_test.py instead, which demonstrates
+    both synchronous and asynchronous usage of the new AdaptiveTest class.
 """
 
 import asyncio
@@ -35,7 +37,6 @@ async def process_item(item: TrismikItem) -> Any:
         # For TrismikMultipleChoiceTextItem, expected response is a choice id.
         # In reality, you would probably want to process the item in a more
         # sophisticated way than just always answering with the first choice.
-        print(f"Processing item: {item.id}...")
         return item.choices[0].id
     else:
         raise RuntimeError("Encountered unknown item type")

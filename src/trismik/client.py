@@ -3,9 +3,13 @@ Trismik client for interacting with the Trismik API.
 
 This module provides a synchronous client for interacting with the Trismik API.
 It wraps the async client to provide a synchronous interface.
+
+.. deprecated:: 0.9.2
+    This module is deprecated and will be removed in a future version.
 """
 
 import asyncio
+import warnings
 from typing import Any, List, Optional
 
 import nest_asyncio
@@ -28,6 +32,9 @@ class TrismikClient:
 
     This class provides a synchronous interface to interact with the Trismik
     API, handling authentication, test sessions, and responses.
+
+    .. deprecated:: 0.9.2
+        This class is deprecated and will be removed in a future version.
     """
 
     _serviceUrl: str = "https://zoo-dashboard.trismik.com/api"
@@ -52,6 +59,13 @@ class TrismikClient:
                 found in environment.
             TrismikApiError: If API request fails.
         """
+        warnings.warn(
+            "TrismikClient is deprecated since version 0.9.2 and will be "
+            "removed in a future version. Please use "
+            "trismik.client_async.TrismikAsyncClient directly instead. ",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         # Create and store a single event loop
         try:
             self._loop = asyncio.get_running_loop()

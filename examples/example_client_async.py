@@ -1,8 +1,10 @@
 """
 Example usage of the TrismikAsyncClient class.
 
-This module demonstrates how to use the TrismikAsyncClient to run tests and
-replay sessions asynchronously.
+.. deprecated:: 0.9.2
+    This example is deprecated and will be removed in a future version.
+    Please use examples/example_adaptive_test.py instead, which demonstrates
+    both synchronous and asynchronous usage of the new AdaptiveTest class.
 """
 
 import asyncio

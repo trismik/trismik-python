@@ -3,9 +3,27 @@ Trismik runner for running tests.
 
 This module provides a synchronous runner for running Trismik tests. It wraps
 the async runner to provide a synchronous interface.
+
+.. deprecated:: 0.9.2
+    This module is deprecated and will be removed in a future version.
+    Please use :class:`trismik.adaptive_test.AdaptiveTest` instead.
+    The new class is a drop-in replacement that provides both sync and async
+    interfaces.
+    Migration is straightforward:
+
+    1. Replace imports:
+       from trismik.runner import TrismikRunner
+       to:
+       from trismik.adaptive_test import AdaptiveTest
+
+    2. Replace calls to TrismikRunner with AdaptiveTest.
+
+    3. The rest of your code should work as-is, since the new class maintains
+       the same interface for synchronous operations.
 """
 
 import asyncio
+import warnings
 from typing import Any, Callable, Optional
 
 import nest_asyncio
@@ -28,6 +46,23 @@ class TrismikRunner:
     This class provides a synchronous interface for running Trismik tests by
     wrapping the asynchronous runner. It handles event loop management and
     provides a simple interface for running tests and replaying sessions.
+
+    .. deprecated:: 0.9.2
+        This module is deprecated and will be removed in a future version.
+        Please use :class:`trismik.adaptive_test.AdaptiveTest` instead.
+        The new class is a drop-in replacement that provides both sync
+        and async interfaces.
+        Migration is straightforward:
+
+        1. Replace imports:
+        from trismik.runner import TrismikRunner
+        to:
+        from trismik.adaptive_test import AdaptiveTest
+
+        2. Replace calls to TrismikRunner with AdaptiveTest.
+
+        3. The rest of your code should work as-is, since the new class
+           maintains the same interface for synchronous operations.
     """
 
     def __init__(
@@ -50,6 +85,15 @@ class TrismikRunner:
         Raises:
             TrismikApiError: If API request fails.
         """
+        warnings.warn(
+            "TrismikRunner in runner.py is deprecated since version 0.9.2 "
+            "and will be removed in a future version. Please use "
+            "trismik.adaptive_test.AdaptiveTest instead. The new class is a "
+            "drop-in replacement that provides both sync and async "
+            "interfaces.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self._item_processor = item_processor
         self._client = client
         self._auth = auth

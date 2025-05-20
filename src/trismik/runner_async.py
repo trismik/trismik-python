@@ -2,10 +2,34 @@
 Trismik async runner for running tests.
 
 This module provides an asynchronous runner for running Trismik tests.
+
+.. deprecated:: 0.9.2
+    This module is deprecated and will be removed in a future version.
+    Please use :class:`trismik.adaptive_test.AdaptiveTest` instead.
+    The new class is a drop-in replacement that provides both sync
+    and async interfaces. Migration is straightforward:
+
+    1. Replace imports:
+       from trismik.runner_async import TrismikAsyncRunner
+       to:
+       from trismik.adaptive_test import AdaptiveTest
+
+    2. Replace calls to TrismikAsyncRunner with AdaptiveTest.
+
+
+    3. Use the _async suffix for async methods:
+       run() -> run_async()
+       run_replay() -> run_replay_async()
+
+    The rest of your code should work as-is, since the new class maintains
+    the same interface for asynchronous operations.
 """
 
+import warnings
 from datetime import datetime, timedelta
 from typing import Any, Awaitable, Callable, Optional
+
+from tqdm.auto import tqdm
 
 from trismik.client_async import TrismikAsyncClient
 from trismik.types import (
@@ -23,6 +47,27 @@ class TrismikAsyncRunner:
     This class provides an asynchronous interface for running Trismik tests.
     It handles authentication, session management, and test execution in an
     asynchronous manner.
+
+    .. deprecated:: 0.9.2
+        This module is deprecated and will be removed in a future version.
+        Please use :class:`trismik.adaptive_test.AdaptiveTest` instead.
+        The new class is a drop-in replacement that provides both sync
+        and async interfaces. Migration is straightforward:
+
+        1. Replace imports:
+        from trismik.runner_async import TrismikAsyncRunner
+        to:
+        from trismik.adaptive_test import AdaptiveTest
+
+        2. Replace calls to TrismikAsyncRunner with AdaptiveTest.
+
+
+        3. Use the _async suffix for async methods:
+        run() -> run_async()
+        run_replay() -> run_replay_async()
+
+        The rest of your code should work as-is, since the new class maintains
+        the same interface for asynchronous operations.
     """
 
     def __init__(
@@ -30,6 +75,7 @@ class TrismikAsyncRunner:
         item_processor: Callable[[TrismikItem], Awaitable[Any]],
         client: Optional[TrismikAsyncClient] = None,
         auth: Optional[TrismikAuth] = None,
+        max_items: int = 60,
     ) -> None:
         """
         Initialize a new Trismik async runner.
@@ -41,13 +87,22 @@ class TrismikAsyncRunner:
                 requests.
             auth (Optional[TrismikAuth]): Authentication token to use for
                 requests.
+            max_items (int): Maximum number of items to process. Default is 60.
 
         Raises:
             TrismikApiError: If API request fails.
         """
+        warnings.warn(
+            "TrismikAsyncRunner in runner_async.py is deprecated since "
+            "version 0.9.2 and will be removed in a future version. "
+            "Please use trismik.adaptive_test.AdaptiveTest instead. ",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self._item_processor = item_processor
         self._client = client
         self._auth = auth
+        self._max_items = max_items
 
     async def run(
         self,
@@ -152,15 +207,17 @@ class TrismikAsyncRunner:
         assert self._auth is not None, "Auth should be initialized by _init()"
         await self._refresh_token_if_needed()
         item = await self._client.current_item(session_url, self._auth.token)
-        while item is not None:
-            await self._refresh_token_if_needed()
-            response = await self._item_processor(item)
-            next_item = await self._client.respond_to_current_item(
-                session_url, response, self._auth.token
-            )
-            if next_item is None:
-                break
-            item = next_item
+        with tqdm(total=self._max_items, desc="Running test") as pbar:
+            while item is not None:
+                await self._refresh_token_if_needed()
+                response = await self._item_processor(item)
+                next_item = await self._client.respond_to_current_item(
+                    session_url, response, self._auth.token
+                )
+                pbar.update(1)
+                if next_item is None:
+                    break
+                item = next_item
 
     async def _init(self) -> None:
         """
