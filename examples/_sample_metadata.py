@@ -1,8 +1,6 @@
-from typing import Final
-
 from trismik.types import TrismikSessionMetadata
 
-sample_metadata: Final[TrismikSessionMetadata] = TrismikSessionMetadata(
+sample_metadata: TrismikSessionMetadata = TrismikSessionMetadata(
     model_metadata=TrismikSessionMetadata.ModelMetadata(
         name="custom-llm-v1.2",
         version="1.2.0",
