@@ -31,7 +31,7 @@ class TrismikAsyncClient:
     API, handling authentication, test sessions, and responses.
     """
 
-    _serviceUrl: str = "https://zoo-dashboard.trismik.com/api"
+    _serviceUrl: str = "https://dashboard.trismik.com/api"
 
     def __init__(
         self,

@@ -13,7 +13,7 @@ requires-python = ">=3.9"
 
 
 [tool.poetry]
-version = "0.9.1"  # base version
+version = "0.9.2"  # base version
 packages = [{ include = "trismik", from = "src" }]
 
 [tool.poetry.group.main.dependencies]
@@ -79,4 +79,4 @@ warn_unreachable = true
 install_types = true
 
 [tool.flake8] # note that this depends on Flake8-pyproject
-ignore = ["D202"]
+ignore = ["D202", "W503", "W504"]
