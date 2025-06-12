@@ -1,41 +1,51 @@
-import asyncio
-from typing import Any, List
+"""
+Example usage of the TrismikAsyncClient class.
 
+.. deprecated:: 0.9.2
+    This example is deprecated and will be removed in a future version.
+    Please use examples/example_adaptive_test.py instead, which demonstrates
+    both synchronous and asynchronous usage of the new AdaptiveTest class.
+"""
+
+import asyncio
+from typing import Any, List, Optional
+
+from _sample_metadata import sample_metadata
 from dotenv import load_dotenv
 
-from trismik import (
-    TrismikAsyncClient,
+from trismik.client_async import TrismikAsyncClient
+from trismik.types import (
     TrismikItem,
     TrismikMultipleChoiceTextItem,
-    TrismikResult,
     TrismikResponse,
+    TrismikResult,
+    TrismikTest,
 )
 
-from _sample_metadata import ( sample_metadata )
 
-def print_tests(tests) -> None:
+def print_tests(tests: List[TrismikTest]) -> None:
+    """Print available tests with their IDs and names."""
     print("Available tests:")
     for test in tests:
         print(f"{test.id} ({test.name})")
 
 
 async def run_test(
-        client: TrismikAsyncClient,
-        session_url: str,
-        token: str
+    client: TrismikAsyncClient, session_url: str, token: str
 ) -> None:
+    """Run a test session by processing items until completion."""
     print("\nStarting test...")
-    item = await client.current_item(session_url, token)
+    item: Optional[TrismikItem] = await client.current_item(session_url, token)
     while item:
         response = await process_item(item)
         item = await client.respond_to_current_item(
-                session_url, response, token
+            session_url, response, token
         )
 
 
 async def process_item(item: TrismikItem) -> Any:
     """
-    Processes returned test item.
+    Process a test item and return a response.
 
     Args:
         item (TrismikItem): Test item to process.
@@ -55,20 +65,23 @@ async def process_item(item: TrismikItem) -> Any:
 
 
 def print_results(results: List[TrismikResult]) -> None:
+    """Print test results with trait, name, and value."""
     print("\nResults...")
     for result in results:
         print(f"{result.trait} ({result.name}): {result.value}")
 
 
 def print_responses(responses: List[TrismikResponse]) -> None:
+    """Print test responses with item ID and correctness."""
     print("\nResponses...")
     for response in responses:
         correct = "correct" if response.score > 0 else "incorrect"
         print(f"{response.item_id}: {correct}")
 
-async def main():
+
+async def main() -> None:
     """
-    Runs a test using the TrismikClient class and then replays it
+    Run a test using the TrismikAsyncClient class and then replay it.
 
     Assumes TRISMIK_SERVICE_URL and TRISMIK_API_KEY are set either in
     environment or in .env file.
@@ -82,7 +95,7 @@ async def main():
         raise RuntimeError("No tests available")
 
     print_tests(tests)
-    test_id = "Tox2024"  # Assuming it is available
+    test_id = "MMLUPro2024"  # Assuming it is available
     session = await client.create_session(test_id, sample_metadata, token)
 
     await client.add_metadata(session.id, sample_metadata, token)
@@ -95,7 +108,9 @@ async def main():
 
     print("\nReplay run")
 
-    replay_session = await client.create_replay_session(session.id, sample_metadata, token)
+    replay_session = await client.create_replay_session(
+        session.id, sample_metadata, token
+    )
     await run_test(client, replay_session.url, token)
     results = await client.results(replay_session.url, token)
     print_results(results)

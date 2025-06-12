@@ -1,13 +1,18 @@
+"""
+Exception classes for the Trismik client.
+
+This module defines custom exceptions used throughout the Trismik client
+library.
+"""
+
+
 class TrismikError(Exception):
-    """
-    Base class for all exceptions raised.
-    Raised when an error occurs in the Trismik package, i.e. configuration.
-    """
-    pass
+    """Base class for all exceptions raised by the Trismik package."""
 
 
 class TrismikApiError(TrismikError):
     """
-    Raised when an error occurs while interacting with the Trismik API
+    Exception raised when an error occurs during API interaction.
+
+    This exception is raised when there is an error during API communication.
     """
-    pass

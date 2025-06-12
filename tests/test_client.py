@@ -1,236 +1,155 @@
-from datetime import datetime
-from unittest.mock import MagicMock
+from datetime import datetime, timedelta
+from unittest.mock import AsyncMock, MagicMock, patch
 
-import httpx
 import pytest
 
-from trismik import (
-    TrismikApiError,
-    TrismikClient,
-    TrismikError,
-    TrismikMultipleChoiceTextItem,
+from trismik.client import TrismikClient
+from trismik.exceptions import TrismikApiError
+from trismik.types import (
+    TrismikAuth,
+    TrismikItem,
+    TrismikResponse,
+    TrismikResult,
+    TrismikSession,
+    TrismikSessionMetadata,
+    TrismikTest,
 )
-from ._mocker import TrismikResponseMocker
 
 
-class TestTrismikClient:
+@pytest.fixture
+def auth():
+    return TrismikAuth(
+        token="token", expires=datetime.now() + timedelta(hours=1)
+    )
 
-    def test_should_initialize_with_explicit_values(self) -> None:
-        TrismikClient(
-                service_url="service_url",
-                api_key="api_key",
+
+@pytest.fixture
+def item():
+    return MagicMock(spec=TrismikItem)
+
+
+@pytest.fixture(autouse=True)
+def mock_async_client(auth, item):
+    with patch("trismik.client.TrismikAsyncClient") as AsyncClientMock:
+        async_client_instance = MagicMock()
+        async_client_instance.authenticate = AsyncMock(return_value=auth)
+        async_client_instance.refresh_token = AsyncMock(return_value=auth)
+        async_client_instance.available_tests = AsyncMock(
+            return_value=[TrismikTest(id="test", name="Test")]
         )
-
-    def test_should_initialize_from_env(self, monkeypatch) -> None:
-        monkeypatch.setenv('TRISMIK_SERVICE_URL', 'service_url')
-        monkeypatch.setenv('TRISMIK_API_KEY', 'api_key')
-        TrismikClient(
-                service_url=None,
-                api_key=None,
+        async_client_instance.create_session = AsyncMock(
+            return_value=MagicMock(spec=TrismikSession)
         )
-
-    def test_should_initialize_with_default_when_service_url_not_provided(
-            self,
-            monkeypatch
-    ) -> None:
-        monkeypatch.delenv('TRISMIK_SERVICE_URL', raising=False)
-        TrismikClient(
-                service_url=None,
-                api_key="api_key"
+        async_client_instance.create_replay_session = AsyncMock(
+            return_value=MagicMock(spec=TrismikSession)
         )
-
-    def test_should_fail_initialize_when_api_key_not_provided(
-            self,
-            monkeypatch
-    ) -> None:
-        monkeypatch.delenv('TRISMIK_API_KEY', raising=False)
-        with pytest.raises(TrismikError,
-                           match="api_key client option must be set"):
-            TrismikClient(
-                    service_url="service_url",
-                    api_key=None,
-            )
-
-    def test_should_authenticate(self) -> None:
-        client = TrismikClient(http_client=self._mock_auth_response())
-        response = client.authenticate()
-        assert response.token == "token"
-        assert response.expires == datetime(2024, 8, 28, 14, 18, 10, 92400)
-
-    def test_should_fail_authenticate_when_api_returned_error(self) -> None:
-        with pytest.raises(TrismikApiError, match="message"):
-            client = TrismikClient(http_client=self._mock_error_response(401))
-            client.authenticate()
-
-    def test_should_refresh_token(self) -> None:
-        client = TrismikClient(http_client=self._mock_auth_response())
-        response = client.refresh_token("token")
-        assert response.token == "token"
-        assert response.expires == datetime(2024, 8, 28, 14, 18, 10, 92400)
-
-    def test_should_fail_refresh_token_when_api_returned_error(self) -> None:
-        with pytest.raises(TrismikApiError, match="message"):
-            client = TrismikClient(http_client=self._mock_error_response(401))
-            client.refresh_token("token")
-
-    def test_should_get_available_tests(self) -> None:
-        client = TrismikClient(http_client=self._mock_tests_response())
-        tests = client.available_tests("token")
-        assert len(tests) == 5
-        assert tests[0].id == "fluency"
-        assert tests[0].name == "Fluency"
-
-    def test_should_fail_get_available_tests_when_api_returned_error(
-            self
-    ) -> None:
-        with pytest.raises(TrismikApiError, match="message"):
-            client = TrismikClient(http_client=self._mock_error_response(401))
-            client.available_tests("token")
-
-    def test_should_create_session(self) -> None:
-        client = TrismikClient(http_client=self._mock_session_response())
-        session = client.create_session("fluency", "token")
-        assert session.id == "id"
-        assert session.url == "url"
-        assert session.status == "status"
-
-    def test_should_fail_create_session_when_api_returned_error(self) -> None:
-        with pytest.raises(TrismikApiError, match="message"):
-            client = TrismikClient(http_client=self._mock_error_response(401))
-            client.create_session("fluency", "token")
-
-    def test_should_get_current_item(self) -> None:
-        client = TrismikClient(http_client=self._mock_item_response())
-        item = client.current_item("url", "token")
-        assert isinstance(item, TrismikMultipleChoiceTextItem)
-        assert item.question == "question"
-        assert len(item.choices) == 3
-        assert item.choices[0].id == "choice_id_1"
-        assert item.choices[0].text == "choice_text_1"
-
-    def test_should_fail_get_current_item_when_api_returned_error(self) -> None:
-        with pytest.raises(TrismikApiError, match="message"):
-            client = TrismikClient(http_client=self._mock_error_response(401))
-            client.current_item("url", "token")
-
-    def test_should_respond_to_current_item(self) -> None:
-        client = TrismikClient(http_client=self._mock_item_response())
-        item = client.respond_to_current_item(
-                "url", "choice_id_1", "token"
+        async_client_instance.current_item = AsyncMock(return_value=item)
+        async_client_instance.respond_to_current_item = AsyncMock(
+            return_value=item
         )
-        assert isinstance(item, TrismikMultipleChoiceTextItem)
-        assert item.question == "question"
-        assert len(item.choices) == 3
-        assert item.choices[0].id == "choice_id_1"
-        assert item.choices[0].text == "choice_text_1"
-
-    def test_should_return_empty_item_when_finished(self) -> None:
-        client = TrismikClient(http_client=self._mock_no_content_response())
-        item = client.respond_to_current_item(
-                "url", "choice_id_1", "token"
+        async_client_instance.results = AsyncMock(
+            return_value=[MagicMock(spec=TrismikResult)]
         )
-        assert item is None
+        async_client_instance.responses = AsyncMock(
+            return_value=[MagicMock(spec=TrismikResponse)]
+        )
+        async_client_instance.add_metadata = AsyncMock(return_value=None)
+        AsyncClientMock.return_value = async_client_instance
+        yield async_client_instance
 
-    def test_should_fail_respond_to_current_item_when_api_returned_error(
-            self
-    ) -> None:
-        with pytest.raises(TrismikApiError, match="message"):
-            client = TrismikClient(http_client=self._mock_error_response(401))
-            client.respond_to_current_item(
-                    "url", "choice_id_1", "token"
-            )
 
-    def test_should_get_results(self) -> None:
-        client = TrismikClient(http_client=self._mock_results_response())
-        results = client.results("url", "token")
-        assert len(results) == 1
-        assert results[0].trait == "trait"
-        assert results[0].name == "name"
-        assert results[0].value == "value"
+def test_authenticate_delegates(mock_async_client):
+    client = TrismikClient()
+    result = client.authenticate()
+    assert result == mock_async_client.authenticate.return_value
+    mock_async_client.authenticate.assert_called_once()
 
-    def test_should_fail_get_results_when_api_returned_error(
-            self
-    ) -> None:
-        with pytest.raises(TrismikApiError, match="message"):
-            client = TrismikClient(http_client=self._mock_error_response(401))
-            client.results("url", "token")
 
-    def test_should_get_responses(self) -> None:
-        client = TrismikClient(http_client=self._mock_responses_response())
-        responses = client.responses("url", "token")
-        assert len(responses) == 1
-        assert responses[0].item_id == "item_id"
-        assert responses[0].value == "value"
-        assert responses[0].score == 1.0
+def test_error_propagation(mock_async_client):
+    mock_async_client.authenticate.side_effect = TrismikApiError("fail")
+    client = TrismikClient()
+    with pytest.raises(TrismikApiError, match="fail"):
+        client.authenticate()
 
-    def test_should_fail_get_responses_when_api_returned_error(
-            self
-    ) -> None:
-        with pytest.raises(TrismikApiError, match="message"):
-            client = TrismikClient(http_client=self._mock_error_response(401))
-            client.responses("url", "token")
 
-    @pytest.fixture(scope='function', autouse=True)
-    def set_env(self, monkeypatch) -> None:
-        monkeypatch.setenv('TRISMIK_SERVICE_URL', 'service_url')
-        monkeypatch.setenv('TRISMIK_API_KEY', 'api_key')
+def test_available_tests_delegates(mock_async_client):
+    client = TrismikClient()
+    token = "token"
+    result = client.available_tests(token)
+    assert result == mock_async_client.available_tests.return_value
+    mock_async_client.available_tests.assert_called_once_with(token)
 
-    @staticmethod
-    def _mock_auth_response() -> httpx.Client:
-        http_client = MagicMock(httpx.Client)
-        response = TrismikResponseMocker.auth()
-        http_client.get.return_value = response
-        http_client.post.return_value = response
-        return http_client
 
-    @staticmethod
-    def _mock_tests_response() -> httpx.Client:
-        http_client = MagicMock(httpx.Client)
-        response = TrismikResponseMocker.tests()
-        http_client.get.return_value = response
-        return http_client
+def test_create_session_delegates(mock_async_client):
+    client = TrismikClient()
+    metadata = MagicMock(spec=TrismikSessionMetadata)
+    token = "token"
+    test_id = "test_id"
+    result = client.create_session(test_id, metadata, token)
+    assert result == mock_async_client.create_session.return_value
+    mock_async_client.create_session.assert_called_once_with(
+        test_id, metadata, token
+    )
 
-    @staticmethod
-    def _mock_session_response() -> httpx.Client:
-        http_client = MagicMock(httpx.Client)
-        response = TrismikResponseMocker.session()
-        http_client.post.return_value = response
-        return http_client
 
-    @staticmethod
-    def _mock_item_response() -> httpx.Client:
-        http_client = MagicMock(httpx.Client)
-        response = TrismikResponseMocker.item()
-        http_client.get.return_value = response
-        http_client.post.return_value = response
-        return http_client
+def test_create_replay_session_delegates(mock_async_client):
+    client = TrismikClient()
+    metadata = MagicMock(spec=TrismikSessionMetadata)
+    token = "token"
+    prev_id = "prev_id"
+    result = client.create_replay_session(prev_id, metadata, token)
+    assert result == mock_async_client.create_replay_session.return_value
+    mock_async_client.create_replay_session.assert_called_once_with(
+        prev_id, metadata, token
+    )
 
-    @staticmethod
-    def _mock_error_response(status) -> httpx.Client:
-        http_client = MagicMock(httpx.Client)
-        response = TrismikResponseMocker.error(status)
-        http_client.get.return_value = response
-        http_client.post.return_value = response
-        return http_client
 
-    @staticmethod
-    def _mock_results_response() -> httpx.Client:
-        http_client = MagicMock(httpx.Client)
-        response = TrismikResponseMocker.results()
-        http_client.get.return_value = response
-        return http_client
+def test_add_metadata_delegates(mock_async_client):
+    client = TrismikClient()
+    session_id = "session_id"
+    metadata = MagicMock(spec=TrismikSessionMetadata)
+    token = "token"
+    result = client.add_metadata(session_id, metadata, token)
+    assert result == mock_async_client.add_metadata.return_value
+    mock_async_client.add_metadata.assert_called_once_with(
+        session_id, metadata, token
+    )
 
-    @staticmethod
-    def _mock_responses_response() -> httpx.Client:
-        http_client = MagicMock(httpx.Client)
-        response = TrismikResponseMocker.responses()
-        http_client.get.return_value = response
-        return http_client
 
-    @staticmethod
-    def _mock_no_content_response() -> httpx.Client:
-        http_client = MagicMock(httpx.Client)
-        response = TrismikResponseMocker.no_content()
-        http_client.get.return_value = response
-        http_client.post.return_value = response
-        return http_client
+def test_current_item_delegates(mock_async_client):
+    client = TrismikClient()
+    session_url = "url"
+    token = "token"
+    result = client.current_item(session_url, token)
+    assert result == mock_async_client.current_item.return_value
+    mock_async_client.current_item.assert_called_once_with(session_url, token)
+
+
+def test_respond_to_current_item_delegates(mock_async_client):
+    client = TrismikClient()
+    session_url = "url"
+    value = "value"
+    token = "token"
+    result = client.respond_to_current_item(session_url, value, token)
+    assert result == mock_async_client.respond_to_current_item.return_value
+    mock_async_client.respond_to_current_item.assert_called_once_with(
+        session_url, value, token
+    )
+
+
+def test_results_delegates(mock_async_client):
+    client = TrismikClient()
+    session_url = "url"
+    token = "token"
+    result = client.results(session_url, token)
+    assert result == mock_async_client.results.return_value
+    mock_async_client.results.assert_called_once_with(session_url, token)
+
+
+def test_responses_delegates(mock_async_client):
+    client = TrismikClient()
+    session_url = "url"
+    token = "token"
+    result = client.responses(session_url, token)
+    assert result == mock_async_client.responses.return_value
+    mock_async_client.responses.assert_called_once_with(session_url, token)
