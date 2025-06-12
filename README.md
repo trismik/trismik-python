@@ -1,7 +1,7 @@
 <h1 align="center"> Trismik SDK</h1>
 
 <p align="center">
-  <img alt="Dynamic TOML Badge" src="https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Ftrismik%2Ftrismik-python%2Frefs%2Fheads%2Fdevelop%2Fpyproject.toml&query=%24.tool.poetry.version&style=flat&label=pypi">
+  <img alt="Dynamic TOML Badge" src="https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Ftrismik%2Ftrismik-python%2Frefs%2Fheads%2Fmain%2Fpyproject.toml&query=%24.tool.poetry.version&style=flat&label=version">
   <img alt="Python Version" src="https://img.shields.io/badge/python-3.9%2B-blue">
   <img alt="License" src="https://img.shields.io/badge/license-MIT-green">
 </p>
