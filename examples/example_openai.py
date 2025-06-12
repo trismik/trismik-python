@@ -3,7 +3,15 @@ Example usage adaptive testing through the Trismik API and the OpenAI API.
 
 This example uses gpt-4.1-nano-2025-04-14 as an example. You can use any
 other model that you have access to. Remember to provide your own Trismik
-API key (and OpenAI API key) in the .env file.
+API key in the .env file. The OpenAI API key can be provided in the .env file
+as well, or you can provide it as an environment variable.
+
+The content of the .env file should look like this:
+
+```
+TRISMIK_API_KEY=your-trismik-api-key
+OPENAI_API_KEY=your-openai-api-key
+```
 """
 
 import asyncio

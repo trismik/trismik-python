@@ -110,7 +110,13 @@ poetry run python examples/example_adaptive_test.py # or any other example
 
 ### Theta (θ)
 
-Our adversarial test returns several values; you will be interested mainly in `theta`. Theta (θ) is our metric; it measures the ability of the model on a certain dataset, and it can be used as a proxy to approximate the original metric used on that dataset. For example, on an accuracy-based dataset, a high θ correlates with a high accuracy, and low θ correlates with low accuracy.
+Our adversarial test returns several values; however, you will be interested mainly in `theta`. Theta ($\theta$) is our metric; it measures the ability of the model on a certain dataset, and it can be used as a proxy to approximate the original metric used on that dataset. For example, on an accuracy-based dataset, a high theta correlates with a high accuracy, and low theta correlates with low accuracy.
+
+To interpret a theta score, consider that $\theta=0$ corresponds to a 50% chance for a model to get an answer right - in other words, to an accuracy of 50%.
+A negative theta means that the model will give more bad answers then good ones, while a positive theta means that the model will give more good answers then bad answers.
+While theta is unbounded in our implementation (i.e. $-\infty < \theta < \infty$), in practice we have that for most cases $\theta$ will take values between -3 and 3.
+
+Compared to classical benchmark testing, the estimated accuracy from adaptive testing uses fewer but more informative items while avoiding noise from overly easy or difficult questions. This makes it a more efficient and stable measure, especially on very large datasets.
 
 ### Other Metrics
 
@@ -121,11 +127,12 @@ Our adversarial test returns several values; you will be interested mainly in `t
 
 - **Correct Responses (`responsesCorrect`)**:
   - The number of correct answers delivered by the model
-  - **Important note**: A higher number of correct answers does not mean a high theta. Our algorithm navigates datasets looking for "hard" and "easy"
-  items for your model in a way that and at the of the test, the model should
-  encounter a healthy mix of inputs it can and it cannot handle. In practical
-  terms, expect `responsesCorrect` to be about half of `responsesTotal`.
 
+  - **Important note**: A higher number of correct answers does not necessarily
+  correlate with a high theta. Our algorithm navigates the dataset to find a
+   balance of “hard” and “easy” items for your model, so by the end of the test,
+  it encounters a representative mix of inputs it can and cannot handle. In
+   practice, expect responsesCorrect to be roughly half of responsesTotal.
 
 - **Total Responses (`responsesTotal`)**:
   - The number of items processed before reaching a stable theta.
