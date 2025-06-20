@@ -5,7 +5,6 @@ This module tests both synchronous and asynchronous functionality of the
 AdaptiveTest class.
 """
 
-from datetime import datetime, timedelta
 from typing import Any, Awaitable, Callable
 from unittest.mock import MagicMock
 
@@ -14,7 +13,6 @@ import pytest
 from trismik.adaptive_test import AdaptiveTest
 from trismik.client_async import TrismikAsyncClient
 from trismik.types import (
-    TrismikAuth,
     TrismikItem,
     TrismikMultipleChoiceTextItem,
     TrismikResponse,
@@ -39,11 +37,9 @@ class TestAdaptiveTest:
         )
 
     @pytest.fixture
-    def mock_client(self, auth, item) -> TrismikAsyncClient:
+    def mock_client(self, item) -> TrismikAsyncClient:
         """Create a mock async client."""
         client = MagicMock(spec=TrismikAsyncClient)
-        client.authenticate.return_value = auth
-        client.refresh_token.return_value = auth
 
         # Create a session with a real string URL
         session = TrismikSession(id="id", url="url", status="status")
@@ -59,13 +55,6 @@ class TestAdaptiveTest:
             TrismikResponse(item_id="id", value="value", score=1.0)
         ]
         return client
-
-    @pytest.fixture
-    def auth(self) -> TrismikAuth:
-        """Create a test auth token."""
-        return TrismikAuth(
-            token="token", expires=datetime.now() + timedelta(hours=1)
-        )
 
     @pytest.fixture
     def sync_item_processor(self) -> Callable[[TrismikItem], Any]:
@@ -86,25 +75,19 @@ class TestAdaptiveTest:
         return processor
 
     @pytest.fixture
-    def sync_runner(
-        self, sync_item_processor, mock_client, auth
-    ) -> AdaptiveTest:
+    def sync_runner(self, sync_item_processor, mock_client) -> AdaptiveTest:
         """Create a test instance with sync item processor."""
         return AdaptiveTest(
             item_processor=sync_item_processor,
             client=mock_client,
-            auth=auth,
         )
 
     @pytest.fixture
-    def async_runner(
-        self, async_item_processor, mock_client, auth
-    ) -> AdaptiveTest:
+    def async_runner(self, async_item_processor, mock_client) -> AdaptiveTest:
         """Create a test instance with async item processor."""
         return AdaptiveTest(
             item_processor=async_item_processor,
             client=mock_client,
-            auth=auth,
         )
 
     def test_run_sync(self, sync_runner, mock_client):
@@ -118,17 +101,13 @@ class TestAdaptiveTest:
         )
         results = sync_runner.run("test_id", metadata)
 
-        mock_client.authenticate.assert_not_called()
-        mock_client.refresh_token.assert_not_called()
-        mock_client.create_session.assert_called_once_with(
-            "test_id", metadata, "token"
-        )
-        mock_client.current_item.assert_called_once_with("url", "token")
+        mock_client.create_session.assert_called_once_with("test_id", metadata)
+        mock_client.current_item.assert_called_once_with("url")
         mock_client.respond_to_current_item.assert_called_with(
-            "url", "processed_response", "token"
+            "url", "processed_response"
         )
         assert mock_client.respond_to_current_item.call_count == 2
-        mock_client.results.assert_called_once_with("url", "token")
+        mock_client.results.assert_called_once_with("url")
         assert isinstance(results, TrismikRunResults)
         assert len(results.results) == 1
 
@@ -144,17 +123,13 @@ class TestAdaptiveTest:
         )
         results = await async_runner.run_async("test_id", metadata)
 
-        mock_client.authenticate.assert_not_called()
-        mock_client.refresh_token.assert_not_called()
-        mock_client.create_session.assert_called_once_with(
-            "test_id", metadata, "token"
-        )
-        mock_client.current_item.assert_called_once_with("url", "token")
+        mock_client.create_session.assert_called_once_with("test_id", metadata)
+        mock_client.current_item.assert_called_once_with("url")
         mock_client.respond_to_current_item.assert_called_with(
-            "url", "processed_response", "token"
+            "url", "processed_response"
         )
         assert mock_client.respond_to_current_item.call_count == 2
-        mock_client.results.assert_called_once_with("url", "token")
+        mock_client.results.assert_called_once_with("url")
         assert isinstance(results, TrismikRunResults)
         assert len(results.results) == 1
 
@@ -169,18 +144,14 @@ class TestAdaptiveTest:
         )
         results = sync_runner.run("test_id", metadata, with_responses=True)
 
-        mock_client.authenticate.assert_not_called()
-        mock_client.refresh_token.assert_not_called()
-        mock_client.create_session.assert_called_once_with(
-            "test_id", metadata, "token"
-        )
-        mock_client.current_item.assert_called_once_with("url", "token")
+        mock_client.create_session.assert_called_once_with("test_id", metadata)
+        mock_client.current_item.assert_called_once_with("url")
         mock_client.respond_to_current_item.assert_called_with(
-            "url", "processed_response", "token"
+            "url", "processed_response"
         )
         assert mock_client.respond_to_current_item.call_count == 2
-        mock_client.results.assert_called_once_with("url", "token")
-        mock_client.responses.assert_called_once_with("url", "token")
+        mock_client.results.assert_called_once_with("url")
+        mock_client.responses.assert_called_once_with("url")
         assert isinstance(results, TrismikRunResults)
         assert len(results.results) == 1
         assert len(results.responses) == 1
@@ -199,18 +170,14 @@ class TestAdaptiveTest:
             "test_id", metadata, with_responses=True
         )
 
-        mock_client.authenticate.assert_not_called()
-        mock_client.refresh_token.assert_not_called()
-        mock_client.create_session.assert_called_once_with(
-            "test_id", metadata, "token"
-        )
-        mock_client.current_item.assert_called_once_with("url", "token")
+        mock_client.create_session.assert_called_once_with("test_id", metadata)
+        mock_client.current_item.assert_called_once_with("url")
         mock_client.respond_to_current_item.assert_called_with(
-            "url", "processed_response", "token"
+            "url", "processed_response"
         )
         assert mock_client.respond_to_current_item.call_count == 2
-        mock_client.results.assert_called_once_with("url", "token")
-        mock_client.responses.assert_called_once_with("url", "token")
+        mock_client.results.assert_called_once_with("url")
+        mock_client.responses.assert_called_once_with("url")
         assert isinstance(results, TrismikRunResults)
         assert len(results.results) == 1
         assert len(results.responses) == 1
@@ -226,17 +193,15 @@ class TestAdaptiveTest:
         )
         results = sync_runner.run_replay("previous_id", metadata)
 
-        mock_client.authenticate.assert_not_called()
-        mock_client.refresh_token.assert_not_called()
         mock_client.create_replay_session.assert_called_once_with(
-            "previous_id", metadata, "token"
+            "previous_id", metadata
         )
-        mock_client.current_item.assert_called_once_with("url", "token")
+        mock_client.current_item.assert_called_once_with("url")
         mock_client.respond_to_current_item.assert_called_with(
-            "url", "processed_response", "token"
+            "url", "processed_response"
         )
         assert mock_client.respond_to_current_item.call_count == 2
-        mock_client.results.assert_called_once_with("url", "token")
+        mock_client.results.assert_called_once_with("url")
         assert isinstance(results, TrismikRunResults)
         assert len(results.results) == 1
 
@@ -252,68 +217,47 @@ class TestAdaptiveTest:
         )
         results = await async_runner.run_replay_async("previous_id", metadata)
 
-        mock_client.authenticate.assert_not_called()
-        mock_client.refresh_token.assert_not_called()
         mock_client.create_replay_session.assert_called_once_with(
-            "previous_id", metadata, "token"
+            "previous_id", metadata
         )
-        mock_client.current_item.assert_called_once_with("url", "token")
+        mock_client.current_item.assert_called_once_with("url")
         mock_client.respond_to_current_item.assert_called_with(
-            "url", "processed_response", "token"
+            "url", "processed_response"
         )
         assert mock_client.respond_to_current_item.call_count == 2
-        mock_client.results.assert_called_once_with("url", "token")
+        mock_client.results.assert_called_once_with("url")
         assert isinstance(results, TrismikRunResults)
         assert len(results.results) == 1
 
-    def test_should_authenticate_itself_when_auth_was_not_provided(
-        self, sync_item_processor, mock_client
+    def test_should_create_client_when_api_key_provided(
+        self, sync_item_processor
     ):
-        """Test that the runner authenticates itself when no auth provided."""
+        """Test that the runner creates a client when api_key is provided."""
         runner = AdaptiveTest(
             item_processor=sync_item_processor,
-            client=mock_client,
+            api_key="test_api_key",
         )
-        metadata = TrismikSessionMetadata(
-            model_metadata=TrismikSessionMetadata.ModelMetadata(
-                name="test_model"
-            ),
-            test_configuration={},
-            inference_setup={},
-        )
-        runner.run("test_id", metadata)
+        assert isinstance(runner._client, TrismikAsyncClient)
 
-        mock_client.authenticate.assert_called_once()
-
-    def test_should_refresh_token_when_close_to_expiration(
+    def test_should_raise_error_when_both_client_and_api_key_provided(
         self, sync_item_processor, mock_client
     ):
-        """Test that the runner refreshes the token when close to expiration."""
-        runner = AdaptiveTest(
-            item_processor=sync_item_processor,
-            client=mock_client,
-            auth=TrismikAuth(
-                token="token", expires=datetime.now() + timedelta(minutes=1)
-            ),
-        )
-        metadata = TrismikSessionMetadata(
-            model_metadata=TrismikSessionMetadata.ModelMetadata(
-                name="test_model"
-            ),
-            test_configuration={},
-            inference_setup={},
-        )
-        runner.run("test_id", metadata)
-
-        mock_client.authenticate.assert_not_called()
-        mock_client.refresh_token.assert_called_once_with("token")
+        """Test that the runner raises an error with both client and api_key."""
+        with pytest.raises(
+            ValueError,
+            match="Either 'client' or 'api_key' should be provided, not both.",
+        ):
+            AdaptiveTest(
+                item_processor=sync_item_processor,
+                client=mock_client,
+                api_key="test_api_key",
+            )
 
     def test_max_items_parameter(self, sync_runner, mock_client):
         """Test that the max_items parameter is respected."""
         runner = AdaptiveTest(
             item_processor=sync_runner._item_processor,
             client=mock_client,
-            auth=sync_runner._auth,
             max_items=2,
         )
         metadata = TrismikSessionMetadata(

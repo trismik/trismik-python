@@ -13,7 +13,6 @@ from trismik._mapper import TrismikResponseMapper
 from trismik._utils import TrismikUtils
 from trismik.exceptions import TrismikApiError
 from trismik.types import (
-    TrismikAuth,
     TrismikItem,
     TrismikResponse,
     TrismikResult,
@@ -45,7 +44,7 @@ class TrismikAsyncClient:
         Args:
             service_url (Optional[str]): URL of the Trismik service.
             api_key (Optional[str]): API key for the Trismik service.
-            http_client (Optional[httpx.Client]): HTTP client to use for
+            http_client (Optional[httpx.AsyncClient]): HTTP client to use for
                 requests.
 
         Raises:
@@ -59,67 +58,17 @@ class TrismikAsyncClient:
         self._api_key = TrismikUtils.required_option(
             api_key, "api_key", "TRISMIK_API_KEY"
         )
+
+        # Set default headers with API key
+        default_headers = {"x-api-key": self._api_key}
+
         self._http_client = http_client or httpx.AsyncClient(
-            base_url=self._service_url
+            base_url=self._service_url, headers=default_headers
         )
 
-    async def authenticate(self) -> TrismikAuth:
-        """
-        Authenticate with the Trismik service.
-
-        Returns:
-            TrismikAuth: Authentication token.
-
-        Raises:
-            TrismikApiError: If API request fails.
-        """
-        try:
-            url = "/client/auth"
-            body = {"apiKey": self._api_key}
-            response = await self._http_client.post(url, json=body)
-            response.raise_for_status()
-            json = response.json()
-            return TrismikResponseMapper.to_auth(json)
-        except httpx.HTTPStatusError as e:
-            raise TrismikApiError(
-                TrismikUtils.get_error_message(e.response)
-            ) from e
-        except httpx.HTTPError as e:
-            raise TrismikApiError(str(e)) from e
-
-    async def refresh_token(self, token: str) -> TrismikAuth:
-        """
-        Refresh the authentication token.
-
-        Args:
-            token (str): Current authentication token.
-
-        Returns:
-            TrismikAuth: New authentication token.
-
-        Raises:
-            TrismikApiError: If API request fails.
-        """
-        try:
-            url = "/client/token"
-            headers = {"Authorization": f"Bearer {token}"}
-            response = await self._http_client.get(url, headers=headers)
-            response.raise_for_status()
-            json = response.json()
-            return TrismikResponseMapper.to_auth(json)
-        except httpx.HTTPStatusError as e:
-            raise TrismikApiError(
-                TrismikUtils.get_error_message(e.response)
-            ) from e
-        except httpx.HTTPError as e:
-            raise TrismikApiError(str(e)) from e
-
-    async def available_tests(self, token: str) -> List[TrismikTest]:
+    async def available_tests(self) -> List[TrismikTest]:
         """
         Get a list of available tests.
-
-        Args:
-            token (str): Authentication token.
 
         Returns:
             List[TrismikTest]: List of available tests.
@@ -129,8 +78,7 @@ class TrismikAsyncClient:
         """
         try:
             url = "/client/tests"
-            headers = {"Authorization": f"Bearer {token}"}
-            response = await self._http_client.get(url, headers=headers)
+            response = await self._http_client.get(url)
             response.raise_for_status()
             json = response.json()
             return TrismikResponseMapper.to_tests(json)
@@ -142,7 +90,7 @@ class TrismikAsyncClient:
             raise TrismikApiError(str(e)) from e
 
     async def create_session(
-        self, test_id: str, metadata: TrismikSessionMetadata, token: str
+        self, test_id: str, metadata: TrismikSessionMetadata
     ) -> TrismikSession:
         """
         Create a new session for a test.
@@ -150,7 +98,6 @@ class TrismikAsyncClient:
         Args:
             test_id (str): ID of the test.
             metadata (TrismikSessionMetadata): Metadata for the session.
-            token (str): Authentication token.
 
         Returns:
             TrismikSession: New session.
@@ -160,11 +107,8 @@ class TrismikAsyncClient:
         """
         try:
             url = "/client/sessions"
-            headers = {"Authorization": f"Bearer {token}"}
             body = {"testId": test_id, "metadata": metadata.toDict()}
-            response = await self._http_client.post(
-                url, headers=headers, json=body
-            )
+            response = await self._http_client.post(url, json=body)
             response.raise_for_status()
             json = response.json()
             return TrismikResponseMapper.to_session(json)
@@ -179,7 +123,6 @@ class TrismikAsyncClient:
         self,
         previous_session_id: str,
         metadata: TrismikSessionMetadata,
-        token: str,
     ) -> TrismikSession:
         """
         Create a new session that replays a previous session.
@@ -190,7 +133,6 @@ class TrismikAsyncClient:
         Args:
             previous_session_id (str): Session id of the session to replay.
             metadata (TrismikSessionMetadata): Metadata for the session.
-            token (str): Authentication token.
 
         Returns:
             TrismikSession: New session.
@@ -200,14 +142,11 @@ class TrismikAsyncClient:
         """
         try:
             url = "/client/sessions/replay"
-            headers = {"Authorization": f"Bearer {token}"}
             body = {
                 "previousSessionToken": previous_session_id,
                 "metadata": metadata.toDict(),
             }
-            response = await self._http_client.post(
-                url, headers=headers, json=body
-            )
+            response = await self._http_client.post(url, json=body)
             response.raise_for_status()
             json = response.json()
             return TrismikResponseMapper.to_session(json)
@@ -219,7 +158,7 @@ class TrismikAsyncClient:
             raise TrismikApiError(str(e)) from e
 
     async def add_metadata(
-        self, session_id: str, metadata: TrismikSessionMetadata, token: str
+        self, session_id: str, metadata: TrismikSessionMetadata
     ) -> None:
         """
         Add metadata to the session, merging it with any already stored.
@@ -228,18 +167,14 @@ class TrismikAsyncClient:
             session_id (str): ID of the session object.
             metadata (TrismikSessionMetadata): Object containing the metadata
                 to add.
-            token (str): Authentication token.
 
         Raises:
             TrismikApiError: If API request fails.
         """
         try:
             url = f"/client/sessions/{session_id}/metadata"
-            headers = {"Authorization": f"Bearer {token}"}
             body = metadata.toDict()
-            response = await self._http_client.post(
-                url, headers=headers, json=body
-            )
+            response = await self._http_client.post(url, json=body)
             response.raise_for_status()
         except httpx.HTTPStatusError as e:
             raise TrismikApiError(
@@ -248,13 +183,12 @@ class TrismikAsyncClient:
         except httpx.HTTPError as e:
             raise TrismikApiError(str(e)) from e
 
-    async def current_item(self, session_url: str, token: str) -> TrismikItem:
+    async def current_item(self, session_url: str) -> TrismikItem:
         """
         Get the current test item.
 
         Args:
             session_url (str): URL of the session.
-            token (str): Authentication token.
 
         Returns:
             TrismikItem: Current test item.
@@ -264,8 +198,7 @@ class TrismikAsyncClient:
         """
         try:
             url = f"{session_url}/item"
-            headers = {"Authorization": f"Bearer {token}"}
-            response = await self._http_client.get(url, headers=headers)
+            response = await self._http_client.get(url)
             response.raise_for_status()
             json = response.json()
             return TrismikResponseMapper.to_item(json)
@@ -277,7 +210,7 @@ class TrismikAsyncClient:
             raise TrismikApiError(str(e)) from e
 
     async def respond_to_current_item(
-        self, session_url: str, value: Any, token: str
+        self, session_url: str, value: Any
     ) -> Optional[TrismikItem]:
         """
         Respond to the current test item.
@@ -285,7 +218,6 @@ class TrismikAsyncClient:
         Args:
             session_url (str): URL of the session.
             value (Any): Response value.
-            token (str): Authentication token.
 
         Returns:
             Optional[TrismikItem]: Next test item or None if session is
@@ -297,10 +229,7 @@ class TrismikAsyncClient:
         try:
             url = f"{session_url}/item"
             body = {"value": value}
-            headers = {"Authorization": f"Bearer {token}"}
-            response = await self._http_client.post(
-                url, headers=headers, json=body
-            )
+            response = await self._http_client.post(url, json=body)
             response.raise_for_status()
             if response.status_code == 204:
                 return None
@@ -314,15 +243,12 @@ class TrismikAsyncClient:
         except httpx.HTTPError as e:
             raise TrismikApiError(str(e)) from e
 
-    async def results(
-        self, session_url: str, token: str
-    ) -> List[TrismikResult]:
+    async def results(self, session_url: str) -> List[TrismikResult]:
         """
         Get the results of a session.
 
         Args:
             session_url (str): URL of the session.
-            token (str): Authentication token.
 
         Returns:
             List[TrismikResult]: Results of the session.
@@ -332,8 +258,7 @@ class TrismikAsyncClient:
         """
         try:
             url = f"{session_url}/results"
-            headers = {"Authorization": f"Bearer {token}"}
-            response = await self._http_client.get(url, headers=headers)
+            response = await self._http_client.get(url)
             response.raise_for_status()
             json = response.json()
             return TrismikResponseMapper.to_results(json)
@@ -344,15 +269,12 @@ class TrismikAsyncClient:
         except httpx.HTTPError as e:
             raise TrismikApiError(str(e)) from e
 
-    async def responses(
-        self, session_url: str, token: str
-    ) -> List[TrismikResponse]:
+    async def responses(self, session_url: str) -> List[TrismikResponse]:
         """
         Get responses to session items.
 
         Args:
             session_url (str): URL of the session.
-            token (str): Authentication token.
 
         Returns:
             List[TrismikResponse]: Responses of the session.
@@ -362,8 +284,7 @@ class TrismikAsyncClient:
         """
         try:
             url = f"{session_url}/responses"
-            headers = {"Authorization": f"Bearer {token}"}
-            response = await self._http_client.get(url, headers=headers)
+            response = await self._http_client.get(url)
             response.raise_for_status()
             json = response.json()
             return TrismikResponseMapper.to_responses(json)

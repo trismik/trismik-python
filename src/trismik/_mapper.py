@@ -1,10 +1,7 @@
 from typing import Any, Dict, List
 
-from dateutil.parser import parse as parse_date
-
 from trismik.exceptions import TrismikApiError
 from trismik.types import (
-    TrismikAuth,
     TrismikItem,
     TrismikMultipleChoiceTextItem,
     TrismikResponse,
@@ -22,22 +19,6 @@ class TrismikResponseMapper:
     This class provides static methods to convert JSON responses from various
     API endpoints into their corresponding Python object representations.
     """
-
-    @staticmethod
-    def to_auth(json: Dict[str, Any]) -> TrismikAuth:
-        """
-        Convert JSON response to a TrismikAuth object.
-
-        Args:
-            json (Dict[str, Any]): JSON response containing auth data.
-
-        Returns:
-            TrismikAuth: Authentication object with token and expiration.
-        """
-        return TrismikAuth(
-            token=json["token"],
-            expires=parse_date(json["expires"]),
-        )
 
     @staticmethod
     def to_tests(json: List[Dict[str, Any]]) -> List[TrismikTest]:

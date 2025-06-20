@@ -6,16 +6,7 @@ library.
 """
 
 from dataclasses import dataclass
-from datetime import datetime
 from typing import Any, Dict, List, Optional
-
-
-@dataclass
-class TrismikAuth:
-    """Authentication token and expiration time."""
-
-    token: str
-    expires: datetime
 
 
 @dataclass

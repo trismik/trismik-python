@@ -1,4 +1,3 @@
-from datetime import datetime
 from unittest.mock import MagicMock
 
 import httpx
@@ -27,7 +26,7 @@ class TestTrismikAsyncClient:
             api_key=None,
         )
 
-    def test_should_fail_initialize_with_default_when_service_url_not_provided(
+    def test_should_initialize_with_default_service_url(
         self, monkeypatch
     ) -> None:
         monkeypatch.delenv("TRISMIK_SERVICE_URL", raising=False)
@@ -46,43 +45,9 @@ class TestTrismikAsyncClient:
             )
 
     @pytest.mark.asyncio
-    async def test_should_authenticate(self) -> None:
-        client = TrismikAsyncClient(http_client=self._mock_auth_response())
-        response = await client.authenticate()
-        assert response.token == "token"
-        assert response.expires == datetime(2024, 8, 28, 14, 18, 10, 92400)
-
-    @pytest.mark.asyncio
-    async def test_should_fail_authenticate_when_api_returned_error(
-        self,
-    ) -> None:
-        with pytest.raises(TrismikApiError, match="message"):
-            client = TrismikAsyncClient(
-                http_client=self._mock_error_response(401)
-            )
-            await client.authenticate()
-
-    @pytest.mark.asyncio
-    async def test_should_refresh_token(self) -> None:
-        client = TrismikAsyncClient(http_client=self._mock_auth_response())
-        response = await client.refresh_token("token")
-        assert response.token == "token"
-        assert response.expires == datetime(2024, 8, 28, 14, 18, 10, 92400)
-
-    @pytest.mark.asyncio
-    async def test_should_fail_refresh_token_when_api_returned_error(
-        self,
-    ) -> None:
-        with pytest.raises(TrismikApiError, match="message"):
-            client = TrismikAsyncClient(
-                http_client=self._mock_error_response(401)
-            )
-            await client.refresh_token("token")
-
-    @pytest.mark.asyncio
     async def test_should_get_available_tests(self) -> None:
         client = TrismikAsyncClient(http_client=self._mock_tests_response())
-        tests = await client.available_tests("token")
+        tests = await client.available_tests()
         assert len(tests) == 5
         assert tests[0].id == "fluency"
         assert tests[0].name == "Fluency"
@@ -95,7 +60,7 @@ class TestTrismikAsyncClient:
             client = TrismikAsyncClient(
                 http_client=self._mock_error_response(401)
             )
-            await client.available_tests("token")
+            await client.available_tests()
 
     @pytest.mark.asyncio
     async def test_should_create_session(self) -> None:
@@ -107,7 +72,7 @@ class TestTrismikAsyncClient:
             test_configuration={},
             inference_setup={},
         )
-        session = await client.create_session("fluency", metadata, "token")
+        session = await client.create_session("fluency", metadata)
         assert session.id == "id"
         assert session.url == "url"
         assert session.status == "status"
@@ -127,12 +92,12 @@ class TestTrismikAsyncClient:
                 test_configuration={},
                 inference_setup={},
             )
-            await client.create_session("fluency", metadata, "token")
+            await client.create_session("fluency", metadata)
 
     @pytest.mark.asyncio
     async def test_should_get_current_item(self) -> None:
         client = TrismikAsyncClient(http_client=self._mock_item_response())
-        item = await client.current_item("url", "token")
+        item = await client.current_item("url")
         assert isinstance(item, TrismikMultipleChoiceTextItem)
         assert item.question == "question"
         assert len(item.choices) == 3
@@ -147,14 +112,12 @@ class TestTrismikAsyncClient:
             client = TrismikAsyncClient(
                 http_client=self._mock_error_response(401)
             )
-            await client.current_item("url", "token")
+            await client.current_item("url")
 
     @pytest.mark.asyncio
     async def test_should_respond_to_current_item(self) -> None:
         client = TrismikAsyncClient(http_client=self._mock_item_response())
-        item = await client.respond_to_current_item(
-            "url", "choice_id_1", "token"
-        )
+        item = await client.respond_to_current_item("url", "choice_id_1")
         assert isinstance(item, TrismikMultipleChoiceTextItem)
         assert item.question == "question"
         assert len(item.choices) == 3
@@ -166,9 +129,7 @@ class TestTrismikAsyncClient:
         client = TrismikAsyncClient(
             http_client=self._mock_no_content_response()
         )
-        item = await client.respond_to_current_item(
-            "url", "choice_id_1", "token"
-        )
+        item = await client.respond_to_current_item("url", "choice_id_1")
         assert item is None
 
     @pytest.mark.asyncio
@@ -179,12 +140,12 @@ class TestTrismikAsyncClient:
             client = TrismikAsyncClient(
                 http_client=self._mock_error_response(401)
             )
-            await client.respond_to_current_item("url", "choice_id_1", "token")
+            await client.respond_to_current_item("url", "choice_id_1")
 
     @pytest.mark.asyncio
     async def test_should_get_results(self) -> None:
         client = TrismikAsyncClient(http_client=self._mock_results_response())
-        results = await client.results("url", "token")
+        results = await client.results("url")
         assert len(results) == 1
         assert results[0].trait == "trait"
         assert results[0].name == "name"
@@ -198,12 +159,12 @@ class TestTrismikAsyncClient:
             client = TrismikAsyncClient(
                 http_client=self._mock_error_response(401)
             )
-            await client.results("url", "token")
+            await client.results("url")
 
     @pytest.mark.asyncio
     async def test_should_get_responses(self) -> None:
         client = TrismikAsyncClient(http_client=self._mock_responses_response())
-        responses = await client.responses("url", "token")
+        responses = await client.responses("url")
         assert len(responses) == 1
         assert responses[0].item_id == "item_id"
         assert responses[0].value == "value"
@@ -217,20 +178,12 @@ class TestTrismikAsyncClient:
             client = TrismikAsyncClient(
                 http_client=self._mock_error_response(401)
             )
-            await client.responses("url", "token")
+            await client.responses("url")
 
     @pytest.fixture(scope="function", autouse=True)
     def set_env(self, monkeypatch) -> None:
         monkeypatch.setenv("TRISMIK_SERVICE_URL", "service_url")
         monkeypatch.setenv("TRISMIK_API_KEY", "api_key")
-
-    @staticmethod
-    def _mock_auth_response() -> httpx.AsyncClient:
-        http_client = MagicMock(httpx.AsyncClient)
-        response = TrismikResponseMocker.auth()
-        http_client.get.return_value = response
-        http_client.post.return_value = response
-        return http_client
 
     @staticmethod
     def _mock_tests_response() -> httpx.AsyncClient:

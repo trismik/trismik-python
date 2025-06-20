@@ -7,19 +7,13 @@ the async ones.
 """
 
 import asyncio
-from datetime import datetime, timedelta
 from typing import Any, Callable, Optional
 
 import nest_asyncio
 from tqdm.auto import tqdm
 
 from trismik.client_async import TrismikAsyncClient
-from trismik.types import (
-    TrismikAuth,
-    TrismikItem,
-    TrismikRunResults,
-    TrismikSessionMetadata,
-)
+from trismik.types import TrismikItem, TrismikRunResults, TrismikSessionMetadata
 
 
 class AdaptiveTest:
@@ -35,7 +29,7 @@ class AdaptiveTest:
         self,
         item_processor: Callable[[TrismikItem], Any],
         client: Optional[TrismikAsyncClient] = None,
-        auth: Optional[TrismikAuth] = None,
+        api_key: Optional[str] = None,
         max_items: int = 60,
     ) -> None:
         """
@@ -45,17 +39,23 @@ class AdaptiveTest:
             item_processor (Callable[[TrismikItem], Any]): Function to process
               test items. For async usage, this should be an async function.
             client (Optional[TrismikAsyncClient]): Trismik async client to use
-              for requests.
-            auth (Optional[TrismikAuth]): Authentication token to use for
-              requests.
+              for requests. If not provided, a new one will be created.
+            api_key (Optional[str]): API key to use if a new client is created.
             max_items (int): Maximum number of items to process. Default is 60.
 
         Raises:
+            ValueError: If both client and api_key are provided.
             TrismikApiError: If API request fails.
         """
+        if client and api_key:
+            raise ValueError(
+                "Either 'client' or 'api_key' should be provided, not both."
+            )
         self._item_processor = item_processor
-        self._client = client
-        self._auth = auth
+        if client:
+            self._client = client
+        else:
+            self._client = TrismikAsyncClient(api_key=api_key)
         self._max_items = max_items
         self._loop = None
 
@@ -126,25 +126,13 @@ class AdaptiveTest:
         Raises:
             TrismikApiError: If API request fails.
         """
-        await self._init_async()
-        assert (
-            self._client is not None
-        ), "Client should be initialized by _init_async()"
-        assert (
-            self._auth is not None
-        ), "Auth should be initialized by _init_async()"
-        await self._refresh_token_if_needed_async()
-        session = await self._client.create_session(
-            test_id, session_metadata, self._auth.token
-        )
+        session = await self._client.create_session(test_id, session_metadata)
 
         await self._run_session_async(session.url)
-        results = await self._client.results(session.url, self._auth.token)
+        results = await self._client.results(session.url)
 
         if with_responses:
-            responses = await self._client.responses(
-                session.url, self._auth.token
-            )
+            responses = await self._client.responses(session.url)
             return TrismikRunResults(session.id, results, responses)
         else:
             return TrismikRunResults(session.id, results)
@@ -202,25 +190,15 @@ class AdaptiveTest:
         Raises:
             TrismikApiError: If API request fails.
         """
-        await self._init_async()
-        assert (
-            self._client is not None
-        ), "Client should be initialized by _init_async()"
-        assert (
-            self._auth is not None
-        ), "Auth should be initialized by _init_async()"
-        await self._refresh_token_if_needed_async()
         session = await self._client.create_replay_session(
-            previous_session_id, session_metadata, self._auth.token
+            previous_session_id, session_metadata
         )
 
         await self._run_session_async(session.url)
-        results = await self._client.results(session.url, self._auth.token)
+        results = await self._client.results(session.url)
 
         if with_responses:
-            responses = await self._client.responses(
-                session.url, self._auth.token
-            )
+            responses = await self._client.responses(session.url)
             return TrismikRunResults(session.id, results, responses)
         else:
             return TrismikRunResults(session.id, results)
@@ -235,68 +213,18 @@ class AdaptiveTest:
         Raises:
             TrismikApiError: If API request fails.
         """
-        await self._init_async()
-        assert (
-            self._client is not None
-        ), "Client should be initialized by _init_async()"
-        assert (
-            self._auth is not None
-        ), "Auth should be initialized by _init_async()"
-        await self._refresh_token_if_needed_async()
-        item = await self._client.current_item(session_url, self._auth.token)
+        item = await self._client.current_item(session_url)
         with tqdm(total=self._max_items, desc="Running test") as pbar:
             while item is not None:
-                await self._refresh_token_if_needed_async()
                 # Handle both sync and async item processors
                 if asyncio.iscoroutinefunction(self._item_processor):
                     response = await self._item_processor(item)
                 else:
                     response = self._item_processor(item)
                 next_item = await self._client.respond_to_current_item(
-                    session_url, response, self._auth.token
+                    session_url, response
                 )
                 pbar.update(1)
                 if next_item is None:
                     break
                 item = next_item
-
-    async def _init_async(self) -> None:
-        """
-        Initialize the client and authenticate if needed asynchronously.
-
-        Raises:
-            TrismikApiError: If API request fails.
-        """
-        if self._client is None:
-            self._client = TrismikAsyncClient()
-
-        if self._auth is None:
-            self._auth = await self._client.authenticate()
-
-    async def _refresh_token_if_needed_async(self) -> None:
-        """
-        Refresh the authentication token if it's about to expire asynchronously.
-
-        Raises:
-            TrismikApiError: If API request fails.
-        """
-        assert (
-            self._client is not None
-        ), "Client should be initialized by _init_async()"
-        assert (
-            self._auth is not None
-        ), "Auth should be initialized by _init_async()"
-        if self._token_needs_refresh():
-            self._auth = await self._client.refresh_token(self._auth.token)
-
-    def _token_needs_refresh(self) -> bool:
-        """
-        Check if the authentication token needs to be refreshed.
-
-        Returns:
-            bool: True if the token needs to be refreshed, False otherwise.
-        """
-        assert (
-            self._auth is not None
-        ), "Auth should be initialized by _init_async()"
-        return self._auth.expires < (datetime.now() + timedelta(minutes=5))
