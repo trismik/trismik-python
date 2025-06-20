@@ -7,6 +7,9 @@ from trismik.types import (
     TrismikResponse,
     TrismikResult,
     TrismikSession,
+    TrismikSessionInfo,
+    TrismikSessionResponse,
+    TrismikSessionState,
     TrismikTest,
     TrismikTextChoice,
 )
@@ -57,6 +60,62 @@ class TrismikResponseMapper:
         )
 
     @staticmethod
+    def to_session_info(json: Dict[str, Any]) -> TrismikSessionInfo:
+        """
+        Convert JSON response to a TrismikSessionInfo object.
+
+        Args:
+            json (Dict[str, Any]): JSON response containing session info.
+
+        Returns:
+            TrismikSessionInfo: Session info object with ID.
+        """
+        return TrismikSessionInfo(id=json["id"])
+
+    @staticmethod
+    def to_session_state(json: Dict[str, Any]) -> TrismikSessionState:
+        """
+        Convert JSON response to a TrismikSessionState object.
+
+        Args:
+            json (Dict[str, Any]): JSON response containing session state.
+
+        Returns:
+            TrismikSessionState: Session state object.
+        """
+        return TrismikSessionState(
+            responses=json.get("responses", []),
+            thetas=json.get("thetas", []),
+            std_error_history=json.get("std_error_history", []),
+            kl_info_history=json.get("kl_info_history", []),
+            effective_difficulties=json.get("effective_difficulties", []),
+        )
+
+    @staticmethod
+    def to_session_response(json: Dict[str, Any]) -> TrismikSessionResponse:
+        """
+        Convert JSON response to a TrismikSessionResponse object.
+
+        Args:
+            json (Dict[str, Any]): JSON response from session endpoints.
+
+        Returns:
+            TrismikSessionResponse: Session response.
+        """
+        return TrismikSessionResponse(
+            session_info=TrismikResponseMapper.to_session_info(
+                json["sessionInfo"]
+            ),
+            state=TrismikResponseMapper.to_session_state(json["state"]),
+            next_item=(
+                TrismikResponseMapper.to_item(json["nextItem"])
+                if json.get("nextItem")
+                else None
+            ),
+            completed=json.get("completed", False),
+        )
+
+    @staticmethod
     def to_item(json: Dict[str, Any]) -> TrismikItem:
         """
         Convert JSON response to a TrismikItem object.
@@ -70,21 +129,22 @@ class TrismikResponseMapper:
         Raises:
             TrismikApiError: If the item type is not recognized.
         """
-        if json["type"] == "multiple_choice_text":
+        if "question" in json and "choices" in json:
             return TrismikMultipleChoiceTextItem(
                 id=json["id"],
                 question=json["question"],
                 choices=[
                     TrismikTextChoice(
                         id=choice["id"],
-                        text=choice["text"],
+                        text=choice["value"],
                     )
                     for choice in json["choices"]
                 ],
             )
         else:
+            item_type = json.get("type", "unknown")
             raise TrismikApiError(
-                f"API has returned unrecognized item type: {json['type']}"
+                f"API has returned unrecognized item type: {item_type}"
             )
 
     @staticmethod

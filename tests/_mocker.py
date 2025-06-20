@@ -41,27 +41,67 @@ class TrismikResponseMocker:
         )
 
     @staticmethod
-    def session() -> httpx.Response:
+    def session_start() -> httpx.Response:
         return httpx.Response(
             request=httpx.Request("method", "url"),
             status_code=201,
-            json={"id": "id", "url": "url", "status": "status"},
+            json={
+                "sessionInfo": {"id": "session_id"},
+                "state": {
+                    "responses": ["item_1"],
+                    "thetas": [1.0],
+                    "std_error_history": [0.5],
+                    "kl_info_history": [0.1],
+                    "effective_difficulties": [0.2],
+                },
+                "nextItem": {
+                    "id": "item_1",
+                    "question": "question 1",
+                    "choices": [{"id": "choice_1", "value": "value 1"}],
+                },
+                "completed": False,
+            },
         )
 
     @staticmethod
-    def item() -> httpx.Response:
+    def session_continue() -> httpx.Response:
         return httpx.Response(
             request=httpx.Request("method", "url"),
             status_code=200,
             json={
-                "id": "id",
-                "type": "multiple_choice_text",
-                "question": "question",
-                "choices": [
-                    {"id": "choice_id_1", "text": "choice_text_1"},
-                    {"id": "choice_id_2", "text": "choice_text_2"},
-                    {"id": "choice_id_3", "text": "choice_text_3"},
-                ],
+                "sessionInfo": {"id": "session_id"},
+                "state": {
+                    "responses": ["item_1", "item_2"],
+                    "thetas": [1.0, 1.2],
+                    "std_error_history": [0.5, 0.4],
+                    "kl_info_history": [0.1, 0.12],
+                    "effective_difficulties": [0.2, 0.25],
+                },
+                "nextItem": {
+                    "id": "item_2",
+                    "question": "question 2",
+                    "choices": [{"id": "choice_2", "value": "value 2"}],
+                },
+                "completed": False,
+            },
+        )
+
+    @staticmethod
+    def session_end() -> httpx.Response:
+        return httpx.Response(
+            request=httpx.Request("method", "url"),
+            status_code=200,
+            json={
+                "sessionInfo": {"id": "session_id"},
+                "state": {
+                    "responses": ["item_1", "item_2", "item_3"],
+                    "thetas": [1.0, 1.2, 1.3],
+                    "std_error_history": [0.5, 0.4, 0.3],
+                    "kl_info_history": [0.1, 0.12, 0.13],
+                    "effective_difficulties": [0.2, 0.25, 0.3],
+                },
+                "nextItem": None,
+                "completed": True,
             },
         )
 

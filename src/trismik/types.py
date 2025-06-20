@@ -27,6 +27,52 @@ class TrismikSession:
 
 
 @dataclass
+class TrismikSessionInfo:
+    """Session info from new API endpoints."""
+
+    id: str
+
+
+@dataclass
+class TrismikSessionState:
+    """Session state including responses, thetas, and other metrics."""
+
+    responses: List[str]
+    thetas: List[float]
+    std_error_history: List[float]
+    kl_info_history: List[float]
+    effective_difficulties: List[float]
+
+
+@dataclass
+class TrismikSessionResponse:
+    """Response from session endpoints (start and continue)."""
+
+    session_info: TrismikSessionInfo
+    state: TrismikSessionState
+    next_item: Optional["TrismikItem"]
+    completed: bool
+
+
+@dataclass
+class TrismikAdaptiveTestState:
+    """State tracking for adaptive tests."""
+
+    session_id: str
+    state: TrismikSessionState
+    completed: bool
+
+
+@dataclass
+class AdaptiveTestScore:
+    """Final scores of an adaptive test run."""
+
+    thetas: List[float]
+    std_error_history: List[float]
+    kl_info_history: List[float]
+
+
+@dataclass
 class TrismikItem:
     """Base class for test items."""
 
@@ -78,8 +124,8 @@ class TrismikRunResults:
     """Test results and responses."""
 
     session_id: str
-    results: List[TrismikResult]
     responses: Optional[List[TrismikResponse]] = None
+    score: Optional[AdaptiveTestScore] = None
 
 
 @dataclass

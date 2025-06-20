@@ -8,17 +8,16 @@ either process_item_sync or process_item_async.
 """
 
 import asyncio
-from typing import Any, List, Optional
+from typing import Any
 
 from _sample_metadata import sample_metadata
 from dotenv import load_dotenv
 
 from trismik.adaptive_test import AdaptiveTest
 from trismik.types import (
+    AdaptiveTestScore,
     TrismikItem,
     TrismikMultipleChoiceTextItem,
-    TrismikResponse,
-    TrismikResult,
 )
 
 
@@ -73,22 +72,13 @@ async def mock_inference_async(item: TrismikItem) -> Any:
         raise RuntimeError("Encountered unknown item type")
 
 
-def print_results(results: List[TrismikResult]) -> None:
-    """Print test results with trait, name, and value."""
-    print("\nResults...")
-    for result in results:
-        print(f"{result.trait} ({result.name}): {result.value}")
-
-
-def print_responses(responses: Optional[List[TrismikResponse]]) -> None:
-    """Print test responses with item ID and correctness."""
-    if responses is None:
-        return
-
-    print("\nResponses...")
-    for response in responses:
-        correct = "correct" if response.score > 0 else "incorrect"
-        print(f"{response.item_id}: {correct}")
+def print_score(score: AdaptiveTestScore) -> None:
+    """Print adaptive test score with thetas, standard errors, and KL info."""
+    print("\nAdaptive Test Score...")
+    print(f"Final theta: {score.thetas[-1]}")
+    print(f"Number of items: {len(score.thetas)}")
+    print(f"Final standard error: {score.std_error_history[-1]}")
+    print(f"Final KL info: {score.kl_info_history[-1]}")
 
 
 def run_sync_example() -> None:
@@ -98,19 +88,20 @@ def run_sync_example() -> None:
 
     print("\nStarting test...")
     results = runner.run(
-        "MMLUPro2024",
-        with_responses=True,
+        "MMLUPro2025",
         session_metadata=sample_metadata,
     )
-    print_results(results.results)
-    print_responses(results.responses)
+    if results.score is not None:
+        print_score(results.score)
+    else:
+        print("No score available.")
 
-    print("\nReplay run")
-    results = runner.run_replay(
-        results.session_id, sample_metadata, with_responses=True
-    )
-    print_results(results.results)
-    print_responses(results.responses)
+    # print("\nReplay run")
+    # results = runner.run_replay(
+    #     results.session_id, sample_metadata, with_responses=True
+    # )
+    # print_results(results.results)
+    # print_responses(results.responses)
 
 
 async def run_async_example() -> None:
@@ -120,19 +111,20 @@ async def run_async_example() -> None:
 
     print("\nStarting test...")
     results = await runner.run_async(
-        "MMLUPro2024",
-        with_responses=True,
+        "MMLUPro2025",
         session_metadata=sample_metadata,
     )
-    print_results(results.results)
-    print_responses(results.responses)
+    if results.score is not None:
+        print_score(results.score)
+    else:
+        print("No score available.")
 
-    print("\nReplay run")
-    results = await runner.run_replay_async(
-        results.session_id, sample_metadata, with_responses=True
-    )
-    print_results(results.results)
-    print_responses(results.responses)
+    # print("\nReplay run")
+    # results = await runner.run_replay_async(
+    #     results.session_id, sample_metadata, with_responses=True
+    # )
+    # print_results(results.results)
+    # print_responses(results.responses)
 
 
 async def main() -> None:

@@ -8,16 +8,15 @@ API key in the .env file.
 
 import asyncio
 import re
-from typing import List
 
 import transformers
 from dotenv import load_dotenv
 
 from trismik.adaptive_test import AdaptiveTest
 from trismik.types import (
+    AdaptiveTestScore,
     TrismikItem,
     TrismikMultipleChoiceTextItem,
-    TrismikResult,
     TrismikSessionMetadata,
 )
 
@@ -124,11 +123,13 @@ Please adhere strictly to the instructions.
     return final_answer
 
 
-def print_results(results: List[TrismikResult]) -> None:
-    """Print test results with trait, name, and value."""
-    print("\nResults...")
-    for result in results:
-        print(f"{result.trait} ({result.name}): {result.value}")
+def print_score(score: AdaptiveTestScore) -> None:
+    """Print adaptive test score with thetas, standard errors, and KL info."""
+    print("\nAdaptive Test Score...")
+    print(f"Final theta: {score.thetas[-1]}")
+    print(f"Number of items: {len(score.thetas)}")
+    print(f"Final standard error: {score.std_error_history[-1]}")
+    print(f"Final KL info: {score.kl_info_history[-1]}")
 
 
 def run_sync_example(pipeline: transformers.pipeline) -> None:
@@ -138,11 +139,13 @@ def run_sync_example(pipeline: transformers.pipeline) -> None:
 
     print("\nStarting test...")
     results = runner.run(
-        "MMLUPro2024",
-        with_responses=True,
+        "MMLUPro2025",
         session_metadata=session_metadata,
     )
-    print_results(results.results)
+    if results.score is not None:
+        print_score(results.score)
+    else:
+        print("No score available.")
 
     # Uncomment to replay the exact same questions from the previous run.
     # This is useful to test the stability of the model - note that this
@@ -163,11 +166,13 @@ async def run_async_example(pipeline: transformers.pipeline) -> None:
 
     print("\nStarting test...")
     results = await runner.run_async(
-        "MMLUPro2024",
-        with_responses=True,
+        "MMLUPro2025",
         session_metadata=session_metadata,
     )
-    print_results(results.results)
+    if results.score is not None:
+        print_score(results.score)
+    else:
+        print("No score available.")
 
     # Uncomment to replay the exact same questions from the previous run.
     # This is useful to test the stability of the model - note that this

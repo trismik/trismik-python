@@ -5,7 +5,7 @@ import pytest
 
 from trismik.client_async import TrismikAsyncClient
 from trismik.exceptions import TrismikApiError, TrismikError
-from trismik.types import TrismikMultipleChoiceTextItem, TrismikSessionMetadata
+from trismik.types import TrismikSessionMetadata
 
 from ._mocker import TrismikResponseMocker
 
@@ -63,8 +63,10 @@ class TestTrismikAsyncClient:
             await client.list_tests()
 
     @pytest.mark.asyncio
-    async def test_should_create_session(self) -> None:
-        client = TrismikAsyncClient(http_client=self._mock_session_response())
+    async def test_should_start_session(self) -> None:
+        client = TrismikAsyncClient(
+            http_client=self._mock_session_start_response()
+        )
         metadata = TrismikSessionMetadata(
             model_metadata=TrismikSessionMetadata.ModelMetadata(
                 name="test_model"
@@ -72,13 +74,15 @@ class TestTrismikAsyncClient:
             test_configuration={},
             inference_setup={},
         )
-        session = await client.create_session("fluency", metadata)
-        assert session.id == "id"
-        assert session.url == "url"
-        assert session.status == "status"
+        response = await client.start_session("test_id", metadata)
+        assert response.session_info.id == "session_id"
+        assert response.completed is False
+        assert response.next_item is not None
+        assert response.next_item.id == "item_1"
+        assert len(response.state.thetas) == 1
 
     @pytest.mark.asyncio
-    async def test_should_fail_create_session_when_api_returned_error(
+    async def test_should_fail_start_session_when_api_returned_error(
         self,
     ) -> None:
         with pytest.raises(TrismikApiError, match="message"):
@@ -92,55 +96,40 @@ class TestTrismikAsyncClient:
                 test_configuration={},
                 inference_setup={},
             )
-            await client.create_session("fluency", metadata)
+            await client.start_session("test_id", metadata)
 
     @pytest.mark.asyncio
-    async def test_should_get_current_item(self) -> None:
-        client = TrismikAsyncClient(http_client=self._mock_item_response())
-        item = await client.current_item("url")
-        assert isinstance(item, TrismikMultipleChoiceTextItem)
-        assert item.question == "question"
-        assert len(item.choices) == 3
-        assert item.choices[0].id == "choice_id_1"
-        assert item.choices[0].text == "choice_text_1"
-
-    @pytest.mark.asyncio
-    async def test_should_fail_get_current_item_when_api_returned_error(
-        self,
-    ) -> None:
-        with pytest.raises(TrismikApiError, match="message"):
-            client = TrismikAsyncClient(
-                http_client=self._mock_error_response(401)
-            )
-            await client.current_item("url")
-
-    @pytest.mark.asyncio
-    async def test_should_respond_to_current_item(self) -> None:
-        client = TrismikAsyncClient(http_client=self._mock_item_response())
-        item = await client.respond_to_current_item("url", "choice_id_1")
-        assert isinstance(item, TrismikMultipleChoiceTextItem)
-        assert item.question == "question"
-        assert len(item.choices) == 3
-        assert item.choices[0].id == "choice_id_1"
-        assert item.choices[0].text == "choice_text_1"
-
-    @pytest.mark.asyncio
-    async def test_should_return_empty_item_when_finished(self) -> None:
+    async def test_should_continue_session(self) -> None:
         client = TrismikAsyncClient(
-            http_client=self._mock_no_content_response()
+            http_client=self._mock_session_continue_response()
         )
-        item = await client.respond_to_current_item("url", "choice_id_1")
-        assert item is None
+        response = await client.continue_session("session_id", "choice_1")
+        assert response.session_info.id == "session_id"
+        assert response.completed is False
+        assert response.next_item is not None
+        assert response.next_item.id == "item_2"
+        assert len(response.state.thetas) == 2
 
     @pytest.mark.asyncio
-    async def test_should_fail_respond_to_current_item_when_api_returned_error(
+    async def test_should_end_session_on_continue(self) -> None:
+        client = TrismikAsyncClient(
+            http_client=self._mock_session_end_response()
+        )
+        response = await client.continue_session("session_id", "choice_2")
+        assert response.session_info.id == "session_id"
+        assert response.completed is True
+        assert response.next_item is None
+        assert len(response.state.thetas) == 3
+
+    @pytest.mark.asyncio
+    async def test_should_fail_continue_session_when_api_returned_error(
         self,
     ) -> None:
         with pytest.raises(TrismikApiError, match="message"):
             client = TrismikAsyncClient(
                 http_client=self._mock_error_response(401)
             )
-            await client.respond_to_current_item("url", "choice_id_1")
+            await client.continue_session("session_id", "choice_1")
 
     @pytest.mark.asyncio
     async def test_should_get_results(self) -> None:
@@ -193,17 +182,23 @@ class TestTrismikAsyncClient:
         return http_client
 
     @staticmethod
-    def _mock_session_response() -> httpx.AsyncClient:
+    def _mock_session_start_response() -> httpx.AsyncClient:
         http_client = MagicMock(httpx.AsyncClient)
-        response = TrismikResponseMocker.session()
+        response = TrismikResponseMocker.session_start()
         http_client.post.return_value = response
         return http_client
 
     @staticmethod
-    def _mock_item_response() -> httpx.AsyncClient:
+    def _mock_session_continue_response() -> httpx.AsyncClient:
         http_client = MagicMock(httpx.AsyncClient)
-        response = TrismikResponseMocker.item()
-        http_client.get.return_value = response
+        response = TrismikResponseMocker.session_continue()
+        http_client.post.return_value = response
+        return http_client
+
+    @staticmethod
+    def _mock_session_end_response() -> httpx.AsyncClient:
+        http_client = MagicMock(httpx.AsyncClient)
+        response = TrismikResponseMocker.session_end()
         http_client.post.return_value = response
         return http_client
 
