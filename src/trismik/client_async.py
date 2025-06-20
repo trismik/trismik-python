@@ -66,7 +66,7 @@ class TrismikAsyncClient:
             base_url=self._service_url, headers=default_headers
         )
 
-    async def available_tests(self) -> List[TrismikTest]:
+    async def list_tests(self) -> List[TrismikTest]:
         """
         Get a list of available tests.
 
@@ -77,7 +77,7 @@ class TrismikAsyncClient:
             TrismikApiError: If API request fails.
         """
         try:
-            url = "/client/tests"
+            url = "/test/summary"
             response = await self._http_client.get(url)
             response.raise_for_status()
             json = response.json()

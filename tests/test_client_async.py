@@ -45,22 +45,22 @@ class TestTrismikAsyncClient:
             )
 
     @pytest.mark.asyncio
-    async def test_should_get_available_tests(self) -> None:
+    async def test_should_list_tests(self) -> None:
         client = TrismikAsyncClient(http_client=self._mock_tests_response())
-        tests = await client.available_tests()
+        tests = await client.list_tests()
         assert len(tests) == 5
         assert tests[0].id == "fluency"
         assert tests[0].name == "Fluency"
 
     @pytest.mark.asyncio
-    async def test_should_fail_get_available_tests_when_api_returned_error(
+    async def test_should_fail_list_tests_when_api_returned_error(
         self,
     ) -> None:
         with pytest.raises(TrismikApiError, match="message"):
             client = TrismikAsyncClient(
                 http_client=self._mock_error_response(401)
             )
-            await client.available_tests()
+            await client.list_tests()
 
     @pytest.mark.asyncio
     async def test_should_create_session(self) -> None:
