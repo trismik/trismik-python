@@ -114,9 +114,9 @@ class TrismikResult:
 class TrismikResponse:
     """Response to a test item."""
 
-    item_id: str
+    dataset_item_id: str
     value: Any
-    score: float
+    correct: bool
 
 
 @dataclass
@@ -126,6 +126,19 @@ class TrismikRunResults:
     session_id: str
     responses: Optional[List[TrismikResponse]] = None
     score: Optional[AdaptiveTestScore] = None
+
+
+@dataclass
+class TrismikSessionSummary:
+    """Complete session summary."""
+
+    id: str
+    test_id: str
+    state: TrismikSessionState
+    completed: bool
+    dataset: List[TrismikItem]
+    responses: List[TrismikResponse]
+    metadata: dict
 
 
 @dataclass

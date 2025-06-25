@@ -120,17 +120,40 @@ class TrismikResponseMocker:
         )
 
     @staticmethod
-    def responses() -> httpx.Response:
+    def session_summary() -> httpx.Response:
         return httpx.Response(
             request=httpx.Request("method", "url"),
             status_code=200,
-            json=[
-                {
-                    "itemId": "item_id",
-                    "value": "value",
-                    "score": 1.0,
-                }
-            ],
+            json={
+                "id": "session_id",
+                "testId": "test_id",
+                "state": {
+                    "responses": ["item_1"],
+                    "thetas": [1.0],
+                    "std_error_history": [0.5],
+                    "kl_info_history": [0.1],
+                    "effective_difficulties": [0.2],
+                },
+                "dataset": [
+                    {
+                        "id": "item_id",
+                        "question": "Test question",
+                        "choices": [
+                            {"id": "A", "value": "Choice A"},
+                            {"id": "B", "value": "Choice B"},
+                        ],
+                    }
+                ],
+                "responses": [
+                    {
+                        "datasetItemId": "item_id",
+                        "value": "value",
+                        "correct": True,
+                    }
+                ],
+                "completed": True,
+                "metadata": {"foo": "bar"},
+            },
         )
 
     @staticmethod

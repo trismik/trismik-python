@@ -13,11 +13,11 @@ from trismik._mapper import TrismikResponseMapper
 from trismik._utils import TrismikUtils
 from trismik.exceptions import TrismikApiError
 from trismik.types import (
-    TrismikResponse,
     TrismikResult,
     TrismikSession,
     TrismikSessionMetadata,
     TrismikSessionResponse,
+    TrismikSessionSummary,
     TrismikTest,
 )
 
@@ -239,25 +239,26 @@ class TrismikAsyncClient:
         except httpx.HTTPError as e:
             raise TrismikApiError(str(e)) from e
 
-    async def responses(self, session_url: str) -> List[TrismikResponse]:
+    async def session_summary(self, session_id: str) -> TrismikSessionSummary:
         """
-        Get responses to session items.
+        Get session summary including responses, dataset, and state.
 
         Args:
-            session_url (str): URL of the session.
+            session_id (str): ID of the session.
 
         Returns:
-            List[TrismikResponse]: Responses of the session.
+            TrismikSessionSummary: Complete session summary with responses,
+                dataset, state, and metadata.
 
         Raises:
             TrismikApiError: If API request fails.
         """
         try:
-            url = f"{session_url}/responses"
+            url = f"/sessions/{session_id}/summary"
             response = await self._http_client.get(url)
             response.raise_for_status()
             json = response.json()
-            return TrismikResponseMapper.to_responses(json)
+            return TrismikResponseMapper.to_session_summary(json)
         except httpx.HTTPStatusError as e:
             raise TrismikApiError(
                 TrismikUtils.get_error_message(e.response)

@@ -10,6 +10,7 @@ from trismik.types import (
     TrismikSessionInfo,
     TrismikSessionResponse,
     TrismikSessionState,
+    TrismikSessionSummary,
     TrismikTest,
     TrismikTextChoice,
 )
@@ -116,6 +117,32 @@ class TrismikResponseMapper:
         )
 
     @staticmethod
+    def to_session_summary(json: Dict[str, Any]) -> TrismikSessionSummary:
+        """
+        Convert JSON response to a TrismikSessionSummary object.
+
+        Args:
+            json (Dict[str, Any]): JSON response from session summary endpoint.
+
+        Returns:
+            TrismikSessionSummary: Complete session summary.
+        """
+        return TrismikSessionSummary(
+            id=json["id"],
+            test_id=json["testId"],
+            state=TrismikResponseMapper.to_session_state(json["state"]),
+            completed=json.get("completed", False),
+            dataset=[
+                TrismikResponseMapper.to_item(item)
+                for item in json.get("dataset", [])
+            ],
+            responses=TrismikResponseMapper.to_responses(
+                json.get("responses", [])
+            ),
+            metadata=json.get("metadata", {}),
+        )
+
+    @staticmethod
     def to_item(json: Dict[str, Any]) -> TrismikItem:
         """
         Convert JSON response to a TrismikItem object.
@@ -177,14 +204,14 @@ class TrismikResponseMapper:
             json (List[Dict[str, Any]]): JSON response containing response data.
 
         Returns:
-            List[TrismikResponse]: List of response objects with item ID, value,
-                and score.
+            List[TrismikResponse]: List of response objects with dataset item
+                ID, value, and correctness.
         """
         return [
             TrismikResponse(
-                item_id=response["itemId"],
+                dataset_item_id=response["datasetItemId"],
                 value=response["value"],
-                score=response["score"],
+                correct=response["correct"],
             )
             for response in json
         ]

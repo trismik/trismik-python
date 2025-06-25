@@ -151,23 +151,46 @@ class TestTrismikAsyncClient:
             await client.results("url")
 
     @pytest.mark.asyncio
-    async def test_should_get_responses(self) -> None:
-        client = TrismikAsyncClient(http_client=self._mock_responses_response())
-        responses = await client.responses("url")
-        assert len(responses) == 1
-        assert responses[0].item_id == "item_id"
-        assert responses[0].value == "value"
-        assert responses[0].score == 1.0
+    async def test_should_get_session_summary(self) -> None:
+        client = TrismikAsyncClient(
+            http_client=self._mock_session_summary_response()
+        )
+        summary = await client.session_summary("session_id")
+
+        # Check id and test_id
+        assert summary.id == "session_id"
+        assert summary.test_id == "test_id"
+
+        # Check state
+        assert len(summary.state.thetas) == 1
+        assert summary.state.thetas[0] == 1.0
+
+        # Check responses
+        assert len(summary.responses) == 1
+        assert summary.responses[0].dataset_item_id == "item_id"
+        assert summary.responses[0].value == "value"
+        assert summary.responses[0].correct is True
+
+        # Check dataset
+        assert len(summary.dataset) == 1
+        assert summary.dataset[0].id == "item_id"
+        assert summary.dataset[0].question == "Test question"
+        assert len(summary.dataset[0].choices) == 2
+
+        # Check completion status
+        assert summary.completed is True
+        # Check metadata
+        assert summary.metadata == {"foo": "bar"}
 
     @pytest.mark.asyncio
-    async def test_should_fail_get_responses_when_api_returned_error(
+    async def test_should_fail_get_session_summary_when_api_returned_error(
         self,
     ) -> None:
         with pytest.raises(TrismikApiError, match="message"):
             client = TrismikAsyncClient(
                 http_client=self._mock_error_response(401)
             )
-            await client.responses("url")
+            await client.session_summary("session_id")
 
     @pytest.fixture(scope="function", autouse=True)
     def set_env(self, monkeypatch) -> None:
@@ -218,9 +241,9 @@ class TestTrismikAsyncClient:
         return http_client
 
     @staticmethod
-    def _mock_responses_response() -> httpx.AsyncClient:
+    def _mock_session_summary_response() -> httpx.AsyncClient:
         http_client = MagicMock(httpx.AsyncClient)
-        response = TrismikResponseMocker.responses()
+        response = TrismikResponseMocker.session_summary()
         http_client.get.return_value = response
         return http_client
 
