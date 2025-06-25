@@ -131,7 +131,6 @@ class TrismikResponseMapper:
             id=json["id"],
             test_id=json["testId"],
             state=TrismikResponseMapper.to_session_state(json["state"]),
-            completed=json.get("completed", False),
             dataset=[
                 TrismikResponseMapper.to_item(item)
                 for item in json.get("dataset", [])

@@ -135,7 +135,6 @@ class TrismikSessionSummary:
     id: str
     test_id: str
     state: TrismikSessionState
-    completed: bool
     dataset: List[TrismikItem]
     responses: List[TrismikResponse]
     metadata: dict

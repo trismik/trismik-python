@@ -151,7 +151,6 @@ class TrismikResponseMocker:
                         "correct": True,
                     }
                 ],
-                "completed": True,
                 "metadata": {"foo": "bar"},
             },
         )

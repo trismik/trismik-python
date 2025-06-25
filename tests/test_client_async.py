@@ -177,8 +177,6 @@ class TestTrismikAsyncClient:
         assert summary.dataset[0].question == "Test question"
         assert len(summary.dataset[0].choices) == 2
 
-        # Check completion status
-        assert summary.completed is True
         # Check metadata
         assert summary.metadata == {"foo": "bar"}
 
