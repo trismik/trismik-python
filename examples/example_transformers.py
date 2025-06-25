@@ -27,7 +27,7 @@ session_metadata = TrismikSessionMetadata(
         provider="Microsoft",
     ),
     test_configuration={
-        "task_name": "MMLUPro2024",
+        "task_name": "MMLUPro2025",
         "response_format": "Multiple-choice",
     },
     inference_setup={
@@ -57,7 +57,7 @@ def inference(
     assert isinstance(item, TrismikMultipleChoiceTextItem)
 
     # We construct the prompt from the question and the possible choices.
-    # We transformed MMLUPro2024 to be in the form of a multiple-choice
+    # We transformed MMLUPro2025 to be in the form of a multiple-choice
     # question, so the prompt reflects that.
     prompt = f"{item.question}\nOptions:\n" + "\n".join(
         [f"- {choice.id}: {choice.text}" for choice in item.choices]
