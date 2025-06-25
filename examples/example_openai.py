@@ -35,7 +35,7 @@ session_metadata = TrismikSessionMetadata(
         provider="OpenAI",
     ),
     test_configuration={
-        "task_name": "MMLUPro2024",
+        "task_name": "MMLUPro2025",
         "response_format": "Multiple-choice",
     },
     inference_setup={},
@@ -54,7 +54,7 @@ def inference(client: OpenAI, item: TrismikItem, max_retries: int = 5) -> str:
     assert isinstance(item, TrismikMultipleChoiceTextItem)
 
     # We construct the prompt from the question and the possible choices.
-    # We transformed MMLUPro2024 to be in the form of a multiple-choice
+    # We transformed MMLUPro2025 to be in the form of a multiple-choice
     # question, so the prompt reflects that.
     prompt = f"{item.question}\nOptions:\n" + "\n".join(
         [f"- {choice.id}: {choice.text}" for choice in item.choices]
@@ -134,6 +134,9 @@ def run_sync_example(client: OpenAI) -> None:
         "MMLUPro2025",
         session_metadata=session_metadata,
     )
+
+    print(f"Session {results.session_id} completed.")
+
     if results.score is not None:
         print_score(results.score)
     else:
@@ -160,6 +163,9 @@ async def run_async_example(client: OpenAI) -> None:
         "MMLUPro2025",
         session_metadata=session_metadata,
     )
+
+    print(f"Session {results.session_id} completed.")
+
     if results.score is not None:
         print_score(results.score)
     else:

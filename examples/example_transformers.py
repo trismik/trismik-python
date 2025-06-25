@@ -142,6 +142,9 @@ def run_sync_example(pipeline: transformers.pipeline) -> None:
         "MMLUPro2025",
         session_metadata=session_metadata,
     )
+
+    print(f"Session {results.session_id} completed.")
+
     if results.score is not None:
         print_score(results.score)
     else:
@@ -169,6 +172,9 @@ async def run_async_example(pipeline: transformers.pipeline) -> None:
         "MMLUPro2025",
         session_metadata=session_metadata,
     )
+
+    print(f"Session {results.session_id} completed.")
+
     if results.score is not None:
         print_score(results.score)
     else:
