@@ -143,25 +143,6 @@ class TestTrismikAsyncClient:
             await client.continue_session("session_id", "choice_1")
 
     @pytest.mark.asyncio
-    async def test_should_get_results(self) -> None:
-        client = TrismikAsyncClient(http_client=self._mock_results_response())
-        results = await client.results("url")
-        assert len(results) == 1
-        assert results[0].trait == "trait"
-        assert results[0].name == "name"
-        assert results[0].value == "value"
-
-    @pytest.mark.asyncio
-    async def test_should_fail_get_results_when_api_returned_error(
-        self,
-    ) -> None:
-        with pytest.raises(TrismikApiError, match="message"):
-            client = TrismikAsyncClient(
-                http_client=self._mock_error_response(401)
-            )
-            await client.results("url")
-
-    @pytest.mark.asyncio
     async def test_should_get_session_summary(self) -> None:
         client = TrismikAsyncClient(
             http_client=self._mock_session_summary_response()
@@ -295,13 +276,6 @@ class TestTrismikAsyncClient:
         response = TrismikResponseMocker.error(status)
         http_client.get.return_value = response
         http_client.post.return_value = response
-        return http_client
-
-    @staticmethod
-    def _mock_results_response() -> httpx.AsyncClient:
-        http_client = MagicMock(httpx.AsyncClient)
-        response = TrismikResponseMocker.results()
-        http_client.get.return_value = response
         return http_client
 
     @staticmethod

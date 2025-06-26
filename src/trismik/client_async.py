@@ -16,8 +16,6 @@ from trismik.settings import client_settings, environment_settings
 from trismik.types import (
     TrismikReplayRequest,
     TrismikReplayResponse,
-    TrismikResult,
-    TrismikSession,
     TrismikSessionMetadata,
     TrismikSessionResponse,
     TrismikSessionSummary,
@@ -152,96 +150,6 @@ class TrismikAsyncClient:
         except httpx.HTTPError as e:
             raise TrismikApiError(str(e)) from e
 
-    async def create_replay_session(
-        self,
-        previous_session_id: str,
-        metadata: TrismikSessionMetadata,
-    ) -> TrismikSession:
-        """
-        Create a new session that replays a previous session.
-
-        Create a new session that replays exactly the question sequence of a
-        previous session.
-
-        Args:
-            previous_session_id (str): Session id of the session to replay.
-            metadata (TrismikSessionMetadata): Metadata for the session.
-
-        Returns:
-            TrismikSession: New session.
-
-        Raises:
-            TrismikApiError: If API request fails.
-        """
-        try:
-            url = "/client/sessions/replay"
-            body = {
-                "previousSessionToken": previous_session_id,
-                "metadata": metadata.toDict(),
-            }
-            response = await self._http_client.post(url, json=body)
-            response.raise_for_status()
-            json = response.json()
-            return TrismikResponseMapper.to_session(json)
-        except httpx.HTTPStatusError as e:
-            raise TrismikApiError(
-                TrismikUtils.get_error_message(e.response)
-            ) from e
-        except httpx.HTTPError as e:
-            raise TrismikApiError(str(e)) from e
-
-    async def add_metadata(
-        self, session_id: str, metadata: TrismikSessionMetadata
-    ) -> None:
-        """
-        Add metadata to the session, merging it with any already stored.
-
-        Args:
-            session_id (str): ID of the session object.
-            metadata (TrismikSessionMetadata): Object containing the metadata
-                to add.
-
-        Raises:
-            TrismikApiError: If API request fails.
-        """
-        try:
-            url = f"/client/sessions/{session_id}/metadata"
-            body = metadata.toDict()
-            response = await self._http_client.post(url, json=body)
-            response.raise_for_status()
-        except httpx.HTTPStatusError as e:
-            raise TrismikApiError(
-                TrismikUtils.get_error_message(e.response)
-            ) from e
-        except httpx.HTTPError as e:
-            raise TrismikApiError(str(e)) from e
-
-    async def results(self, session_url: str) -> List[TrismikResult]:
-        """
-        Get the results of a session.
-
-        Args:
-            session_url (str): URL of the session.
-
-        Returns:
-            List[TrismikResult]: Results of the session.
-
-        Raises:
-            TrismikApiError: If API request fails.
-        """
-        try:
-            url = f"{session_url}/results"
-            response = await self._http_client.get(url)
-            response.raise_for_status()
-            json = response.json()
-            return TrismikResponseMapper.to_results(json)
-        except httpx.HTTPStatusError as e:
-            raise TrismikApiError(
-                TrismikUtils.get_error_message(e.response)
-            ) from e
-        except httpx.HTTPError as e:
-            raise TrismikApiError(str(e)) from e
-
     async def session_summary(self, session_id: str) -> TrismikSessionSummary:
         """
         Get session summary including responses, dataset, and state.
@@ -287,7 +195,7 @@ class TrismikAsyncClient:
             TrismikApiError: If API request fails.
         """
         try:
-            url = f"/api/v1/sessions/{session_id}/replay"
+            url = f"sessions/{session_id}/replay"
 
             # Convert TrismikReplayRequestItem objects to dictionaries
             responses_dict = [
