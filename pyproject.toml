@@ -29,7 +29,6 @@ torch = "^2.7.0"
 torchvision = "^0.22.0"
 torchaudio = "^2.7.0"
 accelerate = "^1.7.0"
-unsloth = { version = "^2025.5.6", python = ">=3.10,<3.13" }
 openai = "^1.81.0"
 
 
