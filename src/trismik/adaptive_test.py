@@ -18,6 +18,8 @@ from trismik.types import (
     AdaptiveTestScore,
     TrismikAdaptiveTestState,
     TrismikItem,
+    TrismikReplayRequest,
+    TrismikReplayRequestItem,
     TrismikRunResults,
     TrismikSessionMetadata,
 )
@@ -228,28 +230,53 @@ class AdaptiveTest:
         Raises:
             TrismikApiError: If API request fails.
         """
-        session = await self._client.create_replay_session(
-            previous_session_id, session_metadata
+        # Get the original session summary to access dataset and responses
+        original_summary = await self._client.session_summary(
+            previous_session_id
         )
 
-        # old code:
-        # await self._run_session_async(session.url)
-        # results = await self._client.results(session.url)
+        # Build replay request by processing each item in the original order
+        replay_items = []
+        with tqdm(
+            total=len(original_summary.dataset), desc="Running replay..."
+        ) as pbar:
+            for item in original_summary.dataset:
+                # Handle both sync and async item processors
+                if asyncio.iscoroutinefunction(self._item_processor):
+                    response = await self._item_processor(item)
+                else:
+                    response = self._item_processor(item)
 
-        # if with_responses:
-        #     responses = await self._client.responses(session.url)
-        #     return TrismikRunResults(session.id, results, responses)
-        # else:
-        #     return TrismikRunResults(session.id, results)
+                # Create replay request item
+                replay_item = TrismikReplayRequestItem(
+                    itemId=item.id, itemChoiceId=response
+                )
+                replay_items.append(replay_item)
+                pbar.update(1)
 
-        # For replay, we do not have the new API flow implemented, so just
-        # return a basic result for now.
-        # To fix mypy, provide required arguments to _run_session_async (even
-        # if not used) and construct TrismikRunResults with only session_id
-        # and score=None.
-        dummy_states: List[TrismikAdaptiveTestState] = []
-        await self._run_session_async(session.url, None, dummy_states)
-        return TrismikRunResults(session.id, score=None)
+        # Create replay request
+        replay_request = TrismikReplayRequest(responses=replay_items)
+
+        # Submit replay
+        replay_response = await self._client.submit_replay(
+            previous_session_id, replay_request
+        )
+
+        # Create score from replay response
+        score = AdaptiveTestScore(
+            theta=replay_response.state.thetas[-1],
+            std_error=replay_response.state.std_error_history[-1],
+        )
+
+        # Return results with optional responses
+        if with_responses:
+            return TrismikRunResults(
+                session_id=replay_response.id,
+                score=score,
+                responses=replay_response.responses,
+            )
+        else:
+            return TrismikRunResults(session_id=replay_response.id, score=score)
 
     async def _run_session_async(
         self,

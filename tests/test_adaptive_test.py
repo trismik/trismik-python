@@ -16,11 +16,14 @@ from trismik.types import (
     AdaptiveTestScore,
     TrismikItem,
     TrismikMultipleChoiceTextItem,
+    TrismikReplayResponse,
+    TrismikResponse,
     TrismikRunResults,
     TrismikSessionInfo,
     TrismikSessionMetadata,
     TrismikSessionResponse,
     TrismikSessionState,
+    TrismikSessionSummary,
     TrismikTextChoice,
 )
 
@@ -80,10 +83,92 @@ class TestAdaptiveTest:
             completed=True,
         )
 
+        # Mock responses for replay functionality
+        session_summary_response = TrismikSessionSummary(
+            id="previous_session_id",
+            test_id="test_id",
+            state=TrismikSessionState(
+                responses=["item_1", "item_2"],
+                thetas=[1.0, 1.2],
+                std_error_history=[0.5, 0.4],
+                kl_info_history=[0.1, 0.12],
+                effective_difficulties=[0.2, 0.25],
+            ),
+            dataset=[
+                TrismikMultipleChoiceTextItem(
+                    id="item_1",
+                    question="q1",
+                    choices=[TrismikTextChoice(id="c1", text="t1")],
+                ),
+                TrismikMultipleChoiceTextItem(
+                    id="item_2",
+                    question="q2",
+                    choices=[TrismikTextChoice(id="c2", text="t2")],
+                ),
+            ],
+            responses=[
+                TrismikResponse(
+                    dataset_item_id="item_1",
+                    value="c1",
+                    correct=True,
+                ),
+                TrismikResponse(
+                    dataset_item_id="item_2",
+                    value="c2",
+                    correct=False,
+                ),
+            ],
+            metadata={"original": "metadata"},
+        )
+
+        replay_response = TrismikReplayResponse(
+            id="replay_session_id",
+            testId="test_id",
+            state=TrismikSessionState(
+                responses=["item_1", "item_2"],
+                thetas=[1.1, 1.3],
+                std_error_history=[0.45, 0.35],
+                kl_info_history=[0.11, 0.13],
+                effective_difficulties=[0.21, 0.26],
+            ),
+            replay_of_session="previous_session_id",
+            completedAt=None,
+            createdAt=None,
+            metadata={"replay": "metadata"},
+            dataset=[
+                TrismikMultipleChoiceTextItem(
+                    id="item_1",
+                    question="q1",
+                    choices=[TrismikTextChoice(id="c1", text="t1")],
+                ),
+                TrismikMultipleChoiceTextItem(
+                    id="item_2",
+                    question="q2",
+                    choices=[TrismikTextChoice(id="c2", text="t2")],
+                ),
+            ],
+            responses=[
+                TrismikResponse(
+                    dataset_item_id="item_1",
+                    value="c1",
+                    correct=True,
+                ),
+                TrismikResponse(
+                    dataset_item_id="item_2",
+                    value="c2",
+                    correct=False,
+                ),
+            ],
+        )
+
         client.start_session = AsyncMock(return_value=start_response)
         client.continue_session = AsyncMock(
             side_effect=[continue_response, end_response]
         )
+        client.session_summary = AsyncMock(
+            return_value=session_summary_response
+        )
+        client.submit_replay = AsyncMock(return_value=replay_response)
         return client
 
     @pytest.fixture
@@ -188,10 +273,7 @@ class TestAdaptiveTest:
                 "test_id", metadata, with_responses=True
             )
 
-    @pytest.mark.skip(
-        reason="Replay functionality not updated for new API flow yet."
-    )
-    def test_run_replay_sync(self, sync_runner):
+    def test_run_replay_sync(self, sync_runner, mock_client):
         """Test replaying a test synchronously."""
         metadata = TrismikSessionMetadata(
             model_metadata=TrismikSessionMetadata.ModelMetadata(
@@ -200,13 +282,30 @@ class TestAdaptiveTest:
             test_configuration={},
             inference_setup={},
         )
-        sync_runner.run_replay("previous_id", metadata)
+        results = sync_runner.run_replay("previous_session_id", metadata)
 
-    @pytest.mark.skip(
-        reason="Replay functionality not updated for new API flow yet."
-    )
+        # Verify session_summary was called
+        mock_client.session_summary.assert_called_once_with(
+            "previous_session_id"
+        )
+
+        # Verify submit_replay was called with correct parameters
+        mock_client.submit_replay.assert_called_once()
+        call_args = mock_client.submit_replay.call_args
+        assert call_args[0][0] == "previous_session_id"  # session_id
+        assert len(call_args[0][1].responses) == 2  # replay_request
+
+        # Verify results
+        assert isinstance(results, TrismikRunResults)
+        assert results.session_id == "replay_session_id"
+        assert isinstance(results.score, AdaptiveTestScore)
+        assert results.score.theta == 1.3  # Final theta from replay response
+        assert (
+            results.score.std_error == 0.35
+        )  # Final std_error from replay response
+
     @pytest.mark.asyncio
-    async def test_run_replay_async(self, async_runner):
+    async def test_run_replay_async(self, async_runner, mock_client):
         """Test replaying a test asynchronously."""
         metadata = TrismikSessionMetadata(
             model_metadata=TrismikSessionMetadata.ModelMetadata(
@@ -215,7 +314,116 @@ class TestAdaptiveTest:
             test_configuration={},
             inference_setup={},
         )
-        await async_runner.run_replay_async("previous_id", metadata)
+        results = await async_runner.run_replay_async(
+            "previous_session_id", metadata
+        )
+
+        # Verify session_summary was called
+        mock_client.session_summary.assert_called_once_with(
+            "previous_session_id"
+        )
+
+        # Verify submit_replay was called with correct parameters
+        mock_client.submit_replay.assert_called_once()
+        call_args = mock_client.submit_replay.call_args
+        assert call_args[0][0] == "previous_session_id"  # session_id
+        assert len(call_args[0][1].responses) == 2  # replay_request
+
+        # Verify results
+        assert isinstance(results, TrismikRunResults)
+        assert results.session_id == "replay_session_id"
+        assert isinstance(results.score, AdaptiveTestScore)
+        assert results.score.theta == 1.3  # Final theta from replay response
+        assert (
+            results.score.std_error == 0.35
+        )  # Final std_error from replay response
+
+    def test_run_replay_with_responses_sync(self, sync_runner, mock_client):
+        """Test replaying a test with responses synchronously."""
+        metadata = TrismikSessionMetadata(
+            model_metadata=TrismikSessionMetadata.ModelMetadata(
+                name="test_model"
+            ),
+            test_configuration={},
+            inference_setup={},
+        )
+        results = sync_runner.run_replay(
+            "previous_session_id", metadata, with_responses=True
+        )
+
+        # Verify session_summary was called
+        mock_client.session_summary.assert_called_once_with(
+            "previous_session_id"
+        )
+
+        # Verify submit_replay was called
+        mock_client.submit_replay.assert_called_once()
+
+        # Verify results include responses
+        assert isinstance(results, TrismikRunResults)
+        assert results.session_id == "replay_session_id"
+        assert isinstance(results.score, AdaptiveTestScore)
+        assert results.responses is not None
+        assert len(results.responses) == 2
+        assert results.responses[0].dataset_item_id == "item_1"
+        assert results.responses[1].dataset_item_id == "item_2"
+
+    @pytest.mark.asyncio
+    async def test_run_replay_with_responses_async(
+        self, async_runner, mock_client
+    ):
+        """Test replaying a test with responses asynchronously."""
+        metadata = TrismikSessionMetadata(
+            model_metadata=TrismikSessionMetadata.ModelMetadata(
+                name="test_model"
+            ),
+            test_configuration={},
+            inference_setup={},
+        )
+        results = await async_runner.run_replay_async(
+            "previous_session_id", metadata, with_responses=True
+        )
+
+        # Verify session_summary was called
+        mock_client.session_summary.assert_called_once_with(
+            "previous_session_id"
+        )
+
+        # Verify submit_replay was called
+        mock_client.submit_replay.assert_called_once()
+
+        # Verify results include responses
+        assert isinstance(results, TrismikRunResults)
+        assert results.session_id == "replay_session_id"
+        assert isinstance(results.score, AdaptiveTestScore)
+        assert results.responses is not None
+        assert len(results.responses) == 2
+        assert results.responses[0].dataset_item_id == "item_1"
+        assert results.responses[1].dataset_item_id == "item_2"
+
+    def test_run_replay_with_async_processor(self, async_runner, mock_client):
+        """Test replaying a test with async item processor."""
+        metadata = TrismikSessionMetadata(
+            model_metadata=TrismikSessionMetadata.ModelMetadata(
+                name="test_model"
+            ),
+            test_configuration={},
+            inference_setup={},
+        )
+        results = async_runner.run_replay("previous_session_id", metadata)
+
+        # Verify session_summary was called
+        mock_client.session_summary.assert_called_once_with(
+            "previous_session_id"
+        )
+
+        # Verify submit_replay was called
+        mock_client.submit_replay.assert_called_once()
+
+        # Verify results
+        assert isinstance(results, TrismikRunResults)
+        assert results.session_id == "replay_session_id"
+        assert isinstance(results.score, AdaptiveTestScore)
 
     def test_should_create_client_when_api_key_provided(
         self, sync_item_processor

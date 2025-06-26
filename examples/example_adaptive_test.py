@@ -97,12 +97,15 @@ def run_sync_example() -> None:
     else:
         print("No score available.")
 
-    # print("\nReplay run")
-    # results = runner.run_replay(
-    #     results.session_id, sample_metadata, with_responses=True
-    # )
-    # print_results(results.results)
-    # print_responses(results.responses)
+    print("\nReplay run")
+    replay_results = runner.run_replay(
+        results.session_id, sample_metadata, with_responses=True
+    )
+    print(f"Replay session {replay_results.session_id} completed.")
+    if replay_results.score is not None:
+        print_score(replay_results.score)
+    if replay_results.responses is not None:
+        print(f"Number of responses: {len(replay_results.responses)}")
 
 
 async def run_async_example() -> None:
@@ -123,12 +126,15 @@ async def run_async_example() -> None:
     else:
         print("No score available.")
 
-    # print("\nReplay run")
-    # results = await runner.run_replay_async(
-    #     results.session_id, sample_metadata, with_responses=True
-    # )
-    # print_results(results.results)
-    # print_responses(results.responses)
+    print("\nReplay run")
+    replay_results = await runner.run_replay_async(
+        results.session_id, sample_metadata, with_responses=True
+    )
+    print(f"Replay session {replay_results.session_id} completed.")
+    if replay_results.score is not None:
+        print_score(replay_results.score)
+    if replay_results.responses is not None:
+        print(f"Number of responses: {len(replay_results.responses)}")
 
 
 async def main() -> None:
