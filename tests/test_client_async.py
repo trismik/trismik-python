@@ -5,6 +5,7 @@ import pytest
 
 from trismik.client_async import TrismikAsyncClient
 from trismik.exceptions import TrismikApiError, TrismikError
+from trismik.settings import environment_settings
 from trismik.types import TrismikSessionMetadata
 
 from ._mocker import TrismikResponseMocker
@@ -19,8 +20,10 @@ class TestTrismikAsyncClient:
         )
 
     def test_should_initialize_from_env(self, monkeypatch) -> None:
-        monkeypatch.setenv("TRISMIK_SERVICE_URL", "service_url")
-        monkeypatch.setenv("TRISMIK_API_KEY", "api_key")
+        monkeypatch.setenv(
+            environment_settings["trismik_service_url"], "service_url"
+        )
+        monkeypatch.setenv(environment_settings["trismik_api_key"], "api_key")
         TrismikAsyncClient(
             service_url=None,
             api_key=None,
@@ -29,13 +32,17 @@ class TestTrismikAsyncClient:
     def test_should_initialize_with_default_service_url(
         self, monkeypatch
     ) -> None:
-        monkeypatch.delenv("TRISMIK_SERVICE_URL", raising=False)
+        monkeypatch.delenv(
+            environment_settings["trismik_service_url"], raising=False
+        )
         TrismikAsyncClient(service_url=None, api_key="api_key")
 
     def test_should_fail_initialize_when_api_key_not_provided(
         self, monkeypatch
     ) -> None:
-        monkeypatch.delenv("TRISMIK_API_KEY", raising=False)
+        monkeypatch.delenv(
+            environment_settings["trismik_api_key"], raising=False
+        )
         with pytest.raises(
             TrismikError, match="api_key client option must be set"
         ):
@@ -192,8 +199,10 @@ class TestTrismikAsyncClient:
 
     @pytest.fixture(scope="function", autouse=True)
     def set_env(self, monkeypatch) -> None:
-        monkeypatch.setenv("TRISMIK_SERVICE_URL", "service_url")
-        monkeypatch.setenv("TRISMIK_API_KEY", "api_key")
+        monkeypatch.setenv(
+            environment_settings["trismik_service_url"], "service_url"
+        )
+        monkeypatch.setenv(environment_settings["trismik_api_key"], "api_key")
 
     @staticmethod
     def _mock_tests_response() -> httpx.AsyncClient:

@@ -12,6 +12,7 @@ import httpx
 from trismik._mapper import TrismikResponseMapper
 from trismik._utils import TrismikUtils
 from trismik.exceptions import TrismikApiError
+from trismik.settings import client_settings, environment_settings
 from trismik.types import (
     TrismikResult,
     TrismikSession,
@@ -29,8 +30,6 @@ class TrismikAsyncClient:
     This class provides an asynchronous interface to interact with the Trismik
     API, handling authentication, test sessions, and responses.
     """
-
-    _serviceUrl: str = "https://dashboard.trismik.com/api"
 
     def __init__(
         self,
@@ -53,10 +52,12 @@ class TrismikAsyncClient:
             TrismikApiError: If API request fails.
         """
         self._service_url = TrismikUtils.option(
-            service_url, self._serviceUrl, "TRISMIK_SERVICE_URL"
+            service_url,
+            client_settings["endpoint"],
+            environment_settings["trismik_service_url"],
         )
         self._api_key = TrismikUtils.required_option(
-            api_key, "api_key", "TRISMIK_API_KEY"
+            api_key, "api_key", environment_settings["trismik_api_key"]
         )
 
         # Set default headers with API key

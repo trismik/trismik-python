@@ -13,6 +13,7 @@ import nest_asyncio
 from tqdm.auto import tqdm
 
 from trismik.client_async import TrismikAsyncClient
+from trismik.settings import evaluation_settings
 from trismik.types import (
     AdaptiveTestScore,
     TrismikAdaptiveTestState,
@@ -36,7 +37,7 @@ class AdaptiveTest:
         item_processor: Callable[[TrismikItem], Any],
         client: Optional[TrismikAsyncClient] = None,
         api_key: Optional[str] = None,
-        max_items: int = 60,
+        max_items: int = evaluation_settings["max_iterations"],
     ) -> None:
         """
         Initialize a new Trismik runner.
