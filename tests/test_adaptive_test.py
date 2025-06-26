@@ -138,7 +138,7 @@ class TestAdaptiveTest:
         )
         assert isinstance(results, TrismikRunResults)
         assert isinstance(results.score, AdaptiveTestScore)
-        assert len(results.score.thetas) == 3
+        assert results.score.theta == 1.3  # Final theta value from mock
 
     @pytest.mark.asyncio
     async def test_run_async(self, async_runner, mock_client):
@@ -159,7 +159,7 @@ class TestAdaptiveTest:
         )
         assert isinstance(results, TrismikRunResults)
         assert isinstance(results.score, AdaptiveTestScore)
-        assert len(results.score.thetas) == 3
+        assert results.score.theta == 1.3  # Final theta value from mock
 
     def test_run_with_responses_sync(self, sync_runner):
         """Test running a test with responses synchronously."""

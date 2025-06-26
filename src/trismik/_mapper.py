@@ -1,9 +1,11 @@
+from datetime import datetime
 from typing import Any, Dict, List
 
 from trismik.exceptions import TrismikApiError
 from trismik.types import (
     TrismikItem,
     TrismikMultipleChoiceTextItem,
+    TrismikReplayResponse,
     TrismikResponse,
     TrismikResult,
     TrismikSession,
@@ -214,3 +216,44 @@ class TrismikResponseMapper:
             )
             for response in json
         ]
+
+    @staticmethod
+    def to_replay_response(json: Dict[str, Any]) -> TrismikReplayResponse:
+        """
+        Convert JSON response to a TrismikReplayResponse object.
+
+        Args:
+            json (Dict[str, Any]): JSON response from replay endpoint.
+
+        Returns:
+            TrismikReplayResponse: Replay response object.
+        """
+        # Parse datetime strings if they exist
+        completed_at = None
+        if "completedAt" in json and json["completedAt"]:
+            completed_at = datetime.fromisoformat(
+                json["completedAt"].replace("Z", "+00:00")
+            )
+
+        created_at = None
+        if "createdAt" in json and json["createdAt"]:
+            created_at = datetime.fromisoformat(
+                json["createdAt"].replace("Z", "+00:00")
+            )
+
+        return TrismikReplayResponse(
+            id=json["id"],
+            testId=json["testId"],
+            state=TrismikResponseMapper.to_session_state(json["state"]),
+            replay_of_session=json["replay_of_session"],
+            completedAt=completed_at,
+            createdAt=created_at,
+            metadata=json.get("metadata", {}),
+            dataset=[
+                TrismikResponseMapper.to_item(item)
+                for item in json.get("dataset", [])
+            ],
+            responses=TrismikResponseMapper.to_responses(
+                json.get("responses", [])
+            ),
+        )

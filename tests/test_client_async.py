@@ -6,7 +6,11 @@ import pytest
 from trismik.client_async import TrismikAsyncClient
 from trismik.exceptions import TrismikApiError, TrismikError
 from trismik.settings import environment_settings
-from trismik.types import TrismikSessionMetadata
+from trismik.types import (
+    TrismikReplayRequest,
+    TrismikReplayRequestItem,
+    TrismikSessionMetadata,
+)
 
 from ._mocker import TrismikResponseMocker
 
@@ -197,6 +201,59 @@ class TestTrismikAsyncClient:
             )
             await client.session_summary("session_id")
 
+    @pytest.mark.asyncio
+    async def test_should_submit_replay(self) -> None:
+        client = TrismikAsyncClient(
+            http_client=self._mock_session_replay_response()
+        )
+        replay_request = TrismikReplayRequest(
+            responses=[
+                TrismikReplayRequestItem(
+                    itemId="item_id", itemChoiceId="choice_id"
+                )
+            ]
+        )
+        response = await client.submit_replay("session_id", replay_request)
+
+        # Check basic properties
+        assert response.id == "replay_session_id"
+        assert response.testId == "test_id"
+        assert response.replay_of_session == "original_session_id"
+
+        # Check state
+        assert len(response.state.thetas) == 1
+        assert response.state.thetas[0] == 1.0
+
+        # Check dates
+        assert response.completedAt is not None
+        assert response.createdAt is not None
+
+        # Check dataset and responses
+        assert len(response.dataset) == 1
+        assert response.dataset[0].id == "item_id"
+        assert len(response.responses) == 1
+        assert response.responses[0].dataset_item_id == "item_id"
+
+        # Check metadata
+        assert response.metadata == {"foo": "bar"}
+
+    @pytest.mark.asyncio
+    async def test_should_fail_submit_replay_when_api_returned_error(
+        self,
+    ) -> None:
+        with pytest.raises(TrismikApiError, match="message"):
+            client = TrismikAsyncClient(
+                http_client=self._mock_error_response(401)
+            )
+            replay_request = TrismikReplayRequest(
+                responses=[
+                    TrismikReplayRequestItem(
+                        itemId="item_id", itemChoiceId="choice_id"
+                    )
+                ]
+            )
+            await client.submit_replay("session_id", replay_request)
+
     @pytest.fixture(scope="function", autouse=True)
     def set_env(self, monkeypatch) -> None:
         monkeypatch.setenv(
@@ -252,6 +309,13 @@ class TestTrismikAsyncClient:
         http_client = MagicMock(httpx.AsyncClient)
         response = TrismikResponseMocker.session_summary()
         http_client.get.return_value = response
+        return http_client
+
+    @staticmethod
+    def _mock_session_replay_response() -> httpx.AsyncClient:
+        http_client = MagicMock(httpx.AsyncClient)
+        response = TrismikResponseMocker.session_replay()
+        http_client.post.return_value = response
         return http_client
 
     @staticmethod

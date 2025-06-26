@@ -14,6 +14,8 @@ from trismik._utils import TrismikUtils
 from trismik.exceptions import TrismikApiError
 from trismik.settings import client_settings, environment_settings
 from trismik.types import (
+    TrismikReplayRequest,
+    TrismikReplayResponse,
     TrismikResult,
     TrismikSession,
     TrismikSessionMetadata,
@@ -260,6 +262,44 @@ class TrismikAsyncClient:
             response.raise_for_status()
             json = response.json()
             return TrismikResponseMapper.to_session_summary(json)
+        except httpx.HTTPStatusError as e:
+            raise TrismikApiError(
+                TrismikUtils.get_error_message(e.response)
+            ) from e
+        except httpx.HTTPError as e:
+            raise TrismikApiError(str(e)) from e
+
+    async def submit_replay(
+        self, session_id: str, replay_request: TrismikReplayRequest
+    ) -> TrismikReplayResponse:
+        """
+        Submit a replay of a session with specific responses.
+
+        Args:
+            session_id (str): ID of the session to replay.
+            replay_request (TrismikReplayRequest): Request containing responses
+                to submit.
+
+        Returns:
+            TrismikReplayResponse: Response from the replay endpoint.
+
+        Raises:
+            TrismikApiError: If API request fails.
+        """
+        try:
+            url = f"/api/v1/sessions/{session_id}/replay"
+
+            # Convert TrismikReplayRequestItem objects to dictionaries
+            responses_dict = [
+                {"itemId": item.itemId, "itemChoiceId": item.itemChoiceId}
+                for item in replay_request.responses
+            ]
+
+            body = {"responses": responses_dict}
+            response = await self._http_client.post(url, json=body)
+            response.raise_for_status()
+            json = response.json()
+            return TrismikResponseMapper.to_replay_response(json)
         except httpx.HTTPStatusError as e:
             raise TrismikApiError(
                 TrismikUtils.get_error_message(e.response)

@@ -169,9 +169,8 @@ class AdaptiveTest:
             )
 
         score = AdaptiveTestScore(
-            thetas=last_state.state.thetas,
-            std_error_history=last_state.state.std_error_history,
-            kl_info_history=last_state.state.kl_info_history,
+            theta=last_state.state.thetas[-1],
+            std_error=last_state.state.std_error_history[-1],
         )
 
         return TrismikRunResults(session_id, score=score)

@@ -5,7 +5,8 @@ This module defines the data structures used throughout the Trismik client
 library.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 
@@ -67,9 +68,8 @@ class TrismikAdaptiveTestState:
 class AdaptiveTestScore:
     """Final scores of an adaptive test run."""
 
-    thetas: List[float]
-    std_error_history: List[float]
-    kl_info_history: List[float]
+    theta: float
+    std_error: float
 
 
 @dataclass
@@ -124,8 +124,8 @@ class TrismikRunResults:
     """Test results and responses."""
 
     session_id: str
-    responses: Optional[List[TrismikResponse]] = None
     score: Optional[AdaptiveTestScore] = None
+    responses: Optional[List[TrismikResponse]] = None
 
 
 @dataclass
@@ -138,6 +138,31 @@ class TrismikSessionSummary:
     dataset: List[TrismikItem]
     responses: List[TrismikResponse]
     metadata: dict
+
+    @property
+    def theta(self) -> float:
+        """Get the theta of the session."""
+        return self.state.thetas[-1]
+
+    @property
+    def std_error(self) -> float:
+        """Get the standard error of the session."""
+        return self.state.std_error_history[-1]
+
+    @property
+    def total_responses(self) -> int:
+        """Get the total number of responses in the session."""
+        return len(self.responses)
+
+    @property
+    def correct_responses(self) -> int:
+        """Get the number of correct responses in the session."""
+        return sum(response.correct for response in self.responses)
+
+    @property
+    def wrong_responses(self) -> int:
+        """Get the number of wrong responses in the session."""
+        return self.total_responses - self.correct_responses
 
 
 @dataclass
@@ -164,3 +189,33 @@ class TrismikSessionMetadata:
             "test_configuration": self.test_configuration,
             "inference_setup": self.inference_setup,
         }
+
+
+@dataclass
+class TrismikReplayRequestItem:
+    """Item in a replay request."""
+
+    itemId: str
+    itemChoiceId: str
+
+
+@dataclass
+class TrismikReplayRequest:
+    """Request to replay a session with specific responses."""
+
+    responses: List[TrismikReplayRequestItem]
+
+
+@dataclass
+class TrismikReplayResponse:
+    """Response from a replay session request."""
+
+    id: str
+    testId: str
+    state: TrismikSessionState
+    replay_of_session: str
+    completedAt: Optional[datetime] = None
+    createdAt: Optional[datetime] = None
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    dataset: List[TrismikItem] = field(default_factory=list)
+    responses: List[TrismikResponse] = field(default_factory=list)

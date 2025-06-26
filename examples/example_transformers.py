@@ -126,10 +126,8 @@ Please adhere strictly to the instructions.
 def print_score(score: AdaptiveTestScore) -> None:
     """Print adaptive test score with thetas, standard errors, and KL info."""
     print("\nAdaptive Test Score...")
-    print(f"Final theta: {score.thetas[-1]}")
-    print(f"Number of items: {len(score.thetas)}")
-    print(f"Final standard error: {score.std_error_history[-1]}")
-    print(f"Final KL info: {score.kl_info_history[-1]}")
+    print(f"Final theta: {score.theta}")
+    print(f"Final standard error: {score.std_error}")
 
 
 def run_sync_example(pipeline: transformers.pipeline) -> None:

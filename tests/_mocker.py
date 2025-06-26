@@ -160,3 +160,42 @@ class TrismikResponseMocker:
         return httpx.Response(
             request=httpx.Request("method", "url"), status_code=204, json=None
         )
+
+    @staticmethod
+    def session_replay() -> httpx.Response:
+        return httpx.Response(
+            request=httpx.Request("method", "url"),
+            status_code=200,
+            json={
+                "id": "replay_session_id",
+                "testId": "test_id",
+                "state": {
+                    "responses": ["item_1"],
+                    "thetas": [1.0],
+                    "std_error_history": [0.5],
+                    "kl_info_history": [0.1],
+                    "effective_difficulties": [0.2],
+                },
+                "replay_of_session": "original_session_id",
+                "completedAt": "2025-06-26T10:56:03.356Z",
+                "createdAt": "2025-06-26T10:56:03.356Z",
+                "metadata": {"foo": "bar"},
+                "dataset": [
+                    {
+                        "id": "item_id",
+                        "question": "Test question",
+                        "choices": [
+                            {"id": "A", "value": "Choice A"},
+                            {"id": "B", "value": "Choice B"},
+                        ],
+                    }
+                ],
+                "responses": [
+                    {
+                        "datasetItemId": "item_id",
+                        "value": "value",
+                        "correct": True,
+                    }
+                ],
+            },
+        )
