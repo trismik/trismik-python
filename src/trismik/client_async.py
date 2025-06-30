@@ -91,14 +91,14 @@ class TrismikAsyncClient:
             raise TrismikApiError(str(e)) from e
 
     async def start_session(
-        self, test_id: str, metadata: TrismikSessionMetadata
+        self, test_id: str, metadata: Optional[TrismikSessionMetadata] = None
     ) -> TrismikSessionResponse:
         """
         Start a new session for a test and get the first item.
 
         Args:
             test_id (str): ID of the test.
-            metadata (TrismikSessionMetadata): Metadata for the session.
+            metadata (Optional[TrismikSessionMetadata]): Session metadata.
 
         Returns:
             TrismikSessionResponse: Session response.
@@ -108,7 +108,10 @@ class TrismikAsyncClient:
         """
         try:
             url = "/sessions/start"
-            body = {"testId": test_id}
+            body = {
+                "testId": test_id,
+                "metadata": metadata.toDict() if metadata else {},
+            }
             response = await self._http_client.post(url, json=body)
             response.raise_for_status()
             json = response.json()
@@ -178,7 +181,10 @@ class TrismikAsyncClient:
             raise TrismikApiError(str(e)) from e
 
     async def submit_replay(
-        self, session_id: str, replay_request: TrismikReplayRequest
+        self,
+        session_id: str,
+        replay_request: TrismikReplayRequest,
+        metadata: Optional[TrismikSessionMetadata] = None,
     ) -> TrismikReplayResponse:
         """
         Submit a replay of a session with specific responses.
@@ -187,6 +193,7 @@ class TrismikAsyncClient:
             session_id (str): ID of the session to replay.
             replay_request (TrismikReplayRequest): Request containing responses
                 to submit.
+            metadata (Optional[TrismikSessionMetadata]): Session metadata.
 
         Returns:
             TrismikReplayResponse: Response from the replay endpoint.
@@ -203,7 +210,10 @@ class TrismikAsyncClient:
                 for item in replay_request.responses
             ]
 
-            body = {"responses": responses_dict}
+            body = {
+                "responses": responses_dict,
+                "metadata": metadata.toDict() if metadata else {},
+            }
             response = await self._http_client.post(url, json=body)
             response.raise_for_status()
             json = response.json()

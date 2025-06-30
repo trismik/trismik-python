@@ -191,7 +191,7 @@ class AdaptiveTest:
         Args:
             previous_session_id (str): ID of a previous session to replay.
             session_metadata (TrismikSessionMetadata): Metadata for the
-             session.
+             replay session.
             with_responses (bool): If True, responses will be included
              with the results.
 
@@ -257,9 +257,9 @@ class AdaptiveTest:
         # Create replay request
         replay_request = TrismikReplayRequest(responses=replay_items)
 
-        # Submit replay
+        # Submit replay with metadata
         replay_response = await self._client.submit_replay(
-            previous_session_id, replay_request
+            previous_session_id, replay_request, session_metadata
         )
 
         # Create score from replay response

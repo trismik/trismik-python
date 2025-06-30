@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import httpx
 import pytest
@@ -234,6 +234,174 @@ class TestTrismikAsyncClient:
                 ]
             )
             await client.submit_replay("session_id", replay_request)
+
+    @pytest.mark.asyncio
+    async def test_should_send_metadata_in_request_body(self) -> None:
+        """Test that metadata is sent in the request body."""
+        # Mock the HTTP client to capture the request
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.raise_for_status.return_value = None
+        mock_response.json.return_value = {
+            "sessionInfo": {"id": "session_id"},
+            "state": {
+                "responses": [],
+                "thetas": [],
+                "std_error_history": [],
+                "kl_info_history": [],
+                "effective_difficulties": [],
+            },
+            "nextItem": None,
+            "completed": True,
+        }
+        mock_client.post = AsyncMock(return_value=mock_response)
+
+        client = TrismikAsyncClient(http_client=mock_client)
+
+        metadata = TrismikSessionMetadata(
+            model_metadata=TrismikSessionMetadata.ModelMetadata("test_model"),
+            test_configuration={"max_items": 20},
+            inference_setup={"temperature": 0.7},
+        )
+
+        await client.start_session("test_id", metadata)
+
+        # Verify the request was made with the correct body
+        mock_client.post.assert_called_once()
+        call_args = mock_client.post.call_args
+        assert call_args[1]["json"] == {
+            "testId": "test_id",
+            "metadata": metadata.toDict(),
+        }
+
+    @pytest.mark.asyncio
+    async def test_should_send_empty_metadata_when_none_provided(self) -> None:
+        """Test that empty metadata is sent when no metadata is provided."""
+        # Mock the HTTP client to capture the request
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.raise_for_status.return_value = None
+        mock_response.json.return_value = {
+            "sessionInfo": {"id": "session_id"},
+            "state": {
+                "responses": [],
+                "thetas": [],
+                "std_error_history": [],
+                "kl_info_history": [],
+                "effective_difficulties": [],
+            },
+            "nextItem": None,
+            "completed": True,
+        }
+        mock_client.post = AsyncMock(return_value=mock_response)
+
+        client = TrismikAsyncClient(http_client=mock_client)
+
+        await client.start_session("test_id")
+
+        # Verify the request was made with empty metadata
+        mock_client.post.assert_called_once()
+        call_args = mock_client.post.call_args
+        assert call_args[1]["json"] == {
+            "testId": "test_id",
+            "metadata": {},
+        }
+
+    @pytest.mark.asyncio
+    async def test_should_send_metadata_in_replay_request_body(self) -> None:
+        """Test that metadata is sent in the replay request body."""
+        # Mock the HTTP client to capture the request
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.raise_for_status.return_value = None
+        mock_response.json.return_value = {
+            "id": "replay_session_id",
+            "testId": "test_id",
+            "state": {
+                "responses": [],
+                "thetas": [],
+                "std_error_history": [],
+                "kl_info_history": [],
+                "effective_difficulties": [],
+            },
+            "replay_of_session": "original_session_id",
+            "metadata": {},
+            "dataset": [],
+            "responses": [],
+        }
+        mock_client.post = AsyncMock(return_value=mock_response)
+
+        client = TrismikAsyncClient(http_client=mock_client)
+
+        metadata = TrismikSessionMetadata(
+            model_metadata=TrismikSessionMetadata.ModelMetadata("test_model"),
+            test_configuration={"max_items": 20},
+            inference_setup={"temperature": 0.7},
+        )
+
+        replay_request = TrismikReplayRequest(
+            responses=[
+                TrismikReplayRequestItem(
+                    itemId="item_id", itemChoiceId="choice_id"
+                )
+            ]
+        )
+
+        await client.submit_replay("session_id", replay_request, metadata)
+
+        # Verify the request was made with the correct body
+        mock_client.post.assert_called_once()
+        call_args = mock_client.post.call_args
+        assert call_args[1]["json"] == {
+            "responses": [{"itemId": "item_id", "itemChoiceId": "choice_id"}],
+            "metadata": metadata.toDict() if metadata else {},
+        }
+
+    @pytest.mark.asyncio
+    async def test_should_send_empty_metadata_in_replay_when_none_provided(
+        self,
+    ) -> None:
+        """Test that empty metadata is sent when no metadata is provided."""
+        # Mock the HTTP client to capture the request
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.raise_for_status.return_value = None
+        mock_response.json.return_value = {
+            "id": "replay_session_id",
+            "testId": "test_id",
+            "state": {
+                "responses": [],
+                "thetas": [],
+                "std_error_history": [],
+                "kl_info_history": [],
+                "effective_difficulties": [],
+            },
+            "replay_of_session": "original_session_id",
+            "metadata": {},
+            "dataset": [],
+            "responses": [],
+        }
+        mock_client.post = AsyncMock(return_value=mock_response)
+
+        client = TrismikAsyncClient(http_client=mock_client)
+
+        replay_request = TrismikReplayRequest(
+            responses=[
+                TrismikReplayRequestItem(
+                    itemId="item_id", itemChoiceId="choice_id"
+                )
+            ]
+        )
+
+        await client.submit_replay("session_id", replay_request)
+
+        # Verify the request was made with empty metadata
+        mock_client.post.assert_called_once()
+        call_args = mock_client.post.call_args
+        assert call_args[1]["json"] == {
+            "responses": [{"itemId": "item_id", "itemChoiceId": "choice_id"}],
+            "metadata": {},
+        }
 
     @pytest.fixture(scope="function", autouse=True)
     def set_env(self, monkeypatch) -> None:

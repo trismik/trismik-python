@@ -5,12 +5,17 @@ This file provides a skeleton for how to use the AdaptiveTest class to run
 tests. In this class, we mock the item processing by picking the first choice.
 In a real application, you would implement your own model inference in
 either process_item_sync or process_item_async.
+
+This example also demonstrates replay functionality with custom metadata.
+The replay sessions use different metadata than the original sessions to
+show how you can track different model configurations, hardware setups,
+or test parameters when replaying sessions.
 """
 
 import asyncio
 from typing import Any
 
-from _sample_metadata import sample_metadata
+from _sample_metadata import replay_metadata, sample_metadata
 from dotenv import load_dotenv
 
 from trismik.adaptive_test import AdaptiveTest
@@ -98,8 +103,15 @@ def run_sync_example() -> None:
         print("No score available.")
 
     print("\nReplay run")
+    # Update replay metadata with the original session ID
+    # This demonstrates how you can customize metadata for replay sessions
+    # to track different model configurations, hardware, or test parameters
+    replay_metadata.test_configuration["original_session_id"] = (
+        results.session_id
+    )
+
     replay_results = runner.run_replay(
-        results.session_id, sample_metadata, with_responses=True
+        results.session_id, replay_metadata, with_responses=True
     )
     print(f"Replay session {replay_results.session_id} completed.")
     if replay_results.score is not None:
@@ -127,8 +139,15 @@ async def run_async_example() -> None:
         print("No score available.")
 
     print("\nReplay run")
+    # Update replay metadata with the original session ID
+    # This demonstrates how you can customize metadata for replay sessions
+    # to track different model configurations, hardware, or test parameters
+    replay_metadata.test_configuration["original_session_id"] = (
+        results.session_id
+    )
+
     replay_results = await runner.run_replay_async(
-        results.session_id, sample_metadata, with_responses=True
+        results.session_id, replay_metadata, with_responses=True
     )
     print(f"Replay session {replay_results.session_id} completed.")
     if replay_results.score is not None:
