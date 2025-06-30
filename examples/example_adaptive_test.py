@@ -104,8 +104,8 @@ def run_sync_example() -> None:
 
     print("\nReplay run")
     # Update replay metadata with the original session ID
-    # This demonstrates how you can customize metadata for replay sessions
-    # to track different model configurations, hardware, or test parameters
+    # Note that we use different metadata for the replay session, for example
+    # to track that we're using a different model.
     replay_metadata.test_configuration["original_session_id"] = (
         results.session_id
     )
