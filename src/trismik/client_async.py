@@ -11,7 +11,11 @@ import httpx
 
 from trismik._mapper import TrismikResponseMapper
 from trismik._utils import TrismikUtils
-from trismik.exceptions import TrismikApiError, TrismikPayloadTooLargeError
+from trismik.exceptions import (
+    TrismikApiError,
+    TrismikPayloadTooLargeError,
+    TrismikValidationError,
+)
 from trismik.settings import client_settings, environment_settings
 from trismik.types import (
     TrismikReplayRequest,
@@ -86,6 +90,15 @@ class TrismikAsyncClient:
             except Exception:
                 backend_message = "Payload too large."
             return TrismikPayloadTooLargeError(backend_message)
+        elif e.response.status_code == 422:
+            # Handle validation error specifically
+            try:
+                backend_message = e.response.json().get(
+                    "detail", "Validation failed."
+                )
+            except Exception:
+                backend_message = "Validation failed."
+            return TrismikValidationError(backend_message)
         else:
             return TrismikApiError(TrismikUtils.get_error_message(e.response))
 
@@ -222,7 +235,9 @@ class TrismikAsyncClient:
 
         Raises:
             TrismikPayloadTooLargeError: If the request payload exceeds the
-            server's size limit.
+                server's size limit.
+            TrismikValidationError: If the request fails validation (e.g.,
+                duplicate item IDs, unknown item IDs).
             TrismikApiError: If API request fails.
         """
         try:

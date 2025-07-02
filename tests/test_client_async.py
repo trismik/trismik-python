@@ -8,6 +8,7 @@ from trismik.exceptions import (
     TrismikApiError,
     TrismikError,
     TrismikPayloadTooLargeError,
+    TrismikValidationError,
 )
 from trismik.settings import environment_settings
 from trismik.types import (
@@ -440,6 +441,24 @@ class TestTrismikAsyncClient:
             "responses": [{"itemId": "item_id", "itemChoiceId": "choice_id"}],
             "metadata": {},
         }
+
+    @pytest.mark.asyncio
+    async def test_should_fail_submit_replay_when_validation_error(
+        self,
+    ) -> None:
+        """Test that a 422 validation error raises TrismikValidationError."""
+        with pytest.raises(TrismikValidationError):
+            client = TrismikAsyncClient(
+                http_client=self._mock_error_response(422)
+            )
+            replay_request = TrismikReplayRequest(
+                responses=[
+                    TrismikReplayRequestItem(
+                        itemId="item_id", itemChoiceId="choice_id"
+                    )
+                ]
+            )
+            await client.submit_replay("session_id", replay_request)
 
     @pytest.fixture(scope="function", autouse=True)
     def set_env(self, monkeypatch) -> None:
