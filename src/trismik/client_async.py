@@ -11,7 +11,7 @@ import httpx
 
 from trismik._mapper import TrismikResponseMapper
 from trismik._utils import TrismikUtils
-from trismik.exceptions import TrismikApiError
+from trismik.exceptions import TrismikApiError, TrismikPayloadTooLargeError
 from trismik.settings import client_settings, environment_settings
 from trismik.types import (
     TrismikReplayRequest,
@@ -67,6 +67,28 @@ class TrismikAsyncClient:
             base_url=self._service_url, headers=default_headers
         )
 
+    def _handle_http_error(self, e: httpx.HTTPStatusError) -> Exception:
+        """
+        Handle HTTP errors and return appropriate Trismik exceptions.
+
+        Args:
+            e (httpx.HTTPStatusError): The HTTP status error to handle.
+
+        Returns:
+            Exception: The appropriate Trismik exception to raise.
+        """
+        if e.response.status_code == 413:
+            # Handle payload too large error specifically
+            try:
+                backend_message = e.response.json().get(
+                    "detail", "Payload too large."
+                )
+            except Exception:
+                backend_message = "Payload too large."
+            return TrismikPayloadTooLargeError(backend_message)
+        else:
+            return TrismikApiError(TrismikUtils.get_error_message(e.response))
+
     async def list_tests(self) -> List[TrismikTest]:
         """
         Get a list of available tests.
@@ -104,6 +126,8 @@ class TrismikAsyncClient:
             TrismikSessionResponse: Session response.
 
         Raises:
+            TrismikPayloadTooLargeError: If the request payload exceeds the
+            server's size limit.
             TrismikApiError: If API request fails.
         """
         try:
@@ -117,9 +141,7 @@ class TrismikAsyncClient:
             json = response.json()
             return TrismikResponseMapper.to_session_response(json)
         except httpx.HTTPStatusError as e:
-            raise TrismikApiError(
-                TrismikUtils.get_error_message(e.response)
-            ) from e
+            raise self._handle_http_error(e) from e
         except httpx.HTTPError as e:
             raise TrismikApiError(str(e)) from e
 
@@ -199,6 +221,8 @@ class TrismikAsyncClient:
             TrismikReplayResponse: Response from the replay endpoint.
 
         Raises:
+            TrismikPayloadTooLargeError: If the request payload exceeds the
+            server's size limit.
             TrismikApiError: If API request fails.
         """
         try:
@@ -219,8 +243,6 @@ class TrismikAsyncClient:
             json = response.json()
             return TrismikResponseMapper.to_replay_response(json)
         except httpx.HTTPStatusError as e:
-            raise TrismikApiError(
-                TrismikUtils.get_error_message(e.response)
-            ) from e
+            raise self._handle_http_error(e) from e
         except httpx.HTTPError as e:
             raise TrismikApiError(str(e)) from e

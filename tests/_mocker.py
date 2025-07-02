@@ -13,18 +13,30 @@ class TrismikResponseMocker:
 
     @staticmethod
     def error(status: int) -> httpx.Response:
-        return httpx.Response(
-            request=httpx.Request("method", "url"),
-            status_code=status,
-            json={
-                "timestamp": "timestamp",
-                "path": "path",
-                "status": status,
-                "error": "error",
-                "requestId": "request_id",
-                "message": "message",
-            },
-        )
+        if status == 413:
+            # 413 errors have a different JSON structure with 'detail' field
+            return httpx.Response(
+                request=httpx.Request("method", "url"),
+                status_code=status,
+                json={
+                    "detail": (
+                        "metadata size must be less than 10KB (10240 bytes)."
+                    )
+                },
+            )
+        else:
+            return httpx.Response(
+                request=httpx.Request("method", "url"),
+                status_code=status,
+                json={
+                    "timestamp": "timestamp",
+                    "path": "path",
+                    "status": status,
+                    "error": "error",
+                    "requestId": "request_id",
+                    "message": "message",
+                },
+            )
 
     @staticmethod
     def tests() -> httpx.Response:

@@ -4,7 +4,11 @@ import httpx
 import pytest
 
 from trismik.client_async import TrismikAsyncClient
-from trismik.exceptions import TrismikApiError, TrismikError
+from trismik.exceptions import (
+    TrismikApiError,
+    TrismikError,
+    TrismikPayloadTooLargeError,
+)
 from trismik.settings import environment_settings
 from trismik.types import (
     TrismikReplayRequest,
@@ -99,6 +103,23 @@ class TestTrismikAsyncClient:
         with pytest.raises(TrismikApiError, match="message"):
             client = TrismikAsyncClient(
                 http_client=self._mock_error_response(401)
+            )
+            metadata = TrismikSessionMetadata(
+                model_metadata=TrismikSessionMetadata.ModelMetadata(
+                    name="test_model"
+                ),
+                test_configuration={},
+                inference_setup={},
+            )
+            await client.start_session("test_id", metadata)
+
+    @pytest.mark.asyncio
+    async def test_should_fail_start_session_when_payload_too_large(
+        self,
+    ) -> None:
+        with pytest.raises(TrismikPayloadTooLargeError):
+            client = TrismikAsyncClient(
+                http_client=self._mock_error_response(413)
             )
             metadata = TrismikSessionMetadata(
                 model_metadata=TrismikSessionMetadata.ModelMetadata(
@@ -225,6 +246,23 @@ class TestTrismikAsyncClient:
         with pytest.raises(TrismikApiError, match="message"):
             client = TrismikAsyncClient(
                 http_client=self._mock_error_response(401)
+            )
+            replay_request = TrismikReplayRequest(
+                responses=[
+                    TrismikReplayRequestItem(
+                        itemId="item_id", itemChoiceId="choice_id"
+                    )
+                ]
+            )
+            await client.submit_replay("session_id", replay_request)
+
+    @pytest.mark.asyncio
+    async def test_should_fail_submit_replay_when_payload_too_large(
+        self,
+    ) -> None:
+        with pytest.raises(TrismikPayloadTooLargeError):
+            client = TrismikAsyncClient(
+                http_client=self._mock_error_response(413)
             )
             replay_request = TrismikReplayRequest(
                 responses=[
