@@ -12,6 +12,7 @@ show how you can track different model configurations, hardware setups,
 or test parameters when replaying sessions.
 """
 
+import argparse
 import asyncio
 from typing import Any
 
@@ -84,14 +85,14 @@ def print_score(score: AdaptiveTestScore) -> None:
     print(f"Final standard error: {score.std_error}")
 
 
-def run_sync_example() -> None:
+def run_sync_example(test_name: str) -> None:
     """Run an adaptive test synchronously using the AdaptiveTest class."""
     print("\n=== Running Synchronous Example ===")
     runner = AdaptiveTest(mock_inference)
 
-    print("\nStarting test...")
+    print(f"\nStarting test with test name: {test_name}")
     results = runner.run(
-        "MMLUPro2025",
+        test_name,
         session_metadata=sample_metadata,
     )
 
@@ -120,14 +121,14 @@ def run_sync_example() -> None:
         print(f"Number of responses: {len(replay_results.responses)}")
 
 
-async def run_async_example() -> None:
+async def run_async_example(test_name: str) -> None:
     """Run an adaptive test asynchronously using the AdaptiveTest class."""
     print("\n=== Running Asynchronous Example ===")
     runner = AdaptiveTest(mock_inference_async)
 
-    print("\nStarting test...")
+    print(f"\nStarting test with test name: {test_name}")
     results = await runner.run_async(
-        "MMLUPro2025",
+        test_name,
         session_metadata=sample_metadata,
     )
 
@@ -163,13 +164,25 @@ async def main() -> None:
     Assumes TRISMIK_SERVICE_URL and TRISMIK_API_KEY are set either in
     environment or in .env file.
     """
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(
+        description="Run adaptive testing examples with Trismik API"
+    )
+    parser.add_argument(
+        "--test-name",
+        type=str,
+        default="FinRAG2025",
+        help="Name of the test to run (default: FinRAG2025)",
+    )
+    args = parser.parse_args()
+
     load_dotenv()
 
     # Run sync example
-    run_sync_example()
+    run_sync_example(args.test_name)
 
     # Run async example
-    await run_async_example()
+    await run_async_example(args.test_name)
 
 
 if __name__ == "__main__":

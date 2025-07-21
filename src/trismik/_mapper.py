@@ -3,6 +3,7 @@ from typing import Any, Dict, List
 
 from trismik.exceptions import TrismikApiError
 from trismik.types import (
+    TrismikDataset,
     TrismikItem,
     TrismikMultipleChoiceTextItem,
     TrismikReplayResponse,
@@ -13,7 +14,6 @@ from trismik.types import (
     TrismikSessionResponse,
     TrismikSessionState,
     TrismikSessionSummary,
-    TrismikTest,
     TrismikTextChoice,
 )
 
@@ -27,7 +27,7 @@ class TrismikResponseMapper:
     """
 
     @staticmethod
-    def to_tests(json: List[Dict[str, Any]]) -> List[TrismikTest]:
+    def to_tests(json: List[Dict[str, Any]]) -> List[TrismikDataset]:
         """
         Convert JSON response to a list of TrismikTest objects.
 
@@ -35,10 +35,10 @@ class TrismikResponseMapper:
             json (List[Dict[str, Any]]): JSON response containing test data.
 
         Returns:
-            List[TrismikTest]: List of test objects with IDs and names.
+            List[TrismikDataset]: List of test objects with IDs and names.
         """
         return [
-            TrismikTest(
+            TrismikDataset(
                 id=item["id"],
                 name=item["name"],
             )

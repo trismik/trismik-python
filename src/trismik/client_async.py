@@ -18,12 +18,12 @@ from trismik.exceptions import (
 )
 from trismik.settings import client_settings, environment_settings
 from trismik.types import (
+    TrismikDataset,
     TrismikReplayRequest,
     TrismikReplayResponse,
     TrismikSessionMetadata,
     TrismikSessionResponse,
     TrismikSessionSummary,
-    TrismikTest,
 )
 
 
@@ -102,18 +102,18 @@ class TrismikAsyncClient:
         else:
             return TrismikApiError(TrismikUtils.get_error_message(e.response))
 
-    async def list_tests(self) -> List[TrismikTest]:
+    async def list_datasets(self) -> List[TrismikDataset]:
         """
-        Get a list of available tests.
+        Get a list of available datasets.
 
         Returns:
-            List[TrismikTest]: List of available tests.
+            List[TrismikDataset]: List of available datasets.
 
         Raises:
             TrismikApiError: If API request fails.
         """
         try:
-            url = "/test/summary"
+            url = "/datasets"
             response = await self._http_client.get(url)
             response.raise_for_status()
             json = response.json()

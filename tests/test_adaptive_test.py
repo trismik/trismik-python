@@ -14,6 +14,7 @@ from trismik.adaptive_test import AdaptiveTest
 from trismik.client_async import TrismikAsyncClient
 from trismik.types import (
     AdaptiveTestScore,
+    TrismikDataset,
     TrismikItem,
     TrismikMultipleChoiceTextItem,
     TrismikReplayResponse,
@@ -161,6 +162,13 @@ class TestAdaptiveTest:
             ],
         )
 
+        # Mock list_datasets response
+        list_datasets_response = [
+            TrismikDataset(id="test_1", name="Test 1"),
+            TrismikDataset(id="test_2", name="Test 2"),
+        ]
+
+        client.list_datasets = AsyncMock(return_value=list_datasets_response)
         client.start_session = AsyncMock(return_value=start_response)
         client.continue_session = AsyncMock(
             side_effect=[continue_response, end_response]
@@ -204,6 +212,31 @@ class TestAdaptiveTest:
             item_processor=async_item_processor,
             client=mock_client,
         )
+
+    def test_list_datasets_sync(self, sync_runner, mock_client):
+        """Test listing datasets synchronously."""
+        datasets = sync_runner.list_datasets()
+
+        mock_client.list_datasets.assert_called_once()
+        assert isinstance(datasets, list)
+        assert len(datasets) == 2
+        assert datasets[0].id == "test_1"
+        assert datasets[0].name == "Test 1"
+        assert datasets[1].id == "test_2"
+        assert datasets[1].name == "Test 2"
+
+    @pytest.mark.asyncio
+    async def test_list_datasets_async(self, async_runner, mock_client):
+        """Test listing datasets asynchronously."""
+        datasets = await async_runner.list_datasets_async()
+
+        mock_client.list_datasets.assert_called_once()
+        assert isinstance(datasets, list)
+        assert len(datasets) == 2
+        assert datasets[0].id == "test_1"
+        assert datasets[0].name == "Test 1"
+        assert datasets[1].id == "test_2"
+        assert datasets[1].name == "Test 2"
 
     def test_run_sync(self, sync_runner, mock_client):
         """Test running a test synchronously."""

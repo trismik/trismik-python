@@ -61,22 +61,22 @@ class TestTrismikAsyncClient:
             )
 
     @pytest.mark.asyncio
-    async def test_should_list_tests(self) -> None:
+    async def test_should_list_datasets(self) -> None:
         client = TrismikAsyncClient(http_client=self._mock_tests_response())
-        tests = await client.list_tests()
-        assert len(tests) == 5
-        assert tests[0].id == "fluency"
-        assert tests[0].name == "Fluency"
+        datasets = await client.list_datasets()
+        assert len(datasets) == 5
+        assert datasets[0].id == "fluency"
+        assert datasets[0].name == "Fluency"
 
     @pytest.mark.asyncio
-    async def test_should_fail_list_tests_when_api_returned_error(
+    async def test_should_fail_list_datasets_when_api_returned_error(
         self,
     ) -> None:
         with pytest.raises(TrismikApiError, match="message"):
             client = TrismikAsyncClient(
                 http_client=self._mock_error_response(401)
             )
-            await client.list_tests()
+            await client.list_datasets()
 
     @pytest.mark.asyncio
     async def test_should_start_session(self) -> None:

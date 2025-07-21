@@ -17,6 +17,7 @@ from trismik.settings import evaluation_settings
 from trismik.types import (
     AdaptiveTestScore,
     TrismikAdaptiveTestState,
+    TrismikDataset,
     TrismikItem,
     TrismikReplayRequest,
     TrismikReplayRequestItem,
@@ -85,6 +86,31 @@ class AdaptiveTest:
         # Allow nested event loops (needed for Jupyter, etc)
         nest_asyncio.apply(loop)
         return loop
+
+    def list_datasets(self) -> List[TrismikDataset]:
+        """
+        Get a list of available datasets synchronously.
+
+        Returns:
+            List[TrismikDataset]: List of available datasets.
+
+        Raises:
+            TrismikApiError: If API request fails.
+        """
+        loop = self._get_loop()
+        return loop.run_until_complete(self.list_datasets_async())
+
+    async def list_datasets_async(self) -> List[TrismikDataset]:
+        """
+        Get a list of available datasets asynchronously.
+
+        Returns:
+            List[TrismikDataset]: List of available datasets.
+
+        Raises:
+            TrismikApiError: If API request fails.
+        """
+        return await self._client.list_datasets()
 
     def run(
         self,

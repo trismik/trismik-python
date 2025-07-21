@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional
 
 
 @dataclass
-class TrismikTest:
+class TrismikDataset:
     """Test metadata including ID and name."""
 
     id: str
