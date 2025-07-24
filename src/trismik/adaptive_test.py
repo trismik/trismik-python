@@ -7,7 +7,7 @@ the async ones.
 """
 
 import asyncio
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, Dict, List, Literal, Optional, Union, overload
 
 import nest_asyncio
 from tqdm.auto import tqdm
@@ -112,12 +112,31 @@ class AdaptiveTest:
         """
         return await self._client.list_datasets()
 
+    @overload
+    def run(  # noqa: E704
+        self,
+        test_id: str,
+        session_metadata: TrismikSessionMetadata,
+        return_dict: Literal[True],
+        with_responses: bool = False,
+    ) -> Dict[str, Any]: ...
+
+    @overload
+    def run(  # noqa: E704
+        self,
+        test_id: str,
+        session_metadata: TrismikSessionMetadata,
+        return_dict: Literal[False],
+        with_responses: bool = False,
+    ) -> TrismikRunResults: ...
+
     def run(
         self,
         test_id: str,
         session_metadata: TrismikSessionMetadata,
+        return_dict: bool = True,
         with_responses: bool = False,
-    ) -> TrismikRunResults:
+    ) -> Union[TrismikRunResults, Dict[str, Any]]:
         """
         Run a test synchronously.
 
@@ -125,39 +144,80 @@ class AdaptiveTest:
             test_id (str): ID of the test to run.
             session_metadata (TrismikSessionMetadata): Metadata for the
               session.
+            return_dict (bool): If True, return results as a dictionary instead
+              of TrismikRunResults object. Defaults to True.
             with_responses (bool): If True, responses will be included with
               the results.
 
         Returns:
-            TrismikRunResults: Either just test results, or with responses.
+            Union[TrismikRunResults, Dict[str, Any]]: Either TrismikRunResults
+              object or dictionary representation based on return_dict
+              parameter.
 
         Raises:
             TrismikApiError: If API request fails.
             NotImplementedError: If with_responses = True (not yet implemented).
         """
         loop = self._get_loop()
-        return loop.run_until_complete(
-            self.run_async(test_id, session_metadata, with_responses)
-        )
+        if return_dict:
+            return loop.run_until_complete(
+                self.run_async(
+                    test_id,
+                    session_metadata,
+                    True,
+                    with_responses,
+                )
+            )
+        else:
+            return loop.run_until_complete(
+                self.run_async(
+                    test_id,
+                    session_metadata,
+                    False,
+                    with_responses,
+                )
+            )
+
+    @overload
+    async def run_async(  # noqa: E704
+        self,
+        test_id: str,
+        session_metadata: TrismikSessionMetadata,
+        return_dict: Literal[True],
+        with_responses: bool = False,
+    ) -> Dict[str, Any]: ...
+
+    @overload
+    async def run_async(  # noqa: E704
+        self,
+        test_id: str,
+        session_metadata: TrismikSessionMetadata,
+        return_dict: Literal[False],
+        with_responses: bool = False,
+    ) -> TrismikRunResults: ...
 
     async def run_async(
         self,
         test_id: str,
         session_metadata: TrismikSessionMetadata,
+        return_dict: bool = True,
         with_responses: bool = False,
-    ) -> TrismikRunResults:
+    ) -> Union[TrismikRunResults, Dict[str, Any]]:
         """
         Run a test asynchronously.
 
         Args:
-            test_id (str): ID of the test to run.
-            session_metadata (TrismikSessionMetadata): Metadata for the
-              session.
-            with_responses (bool): If True, responses will be included with
+            test_id: ID of the test to run.
+            session_metadata: Metadata for the session.
+            return_dict: If True, return results as a dictionary instead
+              of TrismikRunResults object. Defaults to True.
+            with_responses: If True, responses will be included with
               the results.
 
         Returns:
-            TrismikRunResults: Either just test results, or with responses.
+            Union[TrismikRunResults, Dict[str, Any]]: Either TrismikRunResults
+              object or dictionary representation based on return_dict
+              parameter.
 
         Raises:
             TrismikApiError: If API request fails.
@@ -201,57 +261,130 @@ class AdaptiveTest:
             std_error=last_state.state.std_error_history[-1],
         )
 
-        return TrismikRunResults(session_id, score=score)
+        results = TrismikRunResults(session_id, score=score)
+
+        if return_dict:
+            return {
+                "session_id": results.session_id,
+                "score": (
+                    {
+                        "theta": results.score.theta,
+                        "std_error": results.score.std_error,
+                    }
+                    if results.score
+                    else None
+                ),
+                "responses": results.responses,
+            }
+        else:
+            return results
+
+    @overload
+    def run_replay(  # noqa: E704
+        self,
+        previous_session_id: str,
+        session_metadata: TrismikSessionMetadata,
+        return_dict: Literal[True],
+        with_responses: bool = False,
+    ) -> Dict[str, Any]: ...
+
+    @overload
+    def run_replay(  # noqa: E704
+        self,
+        previous_session_id: str,
+        session_metadata: TrismikSessionMetadata,
+        return_dict: Literal[False],
+        with_responses: bool = False,
+    ) -> TrismikRunResults: ...
 
     def run_replay(
         self,
         previous_session_id: str,
         session_metadata: TrismikSessionMetadata,
+        return_dict: bool = True,
         with_responses: bool = False,
-    ) -> TrismikRunResults:
+    ) -> Union[TrismikRunResults, Dict[str, Any]]:
         """
         Replay the exact sequence of questions from a previous session.
 
         Wraps the run_replay_async method.
 
         Args:
-            previous_session_id (str): ID of a previous session to replay.
-            session_metadata (TrismikSessionMetadata): Metadata for the
-             replay session.
-            with_responses (bool): If True, responses will be included
+            previous_session_id: ID of a previous session to replay.
+            session_metadata: Metadata for the replay session.
+            return_dict: If True, return results as a dictionary instead
+              of TrismikRunResults object. Defaults to True.
+            with_responses: If True, responses will be included
              with the results.
 
         Returns:
-            TrismikRunResults: Either just test results, or with responses.
+            Union[TrismikRunResults, Dict[str, Any]]: Either TrismikRunResults
+              object or dictionary representation based on return_dict
+              parameter.
 
         Raises:
             TrismikApiError: If API request fails.
         """
         loop = self._get_loop()
-        return loop.run_until_complete(
-            self.run_replay_async(
-                previous_session_id, session_metadata, with_responses
+        if return_dict:
+            return loop.run_until_complete(
+                self.run_replay_async(
+                    previous_session_id,
+                    session_metadata,
+                    True,
+                    with_responses,
+                )
             )
-        )
+        else:
+            return loop.run_until_complete(
+                self.run_replay_async(
+                    previous_session_id,
+                    session_metadata,
+                    False,
+                    with_responses,
+                )
+            )
+
+    @overload
+    async def run_replay_async(  # noqa: E704
+        self,
+        previous_session_id: str,
+        session_metadata: TrismikSessionMetadata,
+        return_dict: Literal[True],
+        with_responses: bool = False,
+    ) -> Dict[str, Any]: ...
+
+    @overload
+    async def run_replay_async(  # noqa: E704
+        self,
+        previous_session_id: str,
+        session_metadata: TrismikSessionMetadata,
+        return_dict: Literal[False],
+        with_responses: bool = False,
+    ) -> TrismikRunResults: ...
 
     async def run_replay_async(
         self,
         previous_session_id: str,
         session_metadata: TrismikSessionMetadata,
+        return_dict: bool = True,
         with_responses: bool = False,
-    ) -> TrismikRunResults:
+    ) -> Union[TrismikRunResults, Dict[str, Any]]:
         """
         Replay the exact sequence of questions from a previous session.
 
         Args:
-            previous_session_id (str): ID of a previous session to replay.
-            session_metadata (TrismikSessionMetadata): Metadata for the
-              session.
-            with_responses (bool): If True, responses will be included
+            previous_session_id: ID of a previous session to replay.
+            session_metadata: Metadata for the session.
+            return_dict: If True, return results as a dictionary instead
+              of TrismikRunResults object. Defaults to True.
+            with_responses: If True, responses will be included
               with the results.
 
         Returns:
-            TrismikRunResults: Either just test results, or with responses.
+            Union[TrismikRunResults, Dict[str, Any]]: Either TrismikRunResults
+              object or dictionary representation based on return_dict
+              parameter.
 
         Raises:
             TrismikApiError: If API request fails.
@@ -296,13 +429,42 @@ class AdaptiveTest:
 
         # Return results with optional responses
         if with_responses:
-            return TrismikRunResults(
+            results = TrismikRunResults(
                 session_id=replay_response.id,
                 score=score,
                 responses=replay_response.responses,
             )
         else:
-            return TrismikRunResults(session_id=replay_response.id, score=score)
+            results = TrismikRunResults(
+                session_id=replay_response.id, score=score
+            )
+
+        if return_dict:
+            return {
+                "session_id": results.session_id,
+                "score": (
+                    {
+                        "theta": results.score.theta,
+                        "std_error": results.score.std_error,
+                    }
+                    if results.score
+                    else None
+                ),
+                "responses": (
+                    [
+                        {
+                            "dataset_item_id": resp.dataset_item_id,
+                            "value": resp.value,
+                            "correct": resp.correct,
+                        }
+                        for resp in results.responses
+                    ]
+                    if results.responses
+                    else None
+                ),
+            }
+        else:
+            return results
 
     async def _run_session_async(
         self,

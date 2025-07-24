@@ -247,7 +247,7 @@ class TestAdaptiveTest:
             test_configuration={},
             inference_setup={},
         )
-        results = sync_runner.run("test_id", metadata)
+        results = sync_runner.run("test_id", metadata, return_dict=False)
 
         mock_client.start_session.assert_called_once_with("test_id", metadata)
         assert mock_client.continue_session.call_count == 2
@@ -268,7 +268,9 @@ class TestAdaptiveTest:
             test_configuration={},
             inference_setup={},
         )
-        results = await async_runner.run_async("test_id", metadata)
+        results = await async_runner.run_async(
+            "test_id", metadata, return_dict=False
+        )
 
         mock_client.start_session.assert_called_once_with("test_id", metadata)
         assert mock_client.continue_session.call_count == 2
@@ -289,7 +291,9 @@ class TestAdaptiveTest:
             inference_setup={},
         )
         with pytest.raises(NotImplementedError):
-            sync_runner.run("test_id", metadata, with_responses=True)
+            sync_runner.run(
+                "test_id", metadata, with_responses=True, return_dict=False
+            )
 
     @pytest.mark.asyncio
     async def test_run_with_responses_async(self, async_runner):
@@ -303,7 +307,7 @@ class TestAdaptiveTest:
         )
         with pytest.raises(NotImplementedError):
             await async_runner.run_async(
-                "test_id", metadata, with_responses=True
+                "test_id", metadata, with_responses=True, return_dict=False
             )
 
     def test_run_replay_sync(self, sync_runner, mock_client):
@@ -315,7 +319,9 @@ class TestAdaptiveTest:
             test_configuration={},
             inference_setup={},
         )
-        results = sync_runner.run_replay("previous_session_id", metadata)
+        results = sync_runner.run_replay(
+            "previous_session_id", metadata, return_dict=False
+        )
 
         # Verify session_summary was called
         mock_client.session_summary.assert_called_once_with(
@@ -348,7 +354,7 @@ class TestAdaptiveTest:
             inference_setup={},
         )
         results = await async_runner.run_replay_async(
-            "previous_session_id", metadata
+            "previous_session_id", metadata, return_dict=False
         )
 
         # Verify session_summary was called
@@ -381,7 +387,10 @@ class TestAdaptiveTest:
             inference_setup={},
         )
         results = sync_runner.run_replay(
-            "previous_session_id", metadata, with_responses=True
+            "previous_session_id",
+            metadata,
+            with_responses=True,
+            return_dict=False,
         )
 
         # Verify session_summary was called
@@ -414,7 +423,10 @@ class TestAdaptiveTest:
             inference_setup={},
         )
         results = await async_runner.run_replay_async(
-            "previous_session_id", metadata, with_responses=True
+            "previous_session_id",
+            metadata,
+            with_responses=True,
+            return_dict=False,
         )
 
         # Verify session_summary was called
@@ -443,7 +455,9 @@ class TestAdaptiveTest:
             test_configuration={},
             inference_setup={},
         )
-        results = async_runner.run_replay("previous_session_id", metadata)
+        results = async_runner.run_replay(
+            "previous_session_id", metadata, return_dict=False
+        )
 
         # Verify session_summary was called
         mock_client.session_summary.assert_called_once_with(
@@ -481,3 +495,205 @@ class TestAdaptiveTest:
                 client=mock_client,
                 api_key="test_api_key",
             )
+
+    def test_run_sync_return_dict_true(self, sync_runner, mock_client):
+        """Test running a test synchronously with return_dict=True."""
+        metadata = TrismikSessionMetadata(
+            model_metadata=TrismikSessionMetadata.ModelMetadata(
+                name="test_model"
+            ),
+            test_configuration={},
+            inference_setup={},
+        )
+        results = sync_runner.run("test_id", metadata, return_dict=True)
+
+        mock_client.start_session.assert_called_once_with("test_id", metadata)
+        assert mock_client.continue_session.call_count == 2
+        mock_client.continue_session.assert_called_with(
+            "session_id", "processed_response"
+        )
+        assert isinstance(results, dict)
+        assert "session_id" in results
+        assert "score" in results
+        assert "responses" in results
+        assert results["session_id"] == "session_id"
+        assert results["score"]["theta"] == 1.3
+        assert results["score"]["std_error"] == 0.3
+        assert results["responses"] is None
+
+    def test_run_sync_return_dict_false(self, sync_runner, mock_client):
+        """Test running a test synchronously with return_dict=False."""
+        metadata = TrismikSessionMetadata(
+            model_metadata=TrismikSessionMetadata.ModelMetadata(
+                name="test_model"
+            ),
+            test_configuration={},
+            inference_setup={},
+        )
+        results = sync_runner.run("test_id", metadata, return_dict=False)
+
+        mock_client.start_session.assert_called_once_with("test_id", metadata)
+        assert mock_client.continue_session.call_count == 2
+        assert isinstance(results, TrismikRunResults)
+        assert isinstance(results.score, AdaptiveTestScore)
+        assert results.score.theta == 1.3
+
+    @pytest.mark.asyncio
+    async def test_run_async_return_dict_true(self, async_runner, mock_client):
+        """Test running a test asynchronously with return_dict=True."""
+        metadata = TrismikSessionMetadata(
+            model_metadata=TrismikSessionMetadata.ModelMetadata(
+                name="test_model"
+            ),
+            test_configuration={},
+            inference_setup={},
+        )
+        results = await async_runner.run_async(
+            "test_id", metadata, return_dict=True
+        )
+
+        mock_client.start_session.assert_called_once_with("test_id", metadata)
+        assert mock_client.continue_session.call_count == 2
+        assert isinstance(results, dict)
+        assert "session_id" in results
+        assert "score" in results
+        assert "responses" in results
+        assert results["session_id"] == "session_id"
+        assert results["score"]["theta"] == 1.3
+        assert results["score"]["std_error"] == 0.3
+        assert results["responses"] is None
+
+    @pytest.mark.asyncio
+    async def test_run_async_return_dict_false(self, async_runner, mock_client):
+        """Test running a test asynchronously with return_dict=False."""
+        metadata = TrismikSessionMetadata(
+            model_metadata=TrismikSessionMetadata.ModelMetadata(
+                name="test_model"
+            ),
+            test_configuration={},
+            inference_setup={},
+        )
+        results = await async_runner.run_async(
+            "test_id", metadata, return_dict=False
+        )
+
+        mock_client.start_session.assert_called_once_with("test_id", metadata)
+        assert mock_client.continue_session.call_count == 2
+        assert isinstance(results, TrismikRunResults)
+        assert isinstance(results.score, AdaptiveTestScore)
+        assert results.score.theta == 1.3
+
+    def test_run_replay_sync_return_dict_true(self, sync_runner, mock_client):
+        """Test replaying a test synchronously with return_dict=True."""
+        metadata = TrismikSessionMetadata(
+            model_metadata=TrismikSessionMetadata.ModelMetadata(
+                name="test_model"
+            ),
+            test_configuration={},
+            inference_setup={},
+        )
+        results = sync_runner.run_replay(
+            "previous_session_id", metadata, return_dict=True
+        )
+
+        mock_client.session_summary.assert_called_once_with(
+            "previous_session_id"
+        )
+        mock_client.submit_replay.assert_called_once()
+        assert isinstance(results, dict)
+        assert "session_id" in results
+        assert "score" in results
+        assert "responses" in results
+        assert results["session_id"] == "replay_session_id"
+        assert results["score"]["theta"] == 1.3
+        assert results["score"]["std_error"] == 0.35
+        assert results["responses"] is None
+
+    def test_run_replay_sync_return_dict_false(self, sync_runner, mock_client):
+        """Test replaying a test synchronously with return_dict=False."""
+        metadata = TrismikSessionMetadata(
+            model_metadata=TrismikSessionMetadata.ModelMetadata(
+                name="test_model"
+            ),
+            test_configuration={},
+            inference_setup={},
+        )
+        results = sync_runner.run_replay(
+            "previous_session_id", metadata, return_dict=False
+        )
+
+        mock_client.session_summary.assert_called_once_with(
+            "previous_session_id"
+        )
+        mock_client.submit_replay.assert_called_once()
+        assert isinstance(results, TrismikRunResults)
+        assert results.session_id == "replay_session_id"
+        assert isinstance(results.score, AdaptiveTestScore)
+        assert results.score.theta == 1.3
+
+    def test_run_replay_with_responses_return_dict_true(
+        self, sync_runner, mock_client
+    ):
+        """Test replaying a test with responses and return_dict=True."""
+        metadata = TrismikSessionMetadata(
+            model_metadata=TrismikSessionMetadata.ModelMetadata(
+                name="test_model"
+            ),
+            test_configuration={},
+            inference_setup={},
+        )
+        results = sync_runner.run_replay(
+            "previous_session_id",
+            metadata,
+            with_responses=True,
+            return_dict=True,
+        )
+
+        mock_client.session_summary.assert_called_once_with(
+            "previous_session_id"
+        )
+        mock_client.submit_replay.assert_called_once()
+        assert isinstance(results, dict)
+        assert "session_id" in results
+        assert "score" in results
+        assert "responses" in results
+        assert results["session_id"] == "replay_session_id"
+        assert results["score"]["theta"] == 1.3
+        assert results["score"]["std_error"] == 0.35
+        assert results["responses"] is not None
+        assert len(results["responses"]) == 2
+        assert results["responses"][0]["dataset_item_id"] == "item_1"
+        assert results["responses"][0]["value"] == "c1"
+        assert results["responses"][0]["correct"] is True
+        assert results["responses"][1]["dataset_item_id"] == "item_2"
+        assert results["responses"][1]["value"] == "c2"
+        assert results["responses"][1]["correct"] is False
+
+    @pytest.mark.asyncio
+    async def test_run_replay_async_return_dict_true(
+        self, async_runner, mock_client
+    ):
+        """Test replaying a test asynchronously with return_dict=True."""
+        metadata = TrismikSessionMetadata(
+            model_metadata=TrismikSessionMetadata.ModelMetadata(
+                name="test_model"
+            ),
+            test_configuration={},
+            inference_setup={},
+        )
+        results = await async_runner.run_replay_async(
+            "previous_session_id", metadata, return_dict=True
+        )
+
+        mock_client.session_summary.assert_called_once_with(
+            "previous_session_id"
+        )
+        mock_client.submit_replay.assert_called_once()
+        assert isinstance(results, dict)
+        assert "session_id" in results
+        assert "score" in results
+        assert "responses" in results
+        assert results["session_id"] == "replay_session_id"
+        assert results["score"]["theta"] == 1.3
+        assert results["score"]["std_error"] == 0.35
+        assert results["responses"] is None

@@ -94,6 +94,7 @@ def run_sync_example(test_name: str) -> None:
     results = runner.run(
         test_name,
         session_metadata=sample_metadata,
+        return_dict=False,
     )
 
     print(f"Session {results.session_id} completed.")
@@ -112,7 +113,10 @@ def run_sync_example(test_name: str) -> None:
     )
 
     replay_results = runner.run_replay(
-        results.session_id, replay_metadata, with_responses=True
+        results.session_id,
+        replay_metadata,
+        with_responses=True,
+        return_dict=False,
     )
     print(f"Replay session {replay_results.session_id} completed.")
     if replay_results.score is not None:
@@ -130,6 +134,7 @@ async def run_async_example(test_name: str) -> None:
     results = await runner.run_async(
         test_name,
         session_metadata=sample_metadata,
+        return_dict=False,
     )
 
     print(f"Session {results.session_id} completed.")
@@ -148,7 +153,10 @@ async def run_async_example(test_name: str) -> None:
     )
 
     replay_results = await runner.run_replay_async(
-        results.session_id, replay_metadata, with_responses=True
+        results.session_id,
+        replay_metadata,
+        with_responses=True,
+        return_dict=False,
     )
     print(f"Replay session {replay_results.session_id} completed.")
     if replay_results.score is not None:

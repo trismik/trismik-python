@@ -131,6 +131,7 @@ def run_sync_example(client: OpenAI) -> None:
     results = runner.run(
         "MMLUPro2025",
         session_metadata=session_metadata,
+        return_dict=False,
     )
 
     print(f"Session {results.session_id} completed.")
@@ -160,6 +161,7 @@ async def run_async_example(client: OpenAI) -> None:
     results = await runner.run_async(
         "MMLUPro2025",
         session_metadata=session_metadata,
+        return_dict=False,
     )
 
     print(f"Session {results.session_id} completed.")
