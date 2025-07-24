@@ -512,6 +512,8 @@ class AdaptiveTest:
                 pbar.update(1)
 
                 if continue_response.completed:
+                    pbar.total = pbar.n  # Update total to current position
+                    pbar.refresh()
                     break
 
                 item = continue_response.next_item
