@@ -14,6 +14,7 @@ OPENAI_API_KEY=your-openai-api-key
 ```
 """
 
+import argparse
 import asyncio
 
 from dotenv import load_dotenv
@@ -29,17 +30,20 @@ from trismik.types import (
 
 model_name = "gpt-4.1-nano-2025-04-14"
 
-session_metadata = TrismikSessionMetadata(
-    model_metadata=TrismikSessionMetadata.ModelMetadata(
-        name=model_name,
-        provider="OpenAI",
-    ),
-    test_configuration={
-        "task_name": "MMLUPro2025",
-        "response_format": "Multiple-choice",
-    },
-    inference_setup={},
-)
+
+def create_session_metadata(dataset_name: str) -> TrismikSessionMetadata:
+    """Create session metadata for the given dataset."""
+    return TrismikSessionMetadata(
+        model_metadata=TrismikSessionMetadata.ModelMetadata(
+            name=model_name,
+            provider="OpenAI",
+        ),
+        test_configuration={
+            "task_name": dataset_name,
+            "response_format": "Multiple-choice",
+        },
+        inference_setup={},
+    )
 
 
 def inference(client: OpenAI, item: TrismikItem, max_retries: int = 5) -> str:
@@ -122,15 +126,15 @@ def print_score(score: AdaptiveTestScore) -> None:
     print(f"Final standard error: {score.std_error}")
 
 
-def run_sync_example(client: OpenAI) -> None:
+def run_sync_example(client: OpenAI, dataset_name: str) -> None:
     """Run an adaptive test synchronously using the AdaptiveTest class."""
     print("\n=== Running Synchronous Example ===")
     runner = AdaptiveTest(lambda item: inference(client, item))
 
-    print("\nStarting test...")
+    print(f"\nStarting run with dataset name: {dataset_name}")
     results = runner.run(
-        "MMLUPro2025",
-        session_metadata=session_metadata,
+        dataset_name,
+        session_metadata=create_session_metadata(dataset_name),
         return_dict=False,
     )
 
@@ -152,15 +156,15 @@ def run_sync_example(client: OpenAI) -> None:
     # print_results(results.results)
 
 
-async def run_async_example(client: OpenAI) -> None:
+async def run_async_example(client: OpenAI, dataset_name: str) -> None:
     """Run an adaptive test asynchronously using the AdaptiveTest class."""
     print("\n=== Running Asynchronous Example ===")
     runner = AdaptiveTest(lambda item: inference(client, item))
 
-    print("\nStarting test...")
+    print(f"\nStarting run with dataset name: {dataset_name}")
     results = await runner.run_async(
-        "MMLUPro2025",
-        session_metadata=session_metadata,
+        dataset_name,
+        session_metadata=create_session_metadata(dataset_name),
         return_dict=False,
     )
 
@@ -189,15 +193,27 @@ async def main() -> None:
     Assumes TRISMIK_SERVICE_URL and TRISMIK_API_KEY are set either in
     environment or in .env file.
     """
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(
+        description="Run adaptive testing examples with Trismik API"
+    )
+    parser.add_argument(
+        "--dataset-name",
+        type=str,
+        default="FinRAG2025",
+        help="Name of the dataset to run (default: FinRAG2025)",
+    )
+    args = parser.parse_args()
+
     load_dotenv()
 
     client = OpenAI()
 
     # Run sync example
-    run_sync_example(client)
+    run_sync_example(client, args.dataset_name)
 
     # Run async example
-    await run_async_example(client)
+    await run_async_example(client, args.dataset_name)
 
 
 if __name__ == "__main__":

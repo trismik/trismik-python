@@ -487,7 +487,7 @@ class AdaptiveTest:
             TrismikApiError: If API request fails.
         """
         item = first_item
-        with tqdm(total=self._max_items, desc="Running test") as pbar:
+        with tqdm(total=self._max_items, desc="Evaluating") as pbar:
             while item is not None:
                 # Handle both sync and async item processors
                 if asyncio.iscoroutinefunction(self._item_processor):

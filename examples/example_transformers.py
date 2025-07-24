@@ -6,6 +6,7 @@ other model that you have access to. Remember to provide your own Trismik
 API key in the .env file.
 """
 
+import argparse
 import asyncio
 import re
 
@@ -20,20 +21,24 @@ from trismik.types import (
     TrismikSessionMetadata,
 )
 
-session_metadata = TrismikSessionMetadata(
-    model_metadata=TrismikSessionMetadata.ModelMetadata(
-        name="microsoft/Phi-3-small-8k-instruct",
-        parameters="3.84B",
-        provider="Microsoft",
-    ),
-    test_configuration={
-        "task_name": "MMLUPro2025",
-        "response_format": "Multiple-choice",
-    },
-    inference_setup={
-        "max_tokens": 1024,
-    },
-)
+
+def create_session_metadata(dataset_name: str) -> TrismikSessionMetadata:
+    """Create session metadata for the given dataset."""
+    return TrismikSessionMetadata(
+        model_metadata=TrismikSessionMetadata.ModelMetadata(
+            name="microsoft/Phi-3-small-8k-instruct",
+            parameters="3.84B",
+            provider="Microsoft",
+        ),
+        test_configuration={
+            "task_name": dataset_name,
+            "response_format": "Multiple-choice",
+        },
+        inference_setup={
+            "max_tokens": 1024,
+        },
+    )
+
 
 generation_args = {
     "max_new_tokens": 1024,
@@ -130,15 +135,17 @@ def print_score(score: AdaptiveTestScore) -> None:
     print(f"Final standard error: {score.std_error}")
 
 
-def run_sync_example(pipeline: transformers.pipeline) -> None:
+def run_sync_example(
+    pipeline: transformers.pipeline, dataset_name: str
+) -> None:
     """Run an adaptive test synchronously using the AdaptiveTest class."""
     print("\n=== Running Synchronous Example ===")
     runner = AdaptiveTest(lambda item: inference(pipeline, item))
 
-    print("\nStarting test...")
+    print(f"\nStarting run with dataset name: {dataset_name}")
     results = runner.run(
-        "MMLUPro2025",
-        session_metadata=session_metadata,
+        dataset_name,
+        session_metadata=create_session_metadata(dataset_name),
         return_dict=False,
     )
 
@@ -160,16 +167,18 @@ def run_sync_example(pipeline: transformers.pipeline) -> None:
     # print_results(results.results)
 
 
-async def run_async_example(pipeline: transformers.pipeline) -> None:
+async def run_async_example(
+    pipeline: transformers.pipeline, dataset_name: str
+) -> None:
     """Run an adaptive test asynchronously using the AdaptiveTest class."""
 
     print("\n=== Running Asynchronous Example ===")
     runner = AdaptiveTest(lambda item: inference(pipeline, item))
 
-    print("\nStarting test...")
+    print(f"\nStarting run with dataset name: {dataset_name}")
     results = await runner.run_async(
-        "MMLUPro2025",
-        session_metadata=session_metadata,
+        dataset_name,
+        session_metadata=create_session_metadata(dataset_name),
         return_dict=False,
     )
 
@@ -198,6 +207,18 @@ async def main() -> None:
     Assumes TRISMIK_SERVICE_URL and TRISMIK_API_KEY are set either in
     environment or in .env file.
     """
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(
+        description="Run adaptive testing examples with Trismik API"
+    )
+    parser.add_argument(
+        "--dataset-name",
+        type=str,
+        default="FinRAG2025",
+        help="Name of the dataset to run (default: FinRAG2025)",
+    )
+    args = parser.parse_args()
+
     load_dotenv()
 
     # We choose Phi-4-mini-instruct as an example as it requires
@@ -212,10 +233,10 @@ async def main() -> None:
     )
 
     # Run sync example
-    run_sync_example(pipeline)
+    run_sync_example(pipeline, args.dataset_name)
 
     # Run async example
-    await run_async_example(pipeline)
+    await run_async_example(pipeline, args.dataset_name)
 
 
 if __name__ == "__main__":

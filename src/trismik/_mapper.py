@@ -35,7 +35,8 @@ class TrismikResponseMapper:
             json (List[Dict[str, Any]]): JSON response containing test data.
 
         Returns:
-            List[TrismikDataset]: List of test objects with IDs and names.
+            List[TrismikDataset]: List of
+            dataset objects with IDs and names.
         """
         return [
             TrismikDataset(

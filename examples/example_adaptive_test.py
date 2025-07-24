@@ -85,14 +85,14 @@ def print_score(score: AdaptiveTestScore) -> None:
     print(f"Final standard error: {score.std_error}")
 
 
-def run_sync_example(test_name: str) -> None:
+def run_sync_example(dataset_name: str) -> None:
     """Run an adaptive test synchronously using the AdaptiveTest class."""
     print("\n=== Running Synchronous Example ===")
     runner = AdaptiveTest(mock_inference)
 
-    print(f"\nStarting test with test name: {test_name}")
+    print(f"\nStarting run with dataset name: {dataset_name}")
     results = runner.run(
-        test_name,
+        dataset_name,
         session_metadata=sample_metadata,
         return_dict=False,
     )
@@ -125,14 +125,14 @@ def run_sync_example(test_name: str) -> None:
         print(f"Number of responses: {len(replay_results.responses)}")
 
 
-async def run_async_example(test_name: str) -> None:
+async def run_async_example(dataset_name: str) -> None:
     """Run an adaptive test asynchronously using the AdaptiveTest class."""
     print("\n=== Running Asynchronous Example ===")
     runner = AdaptiveTest(mock_inference_async)
 
-    print(f"\nStarting test with test name: {test_name}")
+    print(f"\nStarting run with dataset name: {dataset_name}")
     results = await runner.run_async(
-        test_name,
+        dataset_name,
         session_metadata=sample_metadata,
         return_dict=False,
     )
@@ -177,20 +177,20 @@ async def main() -> None:
         description="Run adaptive testing examples with Trismik API"
     )
     parser.add_argument(
-        "--test-name",
+        "--dataset-name",
         type=str,
         default="FinRAG2025",
-        help="Name of the test to run (default: FinRAG2025)",
+        help="Name of the dataset to run (default: FinRAG2025)",
     )
     args = parser.parse_args()
 
     load_dotenv()
 
     # Run sync example
-    run_sync_example(args.test_name)
+    run_sync_example(args.dataset_name)
 
     # Run async example
-    await run_async_example(args.test_name)
+    await run_async_example(args.dataset_name)
 
 
 if __name__ == "__main__":
