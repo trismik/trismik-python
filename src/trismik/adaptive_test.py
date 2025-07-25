@@ -7,16 +7,20 @@ the async ones.
 """
 
 import asyncio
-from datetime import datetime, timedelta
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Dict, List, Literal, Optional, Union, overload
 
 import nest_asyncio
 from tqdm.auto import tqdm
 
 from trismik.client_async import TrismikAsyncClient
+from trismik.settings import evaluation_settings
 from trismik.types import (
-    TrismikAuth,
+    AdaptiveTestScore,
+    TrismikAdaptiveTestState,
+    TrismikDataset,
     TrismikItem,
+    TrismikReplayRequest,
+    TrismikReplayRequestItem,
     TrismikRunResults,
     TrismikSessionMetadata,
 )
@@ -35,8 +39,8 @@ class AdaptiveTest:
         self,
         item_processor: Callable[[TrismikItem], Any],
         client: Optional[TrismikAsyncClient] = None,
-        auth: Optional[TrismikAuth] = None,
-        max_items: int = 60,
+        api_key: Optional[str] = None,
+        max_items: int = evaluation_settings["max_iterations"],
     ) -> None:
         """
         Initialize a new Trismik runner.
@@ -45,17 +49,23 @@ class AdaptiveTest:
             item_processor (Callable[[TrismikItem], Any]): Function to process
               test items. For async usage, this should be an async function.
             client (Optional[TrismikAsyncClient]): Trismik async client to use
-              for requests.
-            auth (Optional[TrismikAuth]): Authentication token to use for
-              requests.
+              for requests. If not provided, a new one will be created.
+            api_key (Optional[str]): API key to use if a new client is created.
             max_items (int): Maximum number of items to process. Default is 60.
 
         Raises:
+            ValueError: If both client and api_key are provided.
             TrismikApiError: If API request fails.
         """
+        if client and api_key:
+            raise ValueError(
+                "Either 'client' or 'api_key' should be provided, not both."
+            )
         self._item_processor = item_processor
-        self._client = client
-        self._auth = auth
+        if client:
+            self._client = client
+        else:
+            self._client = TrismikAsyncClient(api_key=api_key)
         self._max_items = max_items
         self._loop = None
 
@@ -77,12 +87,56 @@ class AdaptiveTest:
         nest_asyncio.apply(loop)
         return loop
 
+    def list_datasets(self) -> List[TrismikDataset]:
+        """
+        Get a list of available datasets synchronously.
+
+        Returns:
+            List[TrismikDataset]: List of available datasets.
+
+        Raises:
+            TrismikApiError: If API request fails.
+        """
+        loop = self._get_loop()
+        return loop.run_until_complete(self.list_datasets_async())
+
+    async def list_datasets_async(self) -> List[TrismikDataset]:
+        """
+        Get a list of available datasets asynchronously.
+
+        Returns:
+            List[TrismikDataset]: List of available datasets.
+
+        Raises:
+            TrismikApiError: If API request fails.
+        """
+        return await self._client.list_datasets()
+
+    @overload
+    def run(  # noqa: E704
+        self,
+        test_id: str,
+        session_metadata: TrismikSessionMetadata,
+        return_dict: Literal[True],
+        with_responses: bool = False,
+    ) -> Dict[str, Any]: ...
+
+    @overload
+    def run(  # noqa: E704
+        self,
+        test_id: str,
+        session_metadata: TrismikSessionMetadata,
+        return_dict: Literal[False],
+        with_responses: bool = False,
+    ) -> TrismikRunResults: ...
+
     def run(
         self,
         test_id: str,
         session_metadata: TrismikSessionMetadata,
+        return_dict: bool = True,
         with_responses: bool = False,
-    ) -> TrismikRunResults:
+    ) -> Union[TrismikRunResults, Dict[str, Any]]:
         """
         Run a test synchronously.
 
@@ -90,213 +144,380 @@ class AdaptiveTest:
             test_id (str): ID of the test to run.
             session_metadata (TrismikSessionMetadata): Metadata for the
               session.
+            return_dict (bool): If True, return results as a dictionary instead
+              of TrismikRunResults object. Defaults to True.
             with_responses (bool): If True, responses will be included with
               the results.
 
         Returns:
-            TrismikRunResults: Either just test results, or with responses.
+            Union[TrismikRunResults, Dict[str, Any]]: Either TrismikRunResults
+              object or dictionary representation based on return_dict
+              parameter.
 
         Raises:
             TrismikApiError: If API request fails.
+            NotImplementedError: If with_responses = True (not yet implemented).
         """
         loop = self._get_loop()
-        return loop.run_until_complete(
-            self.run_async(test_id, session_metadata, with_responses)
-        )
+        if return_dict:
+            return loop.run_until_complete(
+                self.run_async(
+                    test_id,
+                    session_metadata,
+                    True,
+                    with_responses,
+                )
+            )
+        else:
+            return loop.run_until_complete(
+                self.run_async(
+                    test_id,
+                    session_metadata,
+                    False,
+                    with_responses,
+                )
+            )
+
+    @overload
+    async def run_async(  # noqa: E704
+        self,
+        test_id: str,
+        session_metadata: TrismikSessionMetadata,
+        return_dict: Literal[True],
+        with_responses: bool = False,
+    ) -> Dict[str, Any]: ...
+
+    @overload
+    async def run_async(  # noqa: E704
+        self,
+        test_id: str,
+        session_metadata: TrismikSessionMetadata,
+        return_dict: Literal[False],
+        with_responses: bool = False,
+    ) -> TrismikRunResults: ...
 
     async def run_async(
         self,
         test_id: str,
         session_metadata: TrismikSessionMetadata,
+        return_dict: bool = True,
         with_responses: bool = False,
-    ) -> TrismikRunResults:
+    ) -> Union[TrismikRunResults, Dict[str, Any]]:
         """
         Run a test asynchronously.
 
         Args:
-            test_id (str): ID of the test to run.
-            session_metadata (TrismikSessionMetadata): Metadata for the
-              session.
-            with_responses (bool): If True, responses will be included with
+            test_id: ID of the test to run.
+            session_metadata: Metadata for the session.
+            return_dict: If True, return results as a dictionary instead
+              of TrismikRunResults object. Defaults to True.
+            with_responses: If True, responses will be included with
               the results.
 
         Returns:
-            TrismikRunResults: Either just test results, or with responses.
+            Union[TrismikRunResults, Dict[str, Any]]: Either TrismikRunResults
+              object or dictionary representation based on return_dict
+              parameter.
 
         Raises:
             TrismikApiError: If API request fails.
+            NotImplementedError: If with_responses = True (not yet implemented).
         """
-        await self._init_async()
-        assert (
-            self._client is not None
-        ), "Client should be initialized by _init_async()"
-        assert (
-            self._auth is not None
-        ), "Auth should be initialized by _init_async()"
-        await self._refresh_token_if_needed_async()
-        session = await self._client.create_session(
-            test_id, session_metadata, self._auth.token
+        if with_responses:
+            raise NotImplementedError(
+                "with_responses is not yet implemented for the new API flow"
+            )
+
+        # Start session and get first item
+        start_response = await self._client.start_session(
+            test_id, session_metadata
         )
 
-        await self._run_session_async(session.url)
-        results = await self._client.results(session.url, self._auth.token)
+        # Initialize state tracking
+        states: List[TrismikAdaptiveTestState] = []
+        session_id = start_response.session_info.id
 
-        if with_responses:
-            responses = await self._client.responses(
-                session.url, self._auth.token
+        # Add initial state
+        states.append(
+            TrismikAdaptiveTestState(
+                session_id=session_id,
+                state=start_response.state,
+                completed=start_response.completed,
             )
-            return TrismikRunResults(session.id, results, responses)
+        )
+
+        # Run the session and get last state
+        last_state = await self._run_session_async(
+            session_id, start_response.next_item, states
+        )
+
+        if not last_state:
+            raise RuntimeError(
+                "Test session completed but no final state was captured"
+            )
+
+        score = AdaptiveTestScore(
+            theta=last_state.state.thetas[-1],
+            std_error=last_state.state.std_error_history[-1],
+        )
+
+        results = TrismikRunResults(session_id, score=score)
+
+        if return_dict:
+            return {
+                "session_id": results.session_id,
+                "score": (
+                    {
+                        "theta": results.score.theta,
+                        "std_error": results.score.std_error,
+                    }
+                    if results.score
+                    else None
+                ),
+                "responses": results.responses,
+            }
         else:
-            return TrismikRunResults(session.id, results)
+            return results
+
+    @overload
+    def run_replay(  # noqa: E704
+        self,
+        previous_session_id: str,
+        session_metadata: TrismikSessionMetadata,
+        return_dict: Literal[True],
+        with_responses: bool = False,
+    ) -> Dict[str, Any]: ...
+
+    @overload
+    def run_replay(  # noqa: E704
+        self,
+        previous_session_id: str,
+        session_metadata: TrismikSessionMetadata,
+        return_dict: Literal[False],
+        with_responses: bool = False,
+    ) -> TrismikRunResults: ...
 
     def run_replay(
         self,
         previous_session_id: str,
         session_metadata: TrismikSessionMetadata,
+        return_dict: bool = True,
         with_responses: bool = False,
-    ) -> TrismikRunResults:
+    ) -> Union[TrismikRunResults, Dict[str, Any]]:
         """
         Replay the exact sequence of questions from a previous session.
 
         Wraps the run_replay_async method.
 
         Args:
-            previous_session_id (str): ID of a previous session to replay.
-            session_metadata (TrismikSessionMetadata): Metadata for the
-             session.
-            with_responses (bool): If True, responses will be included
+            previous_session_id: ID of a previous session to replay.
+            session_metadata: Metadata for the replay session.
+            return_dict: If True, return results as a dictionary instead
+              of TrismikRunResults object. Defaults to True.
+            with_responses: If True, responses will be included
              with the results.
 
         Returns:
-            TrismikRunResults: Either just test results, or with responses.
+            Union[TrismikRunResults, Dict[str, Any]]: Either TrismikRunResults
+              object or dictionary representation based on return_dict
+              parameter.
 
         Raises:
             TrismikApiError: If API request fails.
         """
         loop = self._get_loop()
-        return loop.run_until_complete(
-            self.run_replay_async(
-                previous_session_id, session_metadata, with_responses
+        if return_dict:
+            return loop.run_until_complete(
+                self.run_replay_async(
+                    previous_session_id,
+                    session_metadata,
+                    True,
+                    with_responses,
+                )
             )
-        )
+        else:
+            return loop.run_until_complete(
+                self.run_replay_async(
+                    previous_session_id,
+                    session_metadata,
+                    False,
+                    with_responses,
+                )
+            )
+
+    @overload
+    async def run_replay_async(  # noqa: E704
+        self,
+        previous_session_id: str,
+        session_metadata: TrismikSessionMetadata,
+        return_dict: Literal[True],
+        with_responses: bool = False,
+    ) -> Dict[str, Any]: ...
+
+    @overload
+    async def run_replay_async(  # noqa: E704
+        self,
+        previous_session_id: str,
+        session_metadata: TrismikSessionMetadata,
+        return_dict: Literal[False],
+        with_responses: bool = False,
+    ) -> TrismikRunResults: ...
 
     async def run_replay_async(
         self,
         previous_session_id: str,
         session_metadata: TrismikSessionMetadata,
+        return_dict: bool = True,
         with_responses: bool = False,
-    ) -> TrismikRunResults:
+    ) -> Union[TrismikRunResults, Dict[str, Any]]:
         """
         Replay the exact sequence of questions from a previous session.
 
         Args:
-            previous_session_id (str): ID of a previous session to replay.
-            session_metadata (TrismikSessionMetadata): Metadata for the
-              session.
-            with_responses (bool): If True, responses will be included
+            previous_session_id: ID of a previous session to replay.
+            session_metadata: Metadata for the session.
+            return_dict: If True, return results as a dictionary instead
+              of TrismikRunResults object. Defaults to True.
+            with_responses: If True, responses will be included
               with the results.
 
         Returns:
-            TrismikRunResults: Either just test results, or with responses.
+            Union[TrismikRunResults, Dict[str, Any]]: Either TrismikRunResults
+              object or dictionary representation based on return_dict
+              parameter.
 
         Raises:
             TrismikApiError: If API request fails.
         """
-        await self._init_async()
-        assert (
-            self._client is not None
-        ), "Client should be initialized by _init_async()"
-        assert (
-            self._auth is not None
-        ), "Auth should be initialized by _init_async()"
-        await self._refresh_token_if_needed_async()
-        session = await self._client.create_replay_session(
-            previous_session_id, session_metadata, self._auth.token
+        # Get the original session summary to access dataset and responses
+        original_summary = await self._client.session_summary(
+            previous_session_id
         )
 
-        await self._run_session_async(session.url)
-        results = await self._client.results(session.url, self._auth.token)
-
-        if with_responses:
-            responses = await self._client.responses(
-                session.url, self._auth.token
-            )
-            return TrismikRunResults(session.id, results, responses)
-        else:
-            return TrismikRunResults(session.id, results)
-
-    async def _run_session_async(self, session_url: str) -> None:
-        """
-        Run a test session asynchronously.
-
-        Args:
-            session_url (str): URL of the session to run.
-
-        Raises:
-            TrismikApiError: If API request fails.
-        """
-        await self._init_async()
-        assert (
-            self._client is not None
-        ), "Client should be initialized by _init_async()"
-        assert (
-            self._auth is not None
-        ), "Auth should be initialized by _init_async()"
-        await self._refresh_token_if_needed_async()
-        item = await self._client.current_item(session_url, self._auth.token)
-        with tqdm(total=self._max_items, desc="Running test") as pbar:
-            while item is not None:
-                await self._refresh_token_if_needed_async()
+        # Build replay request by processing each item in the original order
+        replay_items = []
+        with tqdm(
+            total=len(original_summary.dataset), desc="Running replay..."
+        ) as pbar:
+            for item in original_summary.dataset:
                 # Handle both sync and async item processors
                 if asyncio.iscoroutinefunction(self._item_processor):
                     response = await self._item_processor(item)
                 else:
                     response = self._item_processor(item)
-                next_item = await self._client.respond_to_current_item(
-                    session_url, response, self._auth.token
+
+                # Create replay request item
+                replay_item = TrismikReplayRequestItem(
+                    itemId=item.id, itemChoiceId=response
                 )
+                replay_items.append(replay_item)
                 pbar.update(1)
-                if next_item is None:
-                    break
-                item = next_item
 
-    async def _init_async(self) -> None:
+        # Create replay request
+        replay_request = TrismikReplayRequest(responses=replay_items)
+
+        # Submit replay with metadata
+        replay_response = await self._client.submit_replay(
+            previous_session_id, replay_request, session_metadata
+        )
+
+        # Create score from replay response
+        score = AdaptiveTestScore(
+            theta=replay_response.state.thetas[-1],
+            std_error=replay_response.state.std_error_history[-1],
+        )
+
+        # Return results with optional responses
+        if with_responses:
+            results = TrismikRunResults(
+                session_id=replay_response.id,
+                score=score,
+                responses=replay_response.responses,
+            )
+        else:
+            results = TrismikRunResults(
+                session_id=replay_response.id, score=score
+            )
+
+        if return_dict:
+            return {
+                "session_id": results.session_id,
+                "score": (
+                    {
+                        "theta": results.score.theta,
+                        "std_error": results.score.std_error,
+                    }
+                    if results.score
+                    else None
+                ),
+                "responses": (
+                    [
+                        {
+                            "dataset_item_id": resp.dataset_item_id,
+                            "value": resp.value,
+                            "correct": resp.correct,
+                        }
+                        for resp in results.responses
+                    ]
+                    if results.responses
+                    else None
+                ),
+            }
+        else:
+            return results
+
+    async def _run_session_async(
+        self,
+        session_id: str,
+        first_item: Optional[TrismikItem],
+        states: List[TrismikAdaptiveTestState],
+    ) -> Optional[TrismikAdaptiveTestState]:
         """
-        Initialize the client and authenticate if needed asynchronously.
+        Run a test session asynchronously.
 
-        Raises:
-            TrismikApiError: If API request fails.
-        """
-        if self._client is None:
-            self._client = TrismikAsyncClient()
-
-        if self._auth is None:
-            self._auth = await self._client.authenticate()
-
-    async def _refresh_token_if_needed_async(self) -> None:
-        """
-        Refresh the authentication token if it's about to expire asynchronously.
-
-        Raises:
-            TrismikApiError: If API request fails.
-        """
-        assert (
-            self._client is not None
-        ), "Client should be initialized by _init_async()"
-        assert (
-            self._auth is not None
-        ), "Auth should be initialized by _init_async()"
-        if self._token_needs_refresh():
-            self._auth = await self._client.refresh_token(self._auth.token)
-
-    def _token_needs_refresh(self) -> bool:
-        """
-        Check if the authentication token needs to be refreshed.
+        Args:
+            session_id (str): ID of the session to run.
+            first_item (Optional[TrismikItem]): First item from session start.
+            states (List[TrismikAdaptiveTestState]): List to accumulate states.
 
         Returns:
-            bool: True if the token needs to be refreshed, False otherwise.
+            Optional[TrismikAdaptiveTestState]: Last state of the session.
+
+        Raises:
+            TrismikApiError: If API request fails.
         """
-        assert (
-            self._auth is not None
-        ), "Auth should be initialized by _init_async()"
-        return self._auth.expires < (datetime.now() + timedelta(minutes=5))
+        item = first_item
+        with tqdm(total=self._max_items, desc="Evaluating") as pbar:
+            while item is not None:
+                # Handle both sync and async item processors
+                if asyncio.iscoroutinefunction(self._item_processor):
+                    response = await self._item_processor(item)
+                else:
+                    response = self._item_processor(item)
+
+                # Continue session with response
+                continue_response = await self._client.continue_session(
+                    session_id, response
+                )
+
+                # Update state tracking
+                states.append(
+                    TrismikAdaptiveTestState(
+                        session_id=session_id,
+                        state=continue_response.state,
+                        completed=continue_response.completed,
+                    )
+                )
+
+                pbar.update(1)
+
+                if continue_response.completed:
+                    pbar.total = pbar.n  # Update total to current position
+                    pbar.refresh()
+                    break
+
+                item = continue_response.next_item
+
+        last_state = states[-1] if states else None
+
+        return last_state

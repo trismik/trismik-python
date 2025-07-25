@@ -81,7 +81,7 @@ runner = AdaptiveTest(model_inference)
 
 # Run the test
 results = await runner.run_async(
-    "MMLUPro2024",  # or any dataset we support
+    "MMLUPro2025",  # or any dataset we support
     with_responses=True,
     session_metadata=sample_metadata,
 )

@@ -6,35 +6,39 @@ other model that you have access to. Remember to provide your own Trismik
 API key in the .env file.
 """
 
+import argparse
 import asyncio
 import re
-from typing import List
 
 import transformers
 from dotenv import load_dotenv
 
 from trismik.adaptive_test import AdaptiveTest
 from trismik.types import (
+    AdaptiveTestScore,
     TrismikItem,
     TrismikMultipleChoiceTextItem,
-    TrismikResult,
     TrismikSessionMetadata,
 )
 
-session_metadata = TrismikSessionMetadata(
-    model_metadata=TrismikSessionMetadata.ModelMetadata(
-        name="microsoft/Phi-3-small-8k-instruct",
-        parameters="3.84B",
-        provider="Microsoft",
-    ),
-    test_configuration={
-        "task_name": "MMLUPro2024",
-        "response_format": "Multiple-choice",
-    },
-    inference_setup={
-        "max_tokens": 1024,
-    },
-)
+
+def create_session_metadata(dataset_name: str) -> TrismikSessionMetadata:
+    """Create session metadata for the given dataset."""
+    return TrismikSessionMetadata(
+        model_metadata=TrismikSessionMetadata.ModelMetadata(
+            name="microsoft/Phi-3-small-8k-instruct",
+            parameters="3.84B",
+            provider="Microsoft",
+        ),
+        test_configuration={
+            "task_name": dataset_name,
+            "response_format": "Multiple-choice",
+        },
+        inference_setup={
+            "max_tokens": 1024,
+        },
+    )
+
 
 generation_args = {
     "max_new_tokens": 1024,
@@ -58,7 +62,7 @@ def inference(
     assert isinstance(item, TrismikMultipleChoiceTextItem)
 
     # We construct the prompt from the question and the possible choices.
-    # We transformed MMLUPro2024 to be in the form of a multiple-choice
+    # We transformed MMLUPro2025 to be in the form of a multiple-choice
     # question, so the prompt reflects that.
     prompt = f"{item.question}\nOptions:\n" + "\n".join(
         [f"- {choice.id}: {choice.text}" for choice in item.choices]
@@ -124,25 +128,33 @@ Please adhere strictly to the instructions.
     return final_answer
 
 
-def print_results(results: List[TrismikResult]) -> None:
-    """Print test results with trait, name, and value."""
-    print("\nResults...")
-    for result in results:
-        print(f"{result.trait} ({result.name}): {result.value}")
+def print_score(score: AdaptiveTestScore) -> None:
+    """Print adaptive test score with thetas, standard errors, and KL info."""
+    print("\nAdaptive Test Score...")
+    print(f"Final theta: {score.theta}")
+    print(f"Final standard error: {score.std_error}")
 
 
-def run_sync_example(pipeline: transformers.pipeline) -> None:
+def run_sync_example(
+    pipeline: transformers.pipeline, dataset_name: str
+) -> None:
     """Run an adaptive test synchronously using the AdaptiveTest class."""
     print("\n=== Running Synchronous Example ===")
     runner = AdaptiveTest(lambda item: inference(pipeline, item))
 
-    print("\nStarting test...")
+    print(f"\nStarting run with dataset name: {dataset_name}")
     results = runner.run(
-        "MMLUPro2024",
-        with_responses=True,
-        session_metadata=session_metadata,
+        dataset_name,
+        session_metadata=create_session_metadata(dataset_name),
+        return_dict=False,
     )
-    print_results(results.results)
+
+    print(f"Session {results.session_id} completed.")
+
+    if results.score is not None:
+        print_score(results.score)
+    else:
+        print("No score available.")
 
     # Uncomment to replay the exact same questions from the previous run.
     # This is useful to test the stability of the model - note that this
@@ -155,19 +167,27 @@ def run_sync_example(pipeline: transformers.pipeline) -> None:
     # print_results(results.results)
 
 
-async def run_async_example(pipeline: transformers.pipeline) -> None:
+async def run_async_example(
+    pipeline: transformers.pipeline, dataset_name: str
+) -> None:
     """Run an adaptive test asynchronously using the AdaptiveTest class."""
 
     print("\n=== Running Asynchronous Example ===")
     runner = AdaptiveTest(lambda item: inference(pipeline, item))
 
-    print("\nStarting test...")
+    print(f"\nStarting run with dataset name: {dataset_name}")
     results = await runner.run_async(
-        "MMLUPro2024",
-        with_responses=True,
-        session_metadata=session_metadata,
+        dataset_name,
+        session_metadata=create_session_metadata(dataset_name),
+        return_dict=False,
     )
-    print_results(results.results)
+
+    print(f"Session {results.session_id} completed.")
+
+    if results.score is not None:
+        print_score(results.score)
+    else:
+        print("No score available.")
 
     # Uncomment to replay the exact same questions from the previous run.
     # This is useful to test the stability of the model - note that this
@@ -187,6 +207,18 @@ async def main() -> None:
     Assumes TRISMIK_SERVICE_URL and TRISMIK_API_KEY are set either in
     environment or in .env file.
     """
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(
+        description="Run adaptive testing examples with Trismik API"
+    )
+    parser.add_argument(
+        "--dataset-name",
+        type=str,
+        default="FinRAG2025",
+        help="Name of the dataset to run (default: FinRAG2025)",
+    )
+    args = parser.parse_args()
+
     load_dotenv()
 
     # We choose Phi-4-mini-instruct as an example as it requires
@@ -201,10 +233,10 @@ async def main() -> None:
     )
 
     # Run sync example
-    run_sync_example(pipeline)
+    run_sync_example(pipeline, args.dataset_name)
 
     # Run async example
-    await run_async_example(pipeline)
+    await run_async_example(pipeline, args.dataset_name)
 
 
 if __name__ == "__main__":

@@ -14,33 +14,36 @@ OPENAI_API_KEY=your-openai-api-key
 ```
 """
 
+import argparse
 import asyncio
-from typing import List
 
 from dotenv import load_dotenv
 from openai import OpenAI
 
 from trismik.adaptive_test import AdaptiveTest
 from trismik.types import (
+    AdaptiveTestScore,
     TrismikItem,
     TrismikMultipleChoiceTextItem,
-    TrismikResult,
     TrismikSessionMetadata,
 )
 
 model_name = "gpt-4.1-nano-2025-04-14"
 
-session_metadata = TrismikSessionMetadata(
-    model_metadata=TrismikSessionMetadata.ModelMetadata(
-        name=model_name,
-        provider="OpenAI",
-    ),
-    test_configuration={
-        "task_name": "MMLUPro2024",
-        "response_format": "Multiple-choice",
-    },
-    inference_setup={},
-)
+
+def create_session_metadata(dataset_name: str) -> TrismikSessionMetadata:
+    """Create session metadata for the given dataset."""
+    return TrismikSessionMetadata(
+        model_metadata=TrismikSessionMetadata.ModelMetadata(
+            name=model_name,
+            provider="OpenAI",
+        ),
+        test_configuration={
+            "task_name": dataset_name,
+            "response_format": "Multiple-choice",
+        },
+        inference_setup={},
+    )
 
 
 def inference(client: OpenAI, item: TrismikItem, max_retries: int = 5) -> str:
@@ -55,7 +58,7 @@ def inference(client: OpenAI, item: TrismikItem, max_retries: int = 5) -> str:
     assert isinstance(item, TrismikMultipleChoiceTextItem)
 
     # We construct the prompt from the question and the possible choices.
-    # We transformed MMLUPro2024 to be in the form of a multiple-choice
+    # We transformed MMLUPro2025 to be in the form of a multiple-choice
     # question, so the prompt reflects that.
     prompt = f"{item.question}\nOptions:\n" + "\n".join(
         [f"- {choice.id}: {choice.text}" for choice in item.choices]
@@ -116,25 +119,31 @@ Please adhere strictly to the instructions.
     return final_answer
 
 
-def print_results(results: List[TrismikResult]) -> None:
-    """Print test results with trait, name, and value."""
-    print("\nResults...")
-    for result in results:
-        print(f"{result.trait} ({result.name}): {result.value}")
+def print_score(score: AdaptiveTestScore) -> None:
+    """Print adaptive test score with thetas, standard errors, and KL info."""
+    print("\nAdaptive Test Score...")
+    print(f"Final theta: {score.theta}")
+    print(f"Final standard error: {score.std_error}")
 
 
-def run_sync_example(client: OpenAI) -> None:
+def run_sync_example(client: OpenAI, dataset_name: str) -> None:
     """Run an adaptive test synchronously using the AdaptiveTest class."""
     print("\n=== Running Synchronous Example ===")
     runner = AdaptiveTest(lambda item: inference(client, item))
 
-    print("\nStarting test...")
+    print(f"\nStarting run with dataset name: {dataset_name}")
     results = runner.run(
-        "MMLUPro2024",
-        with_responses=True,
-        session_metadata=session_metadata,
+        dataset_name,
+        session_metadata=create_session_metadata(dataset_name),
+        return_dict=False,
     )
-    print_results(results.results)
+
+    print(f"Session {results.session_id} completed.")
+
+    if results.score is not None:
+        print_score(results.score)
+    else:
+        print("No score available.")
 
     # Uncomment to replay the exact same questions from the previous run.
     # This is useful to test the stability of the model - note that this
@@ -147,18 +156,24 @@ def run_sync_example(client: OpenAI) -> None:
     # print_results(results.results)
 
 
-async def run_async_example(client: OpenAI) -> None:
+async def run_async_example(client: OpenAI, dataset_name: str) -> None:
     """Run an adaptive test asynchronously using the AdaptiveTest class."""
     print("\n=== Running Asynchronous Example ===")
     runner = AdaptiveTest(lambda item: inference(client, item))
 
-    print("\nStarting test...")
+    print(f"\nStarting run with dataset name: {dataset_name}")
     results = await runner.run_async(
-        "MMLUPro2024",
-        with_responses=True,
-        session_metadata=session_metadata,
+        dataset_name,
+        session_metadata=create_session_metadata(dataset_name),
+        return_dict=False,
     )
-    print_results(results.results)
+
+    print(f"Session {results.session_id} completed.")
+
+    if results.score is not None:
+        print_score(results.score)
+    else:
+        print("No score available.")
 
     # Uncomment to replay the exact same questions from the previous run.
     # This is useful to test the stability of the model - note that this
@@ -178,15 +193,27 @@ async def main() -> None:
     Assumes TRISMIK_SERVICE_URL and TRISMIK_API_KEY are set either in
     environment or in .env file.
     """
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(
+        description="Run adaptive testing examples with Trismik API"
+    )
+    parser.add_argument(
+        "--dataset-name",
+        type=str,
+        default="FinRAG2025",
+        help="Name of the dataset to run (default: FinRAG2025)",
+    )
+    args = parser.parse_args()
+
     load_dotenv()
 
     client = OpenAI()
 
     # Run sync example
-    run_sync_example(client)
+    run_sync_example(client, args.dataset_name)
 
     # Run async example
-    await run_async_example(client)
+    await run_async_example(client, args.dataset_name)
 
 
 if __name__ == "__main__":

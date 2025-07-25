@@ -5,20 +5,25 @@ This file provides a skeleton for how to use the AdaptiveTest class to run
 tests. In this class, we mock the item processing by picking the first choice.
 In a real application, you would implement your own model inference in
 either process_item_sync or process_item_async.
+
+This example also demonstrates replay functionality with custom metadata.
+The replay sessions use different metadata than the original sessions to
+show how you can track different model configurations, hardware setups,
+or test parameters when replaying sessions.
 """
 
+import argparse
 import asyncio
-from typing import Any, List, Optional
+from typing import Any
 
-from _sample_metadata import sample_metadata
+from _sample_metadata import replay_metadata, sample_metadata
 from dotenv import load_dotenv
 
 from trismik.adaptive_test import AdaptiveTest
 from trismik.types import (
+    AdaptiveTestScore,
     TrismikItem,
     TrismikMultipleChoiceTextItem,
-    TrismikResponse,
-    TrismikResult,
 )
 
 
@@ -73,66 +78,91 @@ async def mock_inference_async(item: TrismikItem) -> Any:
         raise RuntimeError("Encountered unknown item type")
 
 
-def print_results(results: List[TrismikResult]) -> None:
-    """Print test results with trait, name, and value."""
-    print("\nResults...")
-    for result in results:
-        print(f"{result.trait} ({result.name}): {result.value}")
+def print_score(score: AdaptiveTestScore) -> None:
+    """Print adaptive test score with thetas, standard errors, and KL info."""
+    print("\nAdaptive Test Score...")
+    print(f"Final theta: {score.theta}")
+    print(f"Final standard error: {score.std_error}")
 
 
-def print_responses(responses: Optional[List[TrismikResponse]]) -> None:
-    """Print test responses with item ID and correctness."""
-    if responses is None:
-        return
-
-    print("\nResponses...")
-    for response in responses:
-        correct = "correct" if response.score > 0 else "incorrect"
-        print(f"{response.item_id}: {correct}")
-
-
-def run_sync_example() -> None:
+def run_sync_example(dataset_name: str) -> None:
     """Run an adaptive test synchronously using the AdaptiveTest class."""
     print("\n=== Running Synchronous Example ===")
     runner = AdaptiveTest(mock_inference)
 
-    print("\nStarting test...")
+    print(f"\nStarting run with dataset name: {dataset_name}")
     results = runner.run(
-        "MMLUPro2024",
-        with_responses=True,
+        dataset_name,
         session_metadata=sample_metadata,
+        return_dict=False,
     )
-    print_results(results.results)
-    print_responses(results.responses)
+
+    print(f"Session {results.session_id} completed.")
+
+    if results.score is not None:
+        print_score(results.score)
+    else:
+        print("No score available.")
 
     print("\nReplay run")
-    results = runner.run_replay(
-        results.session_id, sample_metadata, with_responses=True
+    # Update replay metadata with the original session ID
+    # Note that we use different metadata for the replay session, for example
+    # to track that we're using a different model.
+    replay_metadata.test_configuration["original_session_id"] = (
+        results.session_id
     )
-    print_results(results.results)
-    print_responses(results.responses)
+
+    replay_results = runner.run_replay(
+        results.session_id,
+        replay_metadata,
+        with_responses=True,
+        return_dict=False,
+    )
+    print(f"Replay session {replay_results.session_id} completed.")
+    if replay_results.score is not None:
+        print_score(replay_results.score)
+    if replay_results.responses is not None:
+        print(f"Number of responses: {len(replay_results.responses)}")
 
 
-async def run_async_example() -> None:
+async def run_async_example(dataset_name: str) -> None:
     """Run an adaptive test asynchronously using the AdaptiveTest class."""
     print("\n=== Running Asynchronous Example ===")
     runner = AdaptiveTest(mock_inference_async)
 
-    print("\nStarting test...")
+    print(f"\nStarting run with dataset name: {dataset_name}")
     results = await runner.run_async(
-        "MMLUPro2024",
-        with_responses=True,
+        dataset_name,
         session_metadata=sample_metadata,
+        return_dict=False,
     )
-    print_results(results.results)
-    print_responses(results.responses)
+
+    print(f"Session {results.session_id} completed.")
+
+    if results.score is not None:
+        print_score(results.score)
+    else:
+        print("No score available.")
 
     print("\nReplay run")
-    results = await runner.run_replay_async(
-        results.session_id, sample_metadata, with_responses=True
+    # Update replay metadata with the original session ID
+    # This demonstrates how you can customize metadata for replay sessions
+    # to track different model configurations, hardware, or test parameters
+    replay_metadata.test_configuration["original_session_id"] = (
+        results.session_id
     )
-    print_results(results.results)
-    print_responses(results.responses)
+
+    replay_results = await runner.run_replay_async(
+        results.session_id,
+        replay_metadata,
+        with_responses=True,
+        return_dict=False,
+    )
+    print(f"Replay session {replay_results.session_id} completed.")
+    if replay_results.score is not None:
+        print_score(replay_results.score)
+    if replay_results.responses is not None:
+        print(f"Number of responses: {len(replay_results.responses)}")
 
 
 async def main() -> None:
@@ -142,13 +172,25 @@ async def main() -> None:
     Assumes TRISMIK_SERVICE_URL and TRISMIK_API_KEY are set either in
     environment or in .env file.
     """
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(
+        description="Run adaptive testing examples with Trismik API"
+    )
+    parser.add_argument(
+        "--dataset-name",
+        type=str,
+        default="FinRAG2025",
+        help="Name of the dataset to run (default: FinRAG2025)",
+    )
+    args = parser.parse_args()
+
     load_dotenv()
 
     # Run sync example
-    run_sync_example()
+    run_sync_example(args.dataset_name)
 
     # Run async example
-    await run_async_example()
+    await run_async_example(args.dataset_name)
 
 
 if __name__ == "__main__":
