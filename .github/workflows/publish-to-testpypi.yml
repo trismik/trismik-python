@@ -1,16 +1,17 @@
-name: Publish Python 🐍 distribution 📦 to PyPI and TestPyPI
+name: Publish to TestPyPI
 
 on: push
 
 jobs:
   build:
-    name: Build distribution 📦
+    name: Build distribution
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
       with:
         persist-credentials: false
+        fetch-depth: 0
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
