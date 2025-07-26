@@ -53,8 +53,8 @@ autoflake = "^2.3.1"
 # Expected Git tags: vX.Y.Z, vX.Y.Z-alphaN, vX.Y.Z-betaN, vX.Y.Z-rcN
 enable = true
 vcs = "git"
-tag-pattern = "^v(?P<version>[0-9]+\\.[0-9]+\\.[0-9]+(?:-(?P<pre>(?:alpha|beta|rc)[0-9]*))?)$"
-format = "{version}"
+tag-pattern = '^v(?P<base>[0-9]+\.[0-9]+\.[0-9]+(?:-(?P<pre>(?:alpha|beta|rc)[0-9]*))?)$'
+format = "{base}"
 transformations = [
   { pattern = "-", replacement = "" },
   { pattern = "alpha", replacement = "a" },
