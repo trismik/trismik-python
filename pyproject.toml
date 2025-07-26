@@ -24,8 +24,11 @@ examples = [
 
 
 [tool.poetry]
-version = "0.9.3"  # base version
 packages = [{ include = "trismik", from = "src" }]
+version = "0.0.0" # managed by poetry-dynamic-versioning
+
+[tool.poetry.requires-plugins]
+poetry-dynamic-versioning = { version = ">=1.0.0,<2.0.0", extras = ["plugin"] }
 
 [tool.poetry.group.main.dependencies]
 httpx = "^0.27.2"
@@ -46,10 +49,21 @@ flake8 = "^7.0.0"
 mypy = "^1.15.0"
 autoflake = "^2.3.1"
 
+[tool.poetry-dynamic-versioning]
+# Expected Git tags: vX.Y.Z, vX.Y.Z-alphaN, vX.Y.Z-betaN, vX.Y.Z-rcN
+enable = true
+vcs = "git"
+tag-pattern = '^v(?P<base>[0-9]+\.[0-9]+\.[0-9]+(?:-(?P<pre>(?:alpha|beta|rc)[0-9]*))?)$'
+format = "{base}"
+transformations = [
+  { pattern = "-", replacement = "" },
+  { pattern = "alpha", replacement = "a" },
+  { pattern = "beta", replacement = "b" }
+]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]
+build-backend = "poetry_dynamic_versioning.backend"
 
 [tool.pytest.ini_options]
 asyncio_default_fixture_loop_scope = "class"
