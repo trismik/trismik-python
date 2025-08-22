@@ -1,7 +1,7 @@
-from trismik.types import TrismikSessionMetadata
+from trismik.types import TrismikRunMetadata
 
-sample_metadata: TrismikSessionMetadata = TrismikSessionMetadata(
-    model_metadata=TrismikSessionMetadata.ModelMetadata(
+sample_metadata: TrismikRunMetadata = TrismikRunMetadata(
+    model_metadata=TrismikRunMetadata.ModelMetadata(
         name="example-model",
         version="0.0.1",
         architecture="ExampleNet",
@@ -34,8 +34,8 @@ sample_metadata: TrismikSessionMetadata = TrismikSessionMetadata(
 )
 
 # Replay session metadata with different configuration
-replay_metadata: TrismikSessionMetadata = TrismikSessionMetadata(
-    model_metadata=TrismikSessionMetadata.ModelMetadata(
+replay_metadata: TrismikRunMetadata = TrismikRunMetadata(
+    model_metadata=TrismikRunMetadata.ModelMetadata(
         name="replay-model",
         version="1.0.0",
         architecture="ReplayNet",

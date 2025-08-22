@@ -25,16 +25,16 @@ from trismik.types import (
     AdaptiveTestScore,
     TrismikItem,
     TrismikMultipleChoiceTextItem,
-    TrismikSessionMetadata,
+    TrismikRunMetadata,
 )
 
 model_name = "gpt-4.1-nano-2025-04-14"
 
 
-def create_session_metadata(dataset_name: str) -> TrismikSessionMetadata:
+def create_session_metadata(dataset_name: str) -> TrismikRunMetadata:
     """Create session metadata for the given dataset."""
-    return TrismikSessionMetadata(
-        model_metadata=TrismikSessionMetadata.ModelMetadata(
+    return TrismikRunMetadata(
+        model_metadata=TrismikRunMetadata.ModelMetadata(
             name=model_name,
             provider="OpenAI",
         ),
@@ -138,7 +138,7 @@ def run_sync_example(client: OpenAI, dataset_name: str) -> None:
         return_dict=False,
     )
 
-    print(f"Session {results.session_id} completed.")
+    print(f"Session {results.run_id} completed.")
 
     if results.score is not None:
         print_score(results.score)
@@ -168,7 +168,7 @@ async def run_async_example(client: OpenAI, dataset_name: str) -> None:
         return_dict=False,
     )
 
-    print(f"Session {results.session_id} completed.")
+    print(f"Session {results.run_id} completed.")
 
     if results.score is not None:
         print_score(results.score)

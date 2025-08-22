@@ -97,7 +97,7 @@ def run_sync_example(dataset_name: str) -> None:
         return_dict=False,
     )
 
-    print(f"Session {results.session_id} completed.")
+    print(f"Session {results.run_id} completed.")
 
     if results.score is not None:
         print_score(results.score)
@@ -109,16 +109,16 @@ def run_sync_example(dataset_name: str) -> None:
     # Note that we use different metadata for the replay session, for example
     # to track that we're using a different model.
     replay_metadata.test_configuration["original_session_id"] = (
-        results.session_id
+        results.run_id
     )
 
     replay_results = runner.run_replay(
-        results.session_id,
+        results.run_id,
         replay_metadata,
         with_responses=True,
         return_dict=False,
     )
-    print(f"Replay session {replay_results.session_id} completed.")
+    print(f"Replay session {replay_results.run_id} completed.")
     if replay_results.score is not None:
         print_score(replay_results.score)
     if replay_results.responses is not None:
@@ -137,7 +137,7 @@ async def run_async_example(dataset_name: str) -> None:
         return_dict=False,
     )
 
-    print(f"Session {results.session_id} completed.")
+    print(f"Session {results.run_id} completed.")
 
     if results.score is not None:
         print_score(results.score)
@@ -148,17 +148,19 @@ async def run_async_example(dataset_name: str) -> None:
     # Update replay metadata with the original session ID
     # This demonstrates how you can customize metadata for replay sessions
     # to track different model configurations, hardware, or test parameters
+    
     replay_metadata.test_configuration["original_session_id"] = (
-        results.session_id
+        results.run_id
     )
 
+    await asyncio.sleep(10)  # Wait 10 seconds before replay
     replay_results = await runner.run_replay_async(
-        results.session_id,
+        results.run_id,
         replay_metadata,
         with_responses=True,
         return_dict=False,
     )
-    print(f"Replay session {replay_results.session_id} completed.")
+    print(f"Replay session {replay_results.run_id} completed.")
     if replay_results.score is not None:
         print_score(replay_results.score)
     if replay_results.responses is not None:
@@ -179,7 +181,7 @@ async def main() -> None:
     parser.add_argument(
         "--dataset-name",
         type=str,
-        default="FinRAG2025",
+        default="MMLUPro2024",
         help="Name of the dataset to run (default: FinRAG2025)",
     )
     args = parser.parse_args()
@@ -187,7 +189,7 @@ async def main() -> None:
     load_dotenv()
 
     # Run sync example
-    run_sync_example(args.dataset_name)
+    #run_sync_example(args.dataset_name)
 
     # Run async example
     await run_async_example(args.dataset_name)
