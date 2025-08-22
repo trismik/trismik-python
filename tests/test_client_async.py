@@ -14,7 +14,7 @@ from trismik.settings import environment_settings
 from trismik.types import (
     TrismikReplayRequest,
     TrismikReplayRequestItem,
-    TrismikSessionMetadata,
+    TrismikRunMetadata,
 )
 
 from ._mocker import TrismikResponseMocker
@@ -83,15 +83,15 @@ class TestTrismikAsyncClient:
         client = TrismikAsyncClient(
             http_client=self._mock_session_start_response()
         )
-        metadata = TrismikSessionMetadata(
-            model_metadata=TrismikSessionMetadata.ModelMetadata(
+        metadata = TrismikRunMetadata(
+            model_metadata=TrismikRunMetadata.ModelMetadata(
                 name="test_model"
             ),
             test_configuration={},
             inference_setup={},
         )
-        response = await client.start_session("test_id", metadata)
-        assert response.session_info.id == "session_id"
+        response = await client.start_run("test_id", metadata)
+        assert response.run_info.id == "session_id"
         assert response.completed is False
         assert response.next_item is not None
         assert response.next_item.id == "item_1"
@@ -105,14 +105,14 @@ class TestTrismikAsyncClient:
             client = TrismikAsyncClient(
                 http_client=self._mock_error_response(401)
             )
-            metadata = TrismikSessionMetadata(
-                model_metadata=TrismikSessionMetadata.ModelMetadata(
+            metadata = TrismikRunMetadata(
+                model_metadata=TrismikRunMetadata.ModelMetadata(
                     name="test_model"
                 ),
                 test_configuration={},
                 inference_setup={},
             )
-            await client.start_session("test_id", metadata)
+            await client.start_run("test_id", metadata)
 
     @pytest.mark.asyncio
     async def test_should_fail_start_session_when_payload_too_large(
@@ -122,14 +122,14 @@ class TestTrismikAsyncClient:
             client = TrismikAsyncClient(
                 http_client=self._mock_error_response(413)
             )
-            metadata = TrismikSessionMetadata(
-                model_metadata=TrismikSessionMetadata.ModelMetadata(
+            metadata = TrismikRunMetadata(
+                model_metadata=TrismikRunMetadata.ModelMetadata(
                     name="test_model"
                 ),
                 test_configuration={},
                 inference_setup={},
             )
-            await client.start_session("test_id", metadata)
+            await client.start_run("test_id", metadata)
 
     @pytest.mark.asyncio
     async def test_should_continue_session(self) -> None:
@@ -137,7 +137,7 @@ class TestTrismikAsyncClient:
             http_client=self._mock_session_continue_response()
         )
         response = await client.continue_session("session_id", "choice_1")
-        assert response.session_info.id == "session_id"
+        assert response.run_info.id == "session_id"
         assert response.completed is False
         assert response.next_item is not None
         assert response.next_item.id == "item_2"
@@ -149,7 +149,7 @@ class TestTrismikAsyncClient:
             http_client=self._mock_session_end_response()
         )
         response = await client.continue_session("session_id", "choice_2")
-        assert response.session_info.id == "session_id"
+        assert response.run_info.id == "session_id"
         assert response.completed is True
         assert response.next_item is None
         assert len(response.state.thetas) == 3
@@ -173,7 +173,7 @@ class TestTrismikAsyncClient:
 
         # Check id and test_id
         assert summary.id == "session_id"
-        assert summary.test_id == "test_id"
+        assert summary.dataset_id == "test_id"
 
         # Check state
         assert len(summary.state.thetas) == 1
@@ -220,8 +220,8 @@ class TestTrismikAsyncClient:
 
         # Check basic properties
         assert response.id == "replay_session_id"
-        assert response.testId == "test_id"
-        assert response.replay_of_session == "original_session_id"
+        assert response.datasetId == "test_id"
+        assert response.replay_of_run == "original_session_id"
 
         # Check state
         assert len(response.state.thetas) == 1
@@ -297,13 +297,13 @@ class TestTrismikAsyncClient:
 
         client = TrismikAsyncClient(http_client=mock_client)
 
-        metadata = TrismikSessionMetadata(
-            model_metadata=TrismikSessionMetadata.ModelMetadata("test_model"),
+        metadata = TrismikRunMetadata(
+            model_metadata=TrismikRunMetadata.ModelMetadata("test_model"),
             test_configuration={"max_items": 20},
             inference_setup={"temperature": 0.7},
         )
 
-        await client.start_session("test_id", metadata)
+        await client.start_run("test_id", metadata)
 
         # Verify the request was made with the correct body
         mock_client.post.assert_called_once()
@@ -336,7 +336,7 @@ class TestTrismikAsyncClient:
 
         client = TrismikAsyncClient(http_client=mock_client)
 
-        await client.start_session("test_id")
+        await client.start_run("test_id")
 
         # Verify the request was made with empty metadata
         mock_client.post.assert_called_once()
@@ -372,8 +372,8 @@ class TestTrismikAsyncClient:
 
         client = TrismikAsyncClient(http_client=mock_client)
 
-        metadata = TrismikSessionMetadata(
-            model_metadata=TrismikSessionMetadata.ModelMetadata("test_model"),
+        metadata = TrismikRunMetadata(
+            model_metadata=TrismikRunMetadata.ModelMetadata("test_model"),
             test_configuration={"max_items": 20},
             inference_setup={"temperature": 0.7},
         )

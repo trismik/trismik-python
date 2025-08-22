@@ -21,9 +21,9 @@ from trismik.types import (
     TrismikDataset,
     TrismikReplayRequest,
     TrismikReplayResponse,
-    TrismikSessionMetadata,
-    TrismikSessionResponse,
-    TrismikSessionSummary,
+    TrismikRunMetadata,
+    TrismikRunResponse,
+    TrismikRunSummary,
 )
 
 
@@ -32,7 +32,7 @@ class TrismikAsyncClient:
     Asynchronous client for the Trismik API.
 
     This class provides an asynchronous interface to interact with the Trismik
-    API, handling authentication, test sessions, and responses.
+    API, handling authentication, dataset runs, and responses.
     """
 
     def __init__(
@@ -117,7 +117,7 @@ class TrismikAsyncClient:
             response = await self._http_client.get(url)
             response.raise_for_status()
             json = response.json()
-            return TrismikResponseMapper.to_tests(json)
+            return TrismikResponseMapper.to_datasets(json)
         except httpx.HTTPStatusError as e:
             raise TrismikApiError(
                 TrismikUtils.get_error_message(e.response)
@@ -125,18 +125,18 @@ class TrismikAsyncClient:
         except httpx.HTTPError as e:
             raise TrismikApiError(str(e)) from e
 
-    async def start_session(
-        self, test_id: str, metadata: Optional[TrismikSessionMetadata] = None
-    ) -> TrismikSessionResponse:
+    async def start_run(
+        self, dataset_id: str, metadata: Optional[TrismikRunMetadata] = None
+    ) -> TrismikRunResponse:
         """
-        Start a new session for a test and get the first item.
+        Start a new run for a dataset and get the first item.
 
         Args:
-            test_id (str): ID of the test.
-            metadata (Optional[TrismikSessionMetadata]): Session metadata.
+            dataset_id (str): ID of the dataset.
+            metadata (Optional[TrismikRunMetadata]): Run metadata.
 
         Returns:
-            TrismikSessionResponse: Session response.
+            TrismikRunResponse: Run response.
 
         Raises:
             TrismikPayloadTooLargeError: If the request payload exceeds the
@@ -144,43 +144,48 @@ class TrismikAsyncClient:
             TrismikApiError: If API request fails.
         """
         try:
-            url = "/sessions/start"
+            url = "/runs/start"
             body = {
-                "testId": test_id,
+                "datasetId": dataset_id,
+                "projectId": "71ecc94ab4d8e5944f928daf706b2bb03044a87e",
+                "experiment": "prova",
                 "metadata": metadata.toDict() if metadata else {},
             }
             response = await self._http_client.post(url, json=body)
             response.raise_for_status()
             json = response.json()
-            return TrismikResponseMapper.to_session_response(json)
+            return TrismikResponseMapper.to_run_response(json)
         except httpx.HTTPStatusError as e:
             raise self._handle_http_error(e) from e
         except httpx.HTTPError as e:
             raise TrismikApiError(str(e)) from e
 
-    async def continue_session(
-        self, session_id: str, item_choice_id: str
-    ) -> TrismikSessionResponse:
+    async def continue_run(
+        self, run_id: str, item_choice_id: str
+    ) -> TrismikRunResponse:
         """
-        Continue a session: respond to the current item and get the next one.
+        Continue a run: respond to the current item and get the next one.
 
         Args:
-            session_id (str): ID of the session.
+            run_id (str): ID of the run.
             item_choice_id (str): ID of the chosen item response.
 
         Returns:
-            TrismikSessionResponse: Session response.
+            TrismikRunResponse: Run response.
 
         Raises:
             TrismikApiError: If API request fails.
         """
         try:
-            url = f"/sessions/{session_id}/continue"
-            body = {"itemChoiceId": item_choice_id}
+            url = f"/runs/continue"
+            body = {
+                "itemChoiceId": item_choice_id,
+                "runId": run_id
+            }
             response = await self._http_client.post(url, json=body)
             response.raise_for_status()
             json = response.json()
-            return TrismikResponseMapper.to_session_response(json)
+            return TrismikResponseMapper.to_run_response(json)
         except httpx.HTTPStatusError as e:
             raise TrismikApiError(
                 TrismikUtils.get_error_message(e.response)
@@ -188,26 +193,26 @@ class TrismikAsyncClient:
         except httpx.HTTPError as e:
             raise TrismikApiError(str(e)) from e
 
-    async def session_summary(self, session_id: str) -> TrismikSessionSummary:
+    async def run_summary(self, run_id: str) -> TrismikRunSummary:
         """
-        Get session summary including responses, dataset, and state.
+        Get run summary including responses, dataset, and state.
 
         Args:
-            session_id (str): ID of the session.
+            run_id (str): ID of the run.
 
         Returns:
-            TrismikSessionSummary: Complete session summary with responses,
+            TrismikRunSummary: Complete run summary with responses,
                 dataset, state, and metadata.
 
         Raises:
             TrismikApiError: If API request fails.
         """
         try:
-            url = f"/sessions/{session_id}/summary"
+            url = f"/runs/{run_id}"
             response = await self._http_client.get(url)
             response.raise_for_status()
             json = response.json()
-            return TrismikResponseMapper.to_session_summary(json)
+            return TrismikResponseMapper.to_run_summary(json)
         except httpx.HTTPStatusError as e:
             raise TrismikApiError(
                 TrismikUtils.get_error_message(e.response)
@@ -217,18 +222,18 @@ class TrismikAsyncClient:
 
     async def submit_replay(
         self,
-        session_id: str,
+        run_id: str,
         replay_request: TrismikReplayRequest,
-        metadata: Optional[TrismikSessionMetadata] = None,
+        metadata: Optional[TrismikRunMetadata] = None,
     ) -> TrismikReplayResponse:
         """
-        Submit a replay of a session with specific responses.
+        Submit a replay of a run with specific responses.
 
         Args:
-            session_id (str): ID of the session to replay.
+            run_id (str): ID of the run to replay.
             replay_request (TrismikReplayRequest): Request containing responses
                 to submit.
-            metadata (Optional[TrismikSessionMetadata]): Session metadata.
+            metadata (Optional[TrismikRunMetadata]): Run metadata.
 
         Returns:
             TrismikReplayResponse: Response from the replay endpoint.
@@ -241,7 +246,7 @@ class TrismikAsyncClient:
             TrismikApiError: If API request fails.
         """
         try:
-            url = f"sessions/{session_id}/replay"
+            url = f"runs/{run_id}/replay"
 
             # Convert TrismikReplayRequestItem objects to dictionaries
             responses_dict = [

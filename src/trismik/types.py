@@ -19,7 +19,7 @@ class TrismikDataset:
 
 
 @dataclass
-class TrismikSession:
+class TrismikRun:
     """Session metadata including ID, URL, and status."""
 
     id: str
@@ -28,14 +28,14 @@ class TrismikSession:
 
 
 @dataclass
-class TrismikSessionInfo:
+class TrismikRunInfo:
     """Session info from new API endpoints."""
 
     id: str
 
 
 @dataclass
-class TrismikSessionState:
+class TrismikRunState:
     """Session state including responses, thetas, and other metrics."""
 
     responses: List[str]
@@ -46,11 +46,11 @@ class TrismikSessionState:
 
 
 @dataclass
-class TrismikSessionResponse:
+class TrismikRunResponse:
     """Response from session endpoints (start and continue)."""
 
-    session_info: TrismikSessionInfo
-    state: TrismikSessionState
+    run_info: TrismikRunInfo
+    state: TrismikRunState
     next_item: Optional["TrismikItem"]
     completed: bool
 
@@ -59,8 +59,8 @@ class TrismikSessionResponse:
 class TrismikAdaptiveTestState:
     """State tracking for adaptive tests."""
 
-    session_id: str
-    state: TrismikSessionState
+    run_id: str
+    state: TrismikRunState
     completed: bool
 
 
@@ -123,18 +123,18 @@ class TrismikResponse:
 class TrismikRunResults:
     """Test results and responses."""
 
-    session_id: str
+    run_id: str
     score: Optional[AdaptiveTestScore] = None
     responses: Optional[List[TrismikResponse]] = None
 
 
 @dataclass
-class TrismikSessionSummary:
+class TrismikRunSummary:
     """Complete session summary."""
 
     id: str
-    test_id: str
-    state: TrismikSessionState
+    dataset_id: str
+    state: TrismikRunState
     dataset: List[TrismikItem]
     responses: List[TrismikResponse]
     metadata: dict
@@ -166,7 +166,7 @@ class TrismikSessionSummary:
 
 
 @dataclass
-class TrismikSessionMetadata:
+class TrismikRunMetadata:
     """Metadata for a test session."""
 
     class ModelMetadata:
@@ -211,9 +211,9 @@ class TrismikReplayResponse:
     """Response from a replay session request."""
 
     id: str
-    testId: str
-    state: TrismikSessionState
-    replay_of_session: str
+    datasetId: str
+    state: TrismikRunState
+    replay_of_run: str
     completedAt: Optional[datetime] = None
     createdAt: Optional[datetime] = None
     metadata: Dict[str, Any] = field(default_factory=dict)

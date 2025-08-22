@@ -18,14 +18,14 @@ from trismik.types import (
     AdaptiveTestScore,
     TrismikItem,
     TrismikMultipleChoiceTextItem,
-    TrismikSessionMetadata,
+    TrismikRunMetadata,
 )
 
 
-def create_session_metadata(dataset_name: str) -> TrismikSessionMetadata:
+def create_session_metadata(dataset_name: str) -> TrismikRunMetadata:
     """Create session metadata for the given dataset."""
-    return TrismikSessionMetadata(
-        model_metadata=TrismikSessionMetadata.ModelMetadata(
+    return TrismikRunMetadata(
+        model_metadata=TrismikRunMetadata.ModelMetadata(
             name="microsoft/Phi-3-small-8k-instruct",
             parameters="3.84B",
             provider="Microsoft",
@@ -149,7 +149,7 @@ def run_sync_example(
         return_dict=False,
     )
 
-    print(f"Session {results.session_id} completed.")
+    print(f"Session {results.run_id} completed.")
 
     if results.score is not None:
         print_score(results.score)
@@ -182,7 +182,7 @@ async def run_async_example(
         return_dict=False,
     )
 
-    print(f"Session {results.session_id} completed.")
+    print(f"Session {results.run_id} completed.")
 
     if results.score is not None:
         print_score(results.score)
@@ -214,7 +214,7 @@ async def main() -> None:
     parser.add_argument(
         "--dataset-name",
         type=str,
-        default="FinRAG2025",
+        default="MMLUPro2024",
         help="Name of the dataset to run (default: FinRAG2025)",
     )
     args = parser.parse_args()
