@@ -21,8 +21,8 @@ from trismik.types import (
     TrismikItem,
     TrismikReplayRequest,
     TrismikReplayRequestItem,
-    TrismikRunResults,
     TrismikRunMetadata,
+    TrismikRunResults,
 )
 
 
@@ -116,6 +116,8 @@ class AdaptiveTest:
     def run(  # noqa: E704
         self,
         test_id: str,
+        project_id: str,
+        experiment: str,
         session_metadata: TrismikRunMetadata,
         return_dict: Literal[True],
         with_responses: bool = False,
@@ -125,6 +127,8 @@ class AdaptiveTest:
     def run(  # noqa: E704
         self,
         test_id: str,
+        project_id: str,
+        experiment: str,
         session_metadata: TrismikRunMetadata,
         return_dict: Literal[False],
         with_responses: bool = False,
@@ -133,6 +137,8 @@ class AdaptiveTest:
     def run(
         self,
         test_id: str,
+        project_id: str,
+        experiment: str,
         session_metadata: TrismikRunMetadata,
         return_dict: bool = True,
         with_responses: bool = False,
@@ -142,6 +148,8 @@ class AdaptiveTest:
 
         Args:
             test_id (str): ID of the test to run.
+            project_id (str): ID of the project.
+            experiment (str): Name of the experiment.
             session_metadata (TrismikRunMetadata): Metadata for the
               session.
             return_dict (bool): If True, return results as a dictionary instead
@@ -163,6 +171,8 @@ class AdaptiveTest:
             return loop.run_until_complete(
                 self.run_async(
                     test_id,
+                    project_id,
+                    experiment,
                     session_metadata,
                     True,
                     with_responses,
@@ -172,6 +182,8 @@ class AdaptiveTest:
             return loop.run_until_complete(
                 self.run_async(
                     test_id,
+                    project_id,
+                    experiment,
                     session_metadata,
                     False,
                     with_responses,
@@ -182,6 +194,8 @@ class AdaptiveTest:
     async def run_async(  # noqa: E704
         self,
         test_id: str,
+        project_id: str,
+        experiment: str,
         session_metadata: TrismikRunMetadata,
         return_dict: Literal[True],
         with_responses: bool = False,
@@ -191,6 +205,8 @@ class AdaptiveTest:
     async def run_async(  # noqa: E704
         self,
         test_id: str,
+        project_id: str,
+        experiment: str,
         session_metadata: TrismikRunMetadata,
         return_dict: Literal[False],
         with_responses: bool = False,
@@ -199,6 +215,8 @@ class AdaptiveTest:
     async def run_async(
         self,
         test_id: str,
+        project_id: str,
+        experiment: str,
         session_metadata: TrismikRunMetadata,
         return_dict: bool = True,
         with_responses: bool = False,
@@ -208,6 +226,8 @@ class AdaptiveTest:
 
         Args:
             test_id: ID of the test to run.
+            project_id: ID of the project.
+            experiment: Name of the experiment.
             session_metadata: Metadata for the session.
             return_dict: If True, return results as a dictionary instead
               of TrismikRunResults object. Defaults to True.
@@ -230,7 +250,7 @@ class AdaptiveTest:
 
         # Start session and get first item
         start_response = await self._client.start_run(
-            test_id, session_metadata
+            test_id, project_id, experiment, session_metadata
         )
 
         # Initialize state tracking
@@ -390,9 +410,7 @@ class AdaptiveTest:
             TrismikApiError: If API request fails.
         """
         # Get the original session summary to access dataset and responses
-        original_summary = await self._client.run_summary(
-            previous_session_id
-        )
+        original_summary = await self._client.run_summary(previous_session_id)
 
         # Build replay request by processing each item in the original order
         replay_items = []
@@ -435,9 +453,7 @@ class AdaptiveTest:
                 responses=replay_response.responses,
             )
         else:
-            results = TrismikRunResults(
-                run_id=replay_response.id, score=score
-            )
+            results = TrismikRunResults(run_id=replay_response.id, score=score)
 
         if return_dict:
             return {

@@ -126,13 +126,19 @@ class TrismikAsyncClient:
             raise TrismikApiError(str(e)) from e
 
     async def start_run(
-        self, dataset_id: str, metadata: Optional[TrismikRunMetadata] = None
+        self,
+        dataset_id: str,
+        project_id: str,
+        experiment: str,
+        metadata: Optional[TrismikRunMetadata] = None,
     ) -> TrismikRunResponse:
         """
         Start a new run for a dataset and get the first item.
 
         Args:
             dataset_id (str): ID of the dataset.
+            project_id (str): ID of the project.
+            experiment (str): Name of the experiment.
             metadata (Optional[TrismikRunMetadata]): Run metadata.
 
         Returns:
@@ -147,8 +153,8 @@ class TrismikAsyncClient:
             url = "/runs/start"
             body = {
                 "datasetId": dataset_id,
-                "projectId": "71ecc94ab4d8e5944f928daf706b2bb03044a87e",
-                "experiment": "prova",
+                "projectId": project_id,
+                "experiment": experiment,
                 "metadata": metadata.toDict() if metadata else {},
             }
             response = await self._http_client.post(url, json=body)
@@ -177,11 +183,8 @@ class TrismikAsyncClient:
             TrismikApiError: If API request fails.
         """
         try:
-            url = f"/runs/continue"
-            body = {
-                "itemChoiceId": item_choice_id,
-                "runId": run_id
-            }
+            url = "/runs/continue"
+            body = {"itemChoiceId": item_choice_id, "runId": run_id}
             response = await self._http_client.post(url, json=body)
             response.raise_for_status()
             json = response.json()

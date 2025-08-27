@@ -85,7 +85,9 @@ def print_score(score: AdaptiveTestScore) -> None:
     print(f"Final standard error: {score.std_error}")
 
 
-def run_sync_example(dataset_name: str) -> None:
+def run_sync_example(
+    dataset_name: str, project_id: str, experiment: str
+) -> None:
     """Run an adaptive test synchronously using the AdaptiveTest class."""
     print("\n=== Running Synchronous Example ===")
     runner = AdaptiveTest(mock_inference)
@@ -93,6 +95,8 @@ def run_sync_example(dataset_name: str) -> None:
     print(f"\nStarting run with dataset name: {dataset_name}")
     results = runner.run(
         dataset_name,
+        project_id,
+        experiment,
         session_metadata=sample_metadata,
         return_dict=False,
     )
@@ -108,9 +112,7 @@ def run_sync_example(dataset_name: str) -> None:
     # Update replay metadata with the original session ID
     # Note that we use different metadata for the replay session, for example
     # to track that we're using a different model.
-    replay_metadata.test_configuration["original_session_id"] = (
-        results.run_id
-    )
+    replay_metadata.test_configuration["original_session_id"] = results.run_id
 
     replay_results = runner.run_replay(
         results.run_id,
@@ -125,7 +127,9 @@ def run_sync_example(dataset_name: str) -> None:
         print(f"Number of responses: {len(replay_results.responses)}")
 
 
-async def run_async_example(dataset_name: str) -> None:
+async def run_async_example(
+    dataset_name: str, project_id: str, experiment: str
+) -> None:
     """Run an adaptive test asynchronously using the AdaptiveTest class."""
     print("\n=== Running Asynchronous Example ===")
     runner = AdaptiveTest(mock_inference_async)
@@ -133,6 +137,8 @@ async def run_async_example(dataset_name: str) -> None:
     print(f"\nStarting run with dataset name: {dataset_name}")
     results = await runner.run_async(
         dataset_name,
+        project_id,
+        experiment,
         session_metadata=sample_metadata,
         return_dict=False,
     )
@@ -148,10 +154,8 @@ async def run_async_example(dataset_name: str) -> None:
     # Update replay metadata with the original session ID
     # This demonstrates how you can customize metadata for replay sessions
     # to track different model configurations, hardware, or test parameters
-    
-    replay_metadata.test_configuration["original_session_id"] = (
-        results.run_id
-    )
+
+    replay_metadata.test_configuration["original_session_id"] = results.run_id
 
     await asyncio.sleep(10)  # Wait 10 seconds before replay
     replay_results = await runner.run_replay_async(
@@ -184,15 +188,27 @@ async def main() -> None:
         default="MMLUPro2024",
         help="Name of the dataset to run (default: FinRAG2025)",
     )
+    parser.add_argument(
+        "--project-id",
+        type=str,
+        required=True,
+        help="Project ID for the Trismik run",
+    )
+    parser.add_argument(
+        "--experiment",
+        type=str,
+        required=True,
+        help="Experiment name for the Trismik run",
+    )
     args = parser.parse_args()
 
     load_dotenv()
 
     # Run sync example
-    #run_sync_example(args.dataset_name)
+    # run_sync_example(args.dataset_name, args.project_id, args.experiment)
 
     # Run async example
-    await run_async_example(args.dataset_name)
+    await run_async_example(args.dataset_name, args.project_id, args.experiment)
 
 
 if __name__ == "__main__":

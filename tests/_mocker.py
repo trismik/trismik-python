@@ -58,7 +58,7 @@ class TrismikResponseMocker:
             request=httpx.Request("method", "url"),
             status_code=201,
             json={
-                "sessionInfo": {"id": "session_id"},
+                "runInfo": {"id": "session_id"},
                 "state": {
                     "responses": ["item_1"],
                     "thetas": [1.0],
@@ -81,7 +81,7 @@ class TrismikResponseMocker:
             request=httpx.Request("method", "url"),
             status_code=200,
             json={
-                "sessionInfo": {"id": "session_id"},
+                "runInfo": {"id": "session_id"},
                 "state": {
                     "responses": ["item_1", "item_2"],
                     "thetas": [1.0, 1.2],
@@ -104,7 +104,7 @@ class TrismikResponseMocker:
             request=httpx.Request("method", "url"),
             status_code=200,
             json={
-                "sessionInfo": {"id": "session_id"},
+                "runInfo": {"id": "session_id"},
                 "state": {
                     "responses": ["item_1", "item_2", "item_3"],
                     "thetas": [1.0, 1.2, 1.3],
@@ -138,7 +138,7 @@ class TrismikResponseMocker:
             status_code=200,
             json={
                 "id": "session_id",
-                "testId": "test_id",
+                "datasetId": "test_id",
                 "state": {
                     "responses": ["item_1"],
                     "thetas": [1.0],
@@ -180,7 +180,7 @@ class TrismikResponseMocker:
             status_code=200,
             json={
                 "id": "replay_session_id",
-                "testId": "test_id",
+                "datasetId": "test_id",
                 "state": {
                     "responses": ["item_1"],
                     "thetas": [1.0],
@@ -188,7 +188,7 @@ class TrismikResponseMocker:
                     "kl_info_history": [0.1],
                     "effective_difficulties": [0.2],
                 },
-                "replay_of_session": "original_session_id",
+                "replayOfRun": "original_session_id",
                 "completedAt": "2025-06-26T10:56:03.356Z",
                 "createdAt": "2025-06-26T10:56:03.356Z",
                 "metadata": {"foo": "bar"},

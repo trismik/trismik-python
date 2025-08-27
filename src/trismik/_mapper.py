@@ -107,9 +107,7 @@ class TrismikResponseMapper:
             TrismikRunResponse: Session response.
         """
         return TrismikRunResponse(
-            run_info=TrismikResponseMapper.to_run_info(
-                json["runInfo"]
-            ),
+            run_info=TrismikResponseMapper.to_run_info(json["runInfo"]),
             state=TrismikResponseMapper.to_run_state(json["state"]),
             next_item=(
                 TrismikResponseMapper.to_item(json["nextItem"])
