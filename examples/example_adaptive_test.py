@@ -134,6 +134,12 @@ async def run_async_example(
     print("\n=== Running Asynchronous Example ===")
     runner = AdaptiveTest(mock_inference_async)
 
+    # List available datasets
+    available_datasets = runner.list_datasets()
+    print("Available datasets:")
+    for dataset in available_datasets:
+        print(f"- {dataset.id}")
+
     print(f"\nStarting run with dataset name: {dataset_name}")
     results = await runner.run_async(
         dataset_name,

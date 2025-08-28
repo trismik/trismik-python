@@ -208,7 +208,7 @@ async def main() -> None:
     parser.add_argument(
         "--dataset-name",
         type=str,
-        default="FinRAG2025",
+        default="MMLUPro2024",
         help="Name of the dataset to run (default: FinRAG2025)",
     )
     parser.add_argument(

@@ -27,12 +27,12 @@ class TrismikResponseMapper:
     """
 
     @staticmethod
-    def to_datasets(json: List[Dict[str, Any]]) -> List[TrismikDataset]:
+    def to_datasets(json: Dict[str, Any]) -> List[TrismikDataset]:
         """
-        Convert JSON response to a list of TrismikTest objects.
+        Convert JSON response to a list of TrismikDataset objects.
 
         Args:
-            json (List[Dict[str, Any]]): JSON response containing test data.
+            json (Dict[str, Any]): JSON response containing dataset data.
 
         Returns:
             List[TrismikDataset]: List of
@@ -43,7 +43,7 @@ class TrismikResponseMapper:
                 id=item["id"],
                 name=item["name"],
             )
-            for item in json
+            for item in json["data"]
         ]
 
     @staticmethod

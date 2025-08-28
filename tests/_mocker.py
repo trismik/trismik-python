@@ -43,13 +43,23 @@ class TrismikResponseMocker:
         return httpx.Response(
             request=httpx.Request("method", "url"),
             status_code=200,
-            json=[
-                {"id": "fluency", "name": "Fluency"},
-                {"id": "hallucination", "name": "Hallucination"},
-                {"id": "layman-medical", "name": "Layman Medical"},
-                {"id": "memorization", "name": "Memorization"},
-                {"id": "toxicity", "name": "Toxicity"},
-            ],
+            json={
+                "data": [
+                    {"id": "fluency", "name": "Fluency"},
+                    {"id": "hallucination", "name": "Hallucination"},
+                    {"id": "layman-medical", "name": "Layman Medical"},
+                    {"id": "memorization", "name": "Memorization"},
+                    {"id": "toxicity", "name": "Toxicity"},
+                ],
+                "meta": {
+                    "page": 1,
+                    "limit": 20,
+                    "totalItems": 5,
+                    "totalPages": 1,
+                    "hasNextPage": False,
+                    "hasPreviousPage": False,
+                },
+            },
         )
 
     @staticmethod
