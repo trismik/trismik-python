@@ -21,8 +21,8 @@ from trismik.types import (
     TrismikItem,
     TrismikReplayRequest,
     TrismikReplayRequestItem,
+    TrismikRunMetadata,
     TrismikRunResults,
-    TrismikSessionMetadata,
 )
 
 
@@ -116,7 +116,9 @@ class AdaptiveTest:
     def run(  # noqa: E704
         self,
         test_id: str,
-        session_metadata: TrismikSessionMetadata,
+        project_id: str,
+        experiment: str,
+        session_metadata: TrismikRunMetadata,
         return_dict: Literal[True],
         with_responses: bool = False,
     ) -> Dict[str, Any]: ...
@@ -125,7 +127,9 @@ class AdaptiveTest:
     def run(  # noqa: E704
         self,
         test_id: str,
-        session_metadata: TrismikSessionMetadata,
+        project_id: str,
+        experiment: str,
+        session_metadata: TrismikRunMetadata,
         return_dict: Literal[False],
         with_responses: bool = False,
     ) -> TrismikRunResults: ...
@@ -133,7 +137,9 @@ class AdaptiveTest:
     def run(
         self,
         test_id: str,
-        session_metadata: TrismikSessionMetadata,
+        project_id: str,
+        experiment: str,
+        session_metadata: TrismikRunMetadata,
         return_dict: bool = True,
         with_responses: bool = False,
     ) -> Union[TrismikRunResults, Dict[str, Any]]:
@@ -142,7 +148,9 @@ class AdaptiveTest:
 
         Args:
             test_id (str): ID of the test to run.
-            session_metadata (TrismikSessionMetadata): Metadata for the
+            project_id (str): ID of the project.
+            experiment (str): Name of the experiment.
+            session_metadata (TrismikRunMetadata): Metadata for the
               session.
             return_dict (bool): If True, return results as a dictionary instead
               of TrismikRunResults object. Defaults to True.
@@ -163,6 +171,8 @@ class AdaptiveTest:
             return loop.run_until_complete(
                 self.run_async(
                     test_id,
+                    project_id,
+                    experiment,
                     session_metadata,
                     True,
                     with_responses,
@@ -172,6 +182,8 @@ class AdaptiveTest:
             return loop.run_until_complete(
                 self.run_async(
                     test_id,
+                    project_id,
+                    experiment,
                     session_metadata,
                     False,
                     with_responses,
@@ -182,7 +194,9 @@ class AdaptiveTest:
     async def run_async(  # noqa: E704
         self,
         test_id: str,
-        session_metadata: TrismikSessionMetadata,
+        project_id: str,
+        experiment: str,
+        session_metadata: TrismikRunMetadata,
         return_dict: Literal[True],
         with_responses: bool = False,
     ) -> Dict[str, Any]: ...
@@ -191,7 +205,9 @@ class AdaptiveTest:
     async def run_async(  # noqa: E704
         self,
         test_id: str,
-        session_metadata: TrismikSessionMetadata,
+        project_id: str,
+        experiment: str,
+        session_metadata: TrismikRunMetadata,
         return_dict: Literal[False],
         with_responses: bool = False,
     ) -> TrismikRunResults: ...
@@ -199,7 +215,9 @@ class AdaptiveTest:
     async def run_async(
         self,
         test_id: str,
-        session_metadata: TrismikSessionMetadata,
+        project_id: str,
+        experiment: str,
+        session_metadata: TrismikRunMetadata,
         return_dict: bool = True,
         with_responses: bool = False,
     ) -> Union[TrismikRunResults, Dict[str, Any]]:
@@ -208,6 +226,8 @@ class AdaptiveTest:
 
         Args:
             test_id: ID of the test to run.
+            project_id: ID of the project.
+            experiment: Name of the experiment.
             session_metadata: Metadata for the session.
             return_dict: If True, return results as a dictionary instead
               of TrismikRunResults object. Defaults to True.
@@ -229,18 +249,18 @@ class AdaptiveTest:
             )
 
         # Start session and get first item
-        start_response = await self._client.start_session(
-            test_id, session_metadata
+        start_response = await self._client.start_run(
+            test_id, project_id, experiment, session_metadata
         )
 
         # Initialize state tracking
         states: List[TrismikAdaptiveTestState] = []
-        session_id = start_response.session_info.id
+        session_id = start_response.run_info.id
 
         # Add initial state
         states.append(
             TrismikAdaptiveTestState(
-                session_id=session_id,
+                run_id=session_id,
                 state=start_response.state,
                 completed=start_response.completed,
             )
@@ -265,7 +285,7 @@ class AdaptiveTest:
 
         if return_dict:
             return {
-                "session_id": results.session_id,
+                "session_id": results.run_id,
                 "score": (
                     {
                         "theta": results.score.theta,
@@ -283,7 +303,7 @@ class AdaptiveTest:
     def run_replay(  # noqa: E704
         self,
         previous_session_id: str,
-        session_metadata: TrismikSessionMetadata,
+        session_metadata: TrismikRunMetadata,
         return_dict: Literal[True],
         with_responses: bool = False,
     ) -> Dict[str, Any]: ...
@@ -292,7 +312,7 @@ class AdaptiveTest:
     def run_replay(  # noqa: E704
         self,
         previous_session_id: str,
-        session_metadata: TrismikSessionMetadata,
+        session_metadata: TrismikRunMetadata,
         return_dict: Literal[False],
         with_responses: bool = False,
     ) -> TrismikRunResults: ...
@@ -300,7 +320,7 @@ class AdaptiveTest:
     def run_replay(
         self,
         previous_session_id: str,
-        session_metadata: TrismikSessionMetadata,
+        session_metadata: TrismikRunMetadata,
         return_dict: bool = True,
         with_responses: bool = False,
     ) -> Union[TrismikRunResults, Dict[str, Any]]:
@@ -349,7 +369,7 @@ class AdaptiveTest:
     async def run_replay_async(  # noqa: E704
         self,
         previous_session_id: str,
-        session_metadata: TrismikSessionMetadata,
+        session_metadata: TrismikRunMetadata,
         return_dict: Literal[True],
         with_responses: bool = False,
     ) -> Dict[str, Any]: ...
@@ -358,7 +378,7 @@ class AdaptiveTest:
     async def run_replay_async(  # noqa: E704
         self,
         previous_session_id: str,
-        session_metadata: TrismikSessionMetadata,
+        session_metadata: TrismikRunMetadata,
         return_dict: Literal[False],
         with_responses: bool = False,
     ) -> TrismikRunResults: ...
@@ -366,7 +386,7 @@ class AdaptiveTest:
     async def run_replay_async(
         self,
         previous_session_id: str,
-        session_metadata: TrismikSessionMetadata,
+        session_metadata: TrismikRunMetadata,
         return_dict: bool = True,
         with_responses: bool = False,
     ) -> Union[TrismikRunResults, Dict[str, Any]]:
@@ -390,9 +410,7 @@ class AdaptiveTest:
             TrismikApiError: If API request fails.
         """
         # Get the original session summary to access dataset and responses
-        original_summary = await self._client.session_summary(
-            previous_session_id
-        )
+        original_summary = await self._client.run_summary(previous_session_id)
 
         # Build replay request by processing each item in the original order
         replay_items = []
@@ -430,18 +448,16 @@ class AdaptiveTest:
         # Return results with optional responses
         if with_responses:
             results = TrismikRunResults(
-                session_id=replay_response.id,
+                run_id=replay_response.id,
                 score=score,
                 responses=replay_response.responses,
             )
         else:
-            results = TrismikRunResults(
-                session_id=replay_response.id, score=score
-            )
+            results = TrismikRunResults(run_id=replay_response.id, score=score)
 
         if return_dict:
             return {
-                "session_id": results.session_id,
+                "session_id": results.run_id,
                 "score": (
                     {
                         "theta": results.score.theta,
@@ -496,14 +512,14 @@ class AdaptiveTest:
                     response = self._item_processor(item)
 
                 # Continue session with response
-                continue_response = await self._client.continue_session(
+                continue_response = await self._client.continue_run(
                     session_id, response
                 )
 
                 # Update state tracking
                 states.append(
                     TrismikAdaptiveTestState(
-                        session_id=session_id,
+                        run_id=session_id,
                         state=continue_response.state,
                         completed=continue_response.completed,
                     )
