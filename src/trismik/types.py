@@ -20,7 +20,7 @@ class TrismikDataset:
 
 @dataclass
 class TrismikRun:
-    """Session metadata including ID, URL, and status."""
+    """Run metadata including ID, URL, and status."""
 
     id: str
     url: str
@@ -29,14 +29,14 @@ class TrismikRun:
 
 @dataclass
 class TrismikRunInfo:
-    """Session info from new API endpoints."""
+    """Run info from new API endpoints."""
 
     id: str
 
 
 @dataclass
 class TrismikRunState:
-    """Session state including responses, thetas, and other metrics."""
+    """Run state including responses, thetas, and other metrics."""
 
     responses: List[str]
     thetas: List[float]
@@ -47,7 +47,7 @@ class TrismikRunState:
 
 @dataclass
 class TrismikRunResponse:
-    """Response from session endpoints (start and continue)."""
+    """Response from run endpoints (start and continue)."""
 
     run_info: TrismikRunInfo
     state: TrismikRunState
@@ -130,7 +130,7 @@ class TrismikRunResults:
 
 @dataclass
 class TrismikRunSummary:
-    """Complete session summary."""
+    """Complete run summary."""
 
     id: str
     dataset_id: str
@@ -141,36 +141,36 @@ class TrismikRunSummary:
 
     @property
     def theta(self) -> float:
-        """Get the theta of the session."""
+        """Get the theta of the run."""
         return self.state.thetas[-1]
 
     @property
     def std_error(self) -> float:
-        """Get the standard error of the session."""
+        """Get the standard error of the run."""
         return self.state.std_error_history[-1]
 
     @property
     def total_responses(self) -> int:
-        """Get the total number of responses in the session."""
+        """Get the total number of responses in the run."""
         return len(self.responses)
 
     @property
     def correct_responses(self) -> int:
-        """Get the number of correct responses in the session."""
+        """Get the number of correct responses in the run."""
         return sum(response.correct for response in self.responses)
 
     @property
     def wrong_responses(self) -> int:
-        """Get the number of wrong responses in the session."""
+        """Get the number of wrong responses in the run."""
         return self.total_responses - self.correct_responses
 
 
 @dataclass
 class TrismikRunMetadata:
-    """Metadata for a test session."""
+    """Metadata for a test run."""
 
     class ModelMetadata:
-        """Model metadata for a test session."""
+        """Model metadata for a test run."""
 
         def __init__(self, name: str, **kwargs: Any):
             """Initialize ModelMetadata with a name and optional attributes."""
@@ -183,7 +183,7 @@ class TrismikRunMetadata:
     inference_setup: Dict[str, Any]
 
     def toDict(self) -> Dict[str, Any]:
-        """Convert session metadata to a dictionary."""
+        """Convert run metadata to a dictionary."""
         return {
             "model_metadata": vars(self.model_metadata),
             "test_configuration": self.test_configuration,
@@ -201,14 +201,14 @@ class TrismikReplayRequestItem:
 
 @dataclass
 class TrismikReplayRequest:
-    """Request to replay a session with specific responses."""
+    """Request to replay a run with specific responses."""
 
     responses: List[TrismikReplayRequestItem]
 
 
 @dataclass
 class TrismikReplayResponse:
-    """Response from a replay session request."""
+    """Response from a replay run request."""
 
     id: str
     datasetId: str

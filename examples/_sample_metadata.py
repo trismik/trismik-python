@@ -33,7 +33,7 @@ sample_metadata: TrismikRunMetadata = TrismikRunMetadata(
     },
 )
 
-# Replay session metadata with different configuration
+# Replay run metadata with different configuration
 replay_metadata: TrismikRunMetadata = TrismikRunMetadata(
     model_metadata=TrismikRunMetadata.ModelMetadata(
         name="replay-model",
@@ -58,7 +58,7 @@ replay_metadata: TrismikRunMetadata = TrismikRunMetadata(
         "confidence_score": 0.95,
         "test_stage": "ReplayStage",
         "replay_mode": True,
-        "original_session_id": "placeholder",  # Will be set dynamically
+        "original_run_id": "placeholder",  # Will be set dynamically
     },
     inference_setup={
         "hardware": "ReplayHardware",

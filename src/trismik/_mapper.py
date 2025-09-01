@@ -49,13 +49,13 @@ class TrismikResponseMapper:
     @staticmethod
     def to_run(json: Dict[str, Any]) -> TrismikRun:
         """
-        Convert JSON response to a TrismikSession object.
+        Convert JSON response to a TrismikRun object.
 
         Args:
-            json (Dict[str, Any]): JSON response containing session data.
+            json (Dict[str, Any]): JSON response containing run data.
 
         Returns:
-            TrismikRun: Session object with ID, URL, and status.
+            TrismikRun: Run object with ID, URL, and status.
         """
         return TrismikRun(
             id=json["id"],
@@ -66,26 +66,26 @@ class TrismikResponseMapper:
     @staticmethod
     def to_run_info(json: Dict[str, Any]) -> TrismikRunInfo:
         """
-        Convert JSON response to a TrismikSessionInfo object.
+        Convert JSON response to a TrismikRunInfo object.
 
         Args:
-            json (Dict[str, Any]): JSON response containing session info.
+            json (Dict[str, Any]): JSON response containing run info.
 
         Returns:
-            TrismikRunInfo: Session info object with ID.
+            TrismikRunInfo: Run info object with ID.
         """
         return TrismikRunInfo(id=json["id"])
 
     @staticmethod
     def to_run_state(json: Dict[str, Any]) -> TrismikRunState:
         """
-        Convert JSON response to a TrismikSessionState object.
+        Convert JSON response to a TrismikRunState object.
 
         Args:
-            json (Dict[str, Any]): JSON response containing session state.
+            json (Dict[str, Any]): JSON response containing run state.
 
         Returns:
-            TrismikRunState: Session state object.
+            TrismikRunState: Run state object.
         """
         return TrismikRunState(
             responses=json.get("responses", []),
@@ -98,13 +98,13 @@ class TrismikResponseMapper:
     @staticmethod
     def to_run_response(json: Dict[str, Any]) -> TrismikRunResponse:
         """
-        Convert JSON response to a TrismikSessionResponse object.
+        Convert JSON response to a TrismikRunResponse object.
 
         Args:
-            json (Dict[str, Any]): JSON response from session endpoints.
+            json (Dict[str, Any]): JSON response from run endpoints.
 
         Returns:
-            TrismikRunResponse: Session response.
+            TrismikRunResponse: Run response.
         """
         return TrismikRunResponse(
             run_info=TrismikResponseMapper.to_run_info(json["runInfo"]),
@@ -120,13 +120,13 @@ class TrismikResponseMapper:
     @staticmethod
     def to_run_summary(json: Dict[str, Any]) -> TrismikRunSummary:
         """
-        Convert JSON response to a TrismikSessionSummary object.
+        Convert JSON response to a TrismikRunSummary object.
 
         Args:
-            json (Dict[str, Any]): JSON response from session summary endpoint.
+            json (Dict[str, Any]): JSON response from run summary endpoint.
 
         Returns:
-            TrismikRunSummary: Complete session summary.
+            TrismikRunSummary: Complete run summary.
         """
         return TrismikRunSummary(
             id=json["id"],

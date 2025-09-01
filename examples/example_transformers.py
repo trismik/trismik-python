@@ -22,8 +22,8 @@ from trismik.types import (
 )
 
 
-def create_session_metadata(dataset_name: str) -> TrismikRunMetadata:
-    """Create session metadata for the given dataset."""
+def create_run_metadata(dataset_name: str) -> TrismikRunMetadata:
+    """Create run metadata for the given dataset."""
     return TrismikRunMetadata(
         model_metadata=TrismikRunMetadata.ModelMetadata(
             name="microsoft/Phi-3-small-8k-instruct",
@@ -150,11 +150,11 @@ def run_sync_example(
         dataset_name,
         project_id,
         experiment,
-        session_metadata=create_session_metadata(dataset_name),
+        run_metadata=create_run_metadata(dataset_name),
         return_dict=False,
     )
 
-    print(f"Session {results.run_id} completed.")
+    print(f"Run {results.run_id} completed.")
 
     if results.score is not None:
         print_score(results.score)
@@ -167,7 +167,7 @@ def run_sync_example(
 
     # print("\nReplay run")
     # results = runner.run_replay(
-    #     results.session_id, session_metadata, with_responses=True
+    #     results.run_id, run_metadata, with_responses=True
     # )
     # print_results(results.results)
 
@@ -188,11 +188,11 @@ async def run_async_example(
         dataset_name,
         project_id,
         experiment,
-        session_metadata=create_session_metadata(dataset_name),
+        run_metadata=create_run_metadata(dataset_name),
         return_dict=False,
     )
 
-    print(f"Session {results.run_id} completed.")
+    print(f"Run {results.run_id} completed.")
 
     if results.score is not None:
         print_score(results.score)
@@ -205,7 +205,7 @@ async def run_async_example(
 
     # print("\nReplay run")
     # results = await runner.run_replay_async(
-    #     results.session_id, session_metadata, with_responses=True
+    #     results.run_id, run_metadata, with_responses=True
     # )
     # print_results(results.results)
 

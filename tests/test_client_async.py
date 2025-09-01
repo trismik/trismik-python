@@ -79,10 +79,8 @@ class TestTrismikAsyncClient:
             await client.list_datasets()
 
     @pytest.mark.asyncio
-    async def test_should_start_session(self) -> None:
-        client = TrismikAsyncClient(
-            http_client=self._mock_session_start_response()
-        )
+    async def test_should_start_run(self) -> None:
+        client = TrismikAsyncClient(http_client=self._mock_run_start_response())
         metadata = TrismikRunMetadata(
             model_metadata=TrismikRunMetadata.ModelMetadata(name="test_model"),
             test_configuration={},
@@ -91,14 +89,14 @@ class TestTrismikAsyncClient:
         response = await client.start_run(
             "test_id", "project_id", "experiment", metadata
         )
-        assert response.run_info.id == "session_id"
+        assert response.run_info.id == "run_id"
         assert response.completed is False
         assert response.next_item is not None
         assert response.next_item.id == "item_1"
         assert len(response.state.thetas) == 1
 
     @pytest.mark.asyncio
-    async def test_should_fail_start_session_when_api_returned_error(
+    async def test_should_fail_start_run_when_api_returned_error(
         self,
     ) -> None:
         with pytest.raises(TrismikApiError, match="message"):
@@ -117,7 +115,7 @@ class TestTrismikAsyncClient:
             )
 
     @pytest.mark.asyncio
-    async def test_should_fail_start_session_when_payload_too_large(
+    async def test_should_fail_start_run_when_payload_too_large(
         self,
     ) -> None:
         with pytest.raises(TrismikPayloadTooLargeError):
@@ -136,47 +134,45 @@ class TestTrismikAsyncClient:
             )
 
     @pytest.mark.asyncio
-    async def test_should_continue_session(self) -> None:
+    async def test_should_continue_run(self) -> None:
         client = TrismikAsyncClient(
-            http_client=self._mock_session_continue_response()
+            http_client=self._mock_run_continue_response()
         )
-        response = await client.continue_run("session_id", "choice_1")
-        assert response.run_info.id == "session_id"
+        response = await client.continue_run("run_id", "choice_1")
+        assert response.run_info.id == "run_id"
         assert response.completed is False
         assert response.next_item is not None
         assert response.next_item.id == "item_2"
         assert len(response.state.thetas) == 2
 
     @pytest.mark.asyncio
-    async def test_should_end_session_on_continue(self) -> None:
-        client = TrismikAsyncClient(
-            http_client=self._mock_session_end_response()
-        )
-        response = await client.continue_run("session_id", "choice_2")
-        assert response.run_info.id == "session_id"
+    async def test_should_end_run_on_continue(self) -> None:
+        client = TrismikAsyncClient(http_client=self._mock_run_end_response())
+        response = await client.continue_run("run_id", "choice_2")
+        assert response.run_info.id == "run_id"
         assert response.completed is True
         assert response.next_item is None
         assert len(response.state.thetas) == 3
 
     @pytest.mark.asyncio
-    async def test_should_fail_continue_session_when_api_returned_error(
+    async def test_should_fail_continue_run_when_api_returned_error(
         self,
     ) -> None:
         with pytest.raises(TrismikApiError, match="message"):
             client = TrismikAsyncClient(
                 http_client=self._mock_error_response(401)
             )
-            await client.continue_run("session_id", "choice_1")
+            await client.continue_run("run_id", "choice_1")
 
     @pytest.mark.asyncio
-    async def test_should_get_session_summary(self) -> None:
+    async def test_should_get_run_summary(self) -> None:
         client = TrismikAsyncClient(
-            http_client=self._mock_session_summary_response()
+            http_client=self._mock_run_summary_response()
         )
-        summary = await client.run_summary("session_id")
+        summary = await client.run_summary("run_id")
 
         # Check id and test_id
-        assert summary.id == "session_id"
+        assert summary.id == "run_id"
         assert summary.dataset_id == "test_id"
 
         # Check state
@@ -199,19 +195,19 @@ class TestTrismikAsyncClient:
         assert summary.metadata == {"foo": "bar"}
 
     @pytest.mark.asyncio
-    async def test_should_fail_get_session_summary_when_api_returned_error(
+    async def test_should_fail_get_run_summary_when_api_returned_error(
         self,
     ) -> None:
         with pytest.raises(TrismikApiError, match="message"):
             client = TrismikAsyncClient(
                 http_client=self._mock_error_response(401)
             )
-            await client.run_summary("session_id")
+            await client.run_summary("run_id")
 
     @pytest.mark.asyncio
     async def test_should_submit_replay(self) -> None:
         client = TrismikAsyncClient(
-            http_client=self._mock_session_replay_response()
+            http_client=self._mock_run_replay_response()
         )
         replay_request = TrismikReplayRequest(
             responses=[
@@ -220,12 +216,12 @@ class TestTrismikAsyncClient:
                 )
             ]
         )
-        response = await client.submit_replay("session_id", replay_request)
+        response = await client.submit_replay("run_id", replay_request)
 
         # Check basic properties
-        assert response.id == "replay_session_id"
+        assert response.id == "replay_run_id"
         assert response.datasetId == "test_id"
-        assert response.replay_of_run == "original_session_id"
+        assert response.replay_of_run == "original_run_id"
 
         # Check state
         assert len(response.state.thetas) == 1
@@ -259,7 +255,7 @@ class TestTrismikAsyncClient:
                     )
                 ]
             )
-            await client.submit_replay("session_id", replay_request)
+            await client.submit_replay("run_id", replay_request)
 
     @pytest.mark.asyncio
     async def test_should_fail_submit_replay_when_payload_too_large(
@@ -276,7 +272,7 @@ class TestTrismikAsyncClient:
                     )
                 ]
             )
-            await client.submit_replay("session_id", replay_request)
+            await client.submit_replay("run_id", replay_request)
 
     @pytest.mark.asyncio
     async def test_should_send_metadata_in_request_body(self) -> None:
@@ -286,7 +282,7 @@ class TestTrismikAsyncClient:
         mock_response = MagicMock()
         mock_response.raise_for_status.return_value = None
         mock_response.json.return_value = {
-            "runInfo": {"id": "session_id"},
+            "runInfo": {"id": "run_id"},
             "state": {
                 "responses": [],
                 "thetas": [],
@@ -327,7 +323,7 @@ class TestTrismikAsyncClient:
         mock_response = MagicMock()
         mock_response.raise_for_status.return_value = None
         mock_response.json.return_value = {
-            "runInfo": {"id": "session_id"},
+            "runInfo": {"id": "run_id"},
             "state": {
                 "responses": [],
                 "thetas": [],
@@ -362,7 +358,7 @@ class TestTrismikAsyncClient:
         mock_response = MagicMock()
         mock_response.raise_for_status.return_value = None
         mock_response.json.return_value = {
-            "id": "replay_session_id",
+            "id": "replay_run_id",
             "datasetId": "test_id",
             "state": {
                 "responses": [],
@@ -371,7 +367,7 @@ class TestTrismikAsyncClient:
                 "kl_info_history": [],
                 "effective_difficulties": [],
             },
-            "replayOfRun": "original_session_id",
+            "replayOfRun": "original_run_id",
             "metadata": {},
             "dataset": [],
             "responses": [],
@@ -394,7 +390,7 @@ class TestTrismikAsyncClient:
             ]
         )
 
-        await client.submit_replay("session_id", replay_request, metadata)
+        await client.submit_replay("run_id", replay_request, metadata)
 
         # Verify the request was made with the correct body
         mock_client.post.assert_called_once()
@@ -414,7 +410,7 @@ class TestTrismikAsyncClient:
         mock_response = MagicMock()
         mock_response.raise_for_status.return_value = None
         mock_response.json.return_value = {
-            "id": "replay_session_id",
+            "id": "replay_run_id",
             "datasetId": "test_id",
             "state": {
                 "responses": [],
@@ -423,7 +419,7 @@ class TestTrismikAsyncClient:
                 "kl_info_history": [],
                 "effective_difficulties": [],
             },
-            "replayOfRun": "original_session_id",
+            "replayOfRun": "original_run_id",
             "metadata": {},
             "dataset": [],
             "responses": [],
@@ -440,7 +436,7 @@ class TestTrismikAsyncClient:
             ]
         )
 
-        await client.submit_replay("session_id", replay_request)
+        await client.submit_replay("run_id", replay_request)
 
         # Verify the request was made with empty metadata
         mock_client.post.assert_called_once()
@@ -466,7 +462,7 @@ class TestTrismikAsyncClient:
                     )
                 ]
             )
-            await client.submit_replay("session_id", replay_request)
+            await client.submit_replay("run_id", replay_request)
 
     @pytest.fixture(scope="function", autouse=True)
     def set_env(self, monkeypatch) -> None:
@@ -483,23 +479,23 @@ class TestTrismikAsyncClient:
         return http_client
 
     @staticmethod
-    def _mock_session_start_response() -> httpx.AsyncClient:
+    def _mock_run_start_response() -> httpx.AsyncClient:
         http_client = MagicMock(httpx.AsyncClient)
-        response = TrismikResponseMocker.session_start()
+        response = TrismikResponseMocker.run_start()
         http_client.post.return_value = response
         return http_client
 
     @staticmethod
-    def _mock_session_continue_response() -> httpx.AsyncClient:
+    def _mock_run_continue_response() -> httpx.AsyncClient:
         http_client = MagicMock(httpx.AsyncClient)
-        response = TrismikResponseMocker.session_continue()
+        response = TrismikResponseMocker.run_continue()
         http_client.post.return_value = response
         return http_client
 
     @staticmethod
-    def _mock_session_end_response() -> httpx.AsyncClient:
+    def _mock_run_end_response() -> httpx.AsyncClient:
         http_client = MagicMock(httpx.AsyncClient)
-        response = TrismikResponseMocker.session_end()
+        response = TrismikResponseMocker.run_end()
         http_client.post.return_value = response
         return http_client
 
@@ -512,16 +508,16 @@ class TestTrismikAsyncClient:
         return http_client
 
     @staticmethod
-    def _mock_session_summary_response() -> httpx.AsyncClient:
+    def _mock_run_summary_response() -> httpx.AsyncClient:
         http_client = MagicMock(httpx.AsyncClient)
-        response = TrismikResponseMocker.session_summary()
+        response = TrismikResponseMocker.run_summary()
         http_client.get.return_value = response
         return http_client
 
     @staticmethod
-    def _mock_session_replay_response() -> httpx.AsyncClient:
+    def _mock_run_replay_response() -> httpx.AsyncClient:
         http_client = MagicMock(httpx.AsyncClient)
-        response = TrismikResponseMocker.session_replay()
+        response = TrismikResponseMocker.run_replay()
         http_client.post.return_value = response
         return http_client
 

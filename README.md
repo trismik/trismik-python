@@ -73,8 +73,9 @@ Here's a basic example:
 
 ```python
 def model_inference(item: TrismikItem) -> Any:
-    model_output = ... # call your model here
+    model_output = ...  # call your model here
     return model_output
+
 
 # Initialize the test runner
 runner = AdaptiveTest(model_inference)
@@ -83,7 +84,7 @@ runner = AdaptiveTest(model_inference)
 results = await runner.run_async(
     "MMLUPro2025",  # or any dataset we support
     with_responses=True,
-    session_metadata=sample_metadata,
+    run_metadata=sample_metadata,
 )
 
 # Print the test output

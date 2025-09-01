@@ -7,9 +7,9 @@ In a real application, you would implement your own model inference in
 either process_item_sync or process_item_async.
 
 This example also demonstrates replay functionality with custom metadata.
-The replay sessions use different metadata than the original sessions to
+The replay runs use different metadata than the original runs to
 show how you can track different model configurations, hardware setups,
-or test parameters when replaying sessions.
+or test parameters when replaying runs.
 """
 
 import argparse
@@ -97,11 +97,11 @@ def run_sync_example(
         dataset_name,
         project_id,
         experiment,
-        session_metadata=sample_metadata,
+        run_metadata=sample_metadata,
         return_dict=False,
     )
 
-    print(f"Session {results.run_id} completed.")
+    print(f"Run {results.run_id} completed.")
 
     if results.score is not None:
         print_score(results.score)
@@ -109,10 +109,10 @@ def run_sync_example(
         print("No score available.")
 
     print("\nReplay run")
-    # Update replay metadata with the original session ID
-    # Note that we use different metadata for the replay session, for example
+    # Update replay metadata with the original run ID
+    # Note that we use different metadata for the replay run, for example
     # to track that we're using a different model.
-    replay_metadata.test_configuration["original_session_id"] = results.run_id
+    replay_metadata.test_configuration["original_run_id"] = results.run_id
 
     replay_results = runner.run_replay(
         results.run_id,
@@ -120,7 +120,7 @@ def run_sync_example(
         with_responses=True,
         return_dict=False,
     )
-    print(f"Replay session {replay_results.run_id} completed.")
+    print(f"Replay run {replay_results.run_id} completed.")
     if replay_results.score is not None:
         print_score(replay_results.score)
     if replay_results.responses is not None:
@@ -145,11 +145,11 @@ async def run_async_example(
         dataset_name,
         project_id,
         experiment,
-        session_metadata=sample_metadata,
+        run_metadata=sample_metadata,
         return_dict=False,
     )
 
-    print(f"Session {results.run_id} completed.")
+    print(f"Run {results.run_id} completed.")
 
     if results.score is not None:
         print_score(results.score)
@@ -157,11 +157,11 @@ async def run_async_example(
         print("No score available.")
 
     print("\nReplay run")
-    # Update replay metadata with the original session ID
-    # This demonstrates how you can customize metadata for replay sessions
+    # Update replay metadata with the original run ID
+    # This demonstrates how you can customize metadata for replay runs
     # to track different model configurations, hardware, or test parameters
 
-    replay_metadata.test_configuration["original_session_id"] = results.run_id
+    replay_metadata.test_configuration["original_run_id"] = results.run_id
 
     await asyncio.sleep(10)  # Wait 10 seconds before replay
     replay_results = await runner.run_replay_async(
@@ -170,7 +170,7 @@ async def run_async_example(
         with_responses=True,
         return_dict=False,
     )
-    print(f"Replay session {replay_results.run_id} completed.")
+    print(f"Replay run {replay_results.run_id} completed.")
     if replay_results.score is not None:
         print_score(replay_results.score)
     if replay_results.responses is not None:

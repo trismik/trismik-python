@@ -38,7 +38,7 @@ class TestAdaptiveTest:
         client = MagicMock(spec=TrismikAsyncClient)
 
         start_response = TrismikRunResponse(
-            run_info=TrismikRunInfo(id="session_id"),
+            run_info=TrismikRunInfo(id="run_id"),
             state=TrismikRunState(
                 responses=["item_1"],
                 thetas=[1.0],
@@ -55,7 +55,7 @@ class TestAdaptiveTest:
         )
 
         continue_response = TrismikRunResponse(
-            run_info=TrismikRunInfo(id="session_id"),
+            run_info=TrismikRunInfo(id="run_id"),
             state=TrismikRunState(
                 responses=["item_1", "item_2"],
                 thetas=[1.0, 1.2],
@@ -72,7 +72,7 @@ class TestAdaptiveTest:
         )
 
         end_response = TrismikRunResponse(
-            run_info=TrismikRunInfo(id="session_id"),
+            run_info=TrismikRunInfo(id="run_id"),
             state=TrismikRunState(
                 responses=["item_1", "item_2", "item_3"],
                 thetas=[1.0, 1.2, 1.3],
@@ -85,8 +85,8 @@ class TestAdaptiveTest:
         )
 
         # Mock responses for replay functionality
-        session_summary_response = TrismikRunSummary(
-            id="previous_session_id",
+        run_summary_response = TrismikRunSummary(
+            id="previous_run_id",
             dataset_id="test_id",
             state=TrismikRunState(
                 responses=["item_1", "item_2"],
@@ -123,7 +123,7 @@ class TestAdaptiveTest:
         )
 
         replay_response = TrismikReplayResponse(
-            id="replay_session_id",
+            id="replay_run_id",
             datasetId="test_id",
             state=TrismikRunState(
                 responses=["item_1", "item_2"],
@@ -132,7 +132,7 @@ class TestAdaptiveTest:
                 kl_info_history=[0.11, 0.13],
                 effective_difficulties=[0.21, 0.26],
             ),
-            replay_of_run="previous_session_id",
+            replay_of_run="previous_run_id",
             completedAt=None,
             createdAt=None,
             metadata={"replay": "metadata"},
@@ -173,7 +173,7 @@ class TestAdaptiveTest:
         client.continue_run = AsyncMock(
             side_effect=[continue_response, end_response]
         )
-        client.run_summary = AsyncMock(return_value=session_summary_response)
+        client.run_summary = AsyncMock(return_value=run_summary_response)
         client.submit_replay = AsyncMock(return_value=replay_response)
         return client
 
@@ -252,7 +252,7 @@ class TestAdaptiveTest:
         )
         assert mock_client.continue_run.call_count == 2
         mock_client.continue_run.assert_called_with(
-            "session_id", "processed_response"
+            "run_id", "processed_response"
         )
         assert isinstance(results, TrismikRunResults)
         assert isinstance(results.score, AdaptiveTestScore)
@@ -275,7 +275,7 @@ class TestAdaptiveTest:
         )
         assert mock_client.continue_run.call_count == 2
         mock_client.continue_run.assert_called_with(
-            "session_id", "processed_response"
+            "run_id", "processed_response"
         )
         assert isinstance(results, TrismikRunResults)
         assert isinstance(results.score, AdaptiveTestScore)
@@ -324,21 +324,21 @@ class TestAdaptiveTest:
             inference_setup={},
         )
         results = sync_runner.run_replay(
-            "previous_session_id", metadata, return_dict=False
+            "previous_run_id", metadata, return_dict=False
         )
 
-        # Verify session_summary was called
-        mock_client.run_summary.assert_called_once_with("previous_session_id")
+        # Verify run_summary was called
+        mock_client.run_summary.assert_called_once_with("previous_run_id")
 
         # Verify submit_replay was called with correct parameters
         mock_client.submit_replay.assert_called_once()
         call_args = mock_client.submit_replay.call_args
-        assert call_args[0][0] == "previous_session_id"  # session_id
+        assert call_args[0][0] == "previous_run_id"  # run_id
         assert len(call_args[0][1].responses) == 2  # replay_request
 
         # Verify results
         assert isinstance(results, TrismikRunResults)
-        assert results.run_id == "replay_session_id"
+        assert results.run_id == "replay_run_id"
         assert isinstance(results.score, AdaptiveTestScore)
         assert results.score.theta == 1.3  # Final theta from replay response
         assert (
@@ -354,21 +354,21 @@ class TestAdaptiveTest:
             inference_setup={},
         )
         results = await async_runner.run_replay_async(
-            "previous_session_id", metadata, return_dict=False
+            "previous_run_id", metadata, return_dict=False
         )
 
-        # Verify session_summary was called
-        mock_client.run_summary.assert_called_once_with("previous_session_id")
+        # Verify run_summary was called
+        mock_client.run_summary.assert_called_once_with("previous_run_id")
 
         # Verify submit_replay was called with correct parameters
         mock_client.submit_replay.assert_called_once()
         call_args = mock_client.submit_replay.call_args
-        assert call_args[0][0] == "previous_session_id"  # session_id
+        assert call_args[0][0] == "previous_run_id"  # run_id
         assert len(call_args[0][1].responses) == 2  # replay_request
 
         # Verify results
         assert isinstance(results, TrismikRunResults)
-        assert results.run_id == "replay_session_id"
+        assert results.run_id == "replay_run_id"
         assert isinstance(results.score, AdaptiveTestScore)
         assert results.score.theta == 1.3  # Final theta from replay response
         assert (
@@ -383,21 +383,21 @@ class TestAdaptiveTest:
             inference_setup={},
         )
         results = sync_runner.run_replay(
-            "previous_session_id",
+            "previous_run_id",
             metadata,
             with_responses=True,
             return_dict=False,
         )
 
-        # Verify session_summary was called
-        mock_client.run_summary.assert_called_once_with("previous_session_id")
+        # Verify run_summary was called
+        mock_client.run_summary.assert_called_once_with("previous_run_id")
 
         # Verify submit_replay was called
         mock_client.submit_replay.assert_called_once()
 
         # Verify results include responses
         assert isinstance(results, TrismikRunResults)
-        assert results.run_id == "replay_session_id"
+        assert results.run_id == "replay_run_id"
         assert isinstance(results.score, AdaptiveTestScore)
         assert results.responses is not None
         assert len(results.responses) == 2
@@ -415,21 +415,21 @@ class TestAdaptiveTest:
             inference_setup={},
         )
         results = await async_runner.run_replay_async(
-            "previous_session_id",
+            "previous_run_id",
             metadata,
             with_responses=True,
             return_dict=False,
         )
 
-        # Verify session_summary was called
-        mock_client.run_summary.assert_called_once_with("previous_session_id")
+        # Verify run_summary was called
+        mock_client.run_summary.assert_called_once_with("previous_run_id")
 
         # Verify submit_replay was called
         mock_client.submit_replay.assert_called_once()
 
         # Verify results include responses
         assert isinstance(results, TrismikRunResults)
-        assert results.run_id == "replay_session_id"
+        assert results.run_id == "replay_run_id"
         assert isinstance(results.score, AdaptiveTestScore)
         assert results.responses is not None
         assert len(results.responses) == 2
@@ -444,18 +444,18 @@ class TestAdaptiveTest:
             inference_setup={},
         )
         results = async_runner.run_replay(
-            "previous_session_id", metadata, return_dict=False
+            "previous_run_id", metadata, return_dict=False
         )
 
-        # Verify session_summary was called
-        mock_client.run_summary.assert_called_once_with("previous_session_id")
+        # Verify run_summary was called
+        mock_client.run_summary.assert_called_once_with("previous_run_id")
 
         # Verify submit_replay was called
         mock_client.submit_replay.assert_called_once()
 
         # Verify results
         assert isinstance(results, TrismikRunResults)
-        assert results.run_id == "replay_session_id"
+        assert results.run_id == "replay_run_id"
         assert isinstance(results.score, AdaptiveTestScore)
 
     def test_should_create_client_when_api_key_provided(
@@ -498,13 +498,13 @@ class TestAdaptiveTest:
         )
         assert mock_client.continue_run.call_count == 2
         mock_client.continue_run.assert_called_with(
-            "session_id", "processed_response"
+            "run_id", "processed_response"
         )
         assert isinstance(results, dict)
-        assert "session_id" in results
+        assert "run_id" in results
         assert "score" in results
         assert "responses" in results
-        assert results["session_id"] == "session_id"
+        assert results["run_id"] == "run_id"
         assert results["score"]["theta"] == 1.3
         assert results["score"]["std_error"] == 0.3
         assert results["responses"] is None
@@ -545,10 +545,10 @@ class TestAdaptiveTest:
         )
         assert mock_client.continue_run.call_count == 2
         assert isinstance(results, dict)
-        assert "session_id" in results
+        assert "run_id" in results
         assert "score" in results
         assert "responses" in results
-        assert results["session_id"] == "session_id"
+        assert results["run_id"] == "run_id"
         assert results["score"]["theta"] == 1.3
         assert results["score"]["std_error"] == 0.3
         assert results["responses"] is None
@@ -581,16 +581,16 @@ class TestAdaptiveTest:
             inference_setup={},
         )
         results = sync_runner.run_replay(
-            "previous_session_id", metadata, return_dict=True
+            "previous_run_id", metadata, return_dict=True
         )
 
-        mock_client.run_summary.assert_called_once_with("previous_session_id")
+        mock_client.run_summary.assert_called_once_with("previous_run_id")
         mock_client.submit_replay.assert_called_once()
         assert isinstance(results, dict)
-        assert "session_id" in results
+        assert "run_id" in results
         assert "score" in results
         assert "responses" in results
-        assert results["session_id"] == "replay_session_id"
+        assert results["run_id"] == "replay_run_id"
         assert results["score"]["theta"] == 1.3
         assert results["score"]["std_error"] == 0.35
         assert results["responses"] is None
@@ -603,13 +603,13 @@ class TestAdaptiveTest:
             inference_setup={},
         )
         results = sync_runner.run_replay(
-            "previous_session_id", metadata, return_dict=False
+            "previous_run_id", metadata, return_dict=False
         )
 
-        mock_client.run_summary.assert_called_once_with("previous_session_id")
+        mock_client.run_summary.assert_called_once_with("previous_run_id")
         mock_client.submit_replay.assert_called_once()
         assert isinstance(results, TrismikRunResults)
-        assert results.run_id == "replay_session_id"
+        assert results.run_id == "replay_run_id"
         assert isinstance(results.score, AdaptiveTestScore)
         assert results.score.theta == 1.3
 
@@ -623,19 +623,19 @@ class TestAdaptiveTest:
             inference_setup={},
         )
         results = sync_runner.run_replay(
-            "previous_session_id",
+            "previous_run_id",
             metadata,
             with_responses=True,
             return_dict=True,
         )
 
-        mock_client.run_summary.assert_called_once_with("previous_session_id")
+        mock_client.run_summary.assert_called_once_with("previous_run_id")
         mock_client.submit_replay.assert_called_once()
         assert isinstance(results, dict)
-        assert "session_id" in results
+        assert "run_id" in results
         assert "score" in results
         assert "responses" in results
-        assert results["session_id"] == "replay_session_id"
+        assert results["run_id"] == "replay_run_id"
         assert results["score"]["theta"] == 1.3
         assert results["score"]["std_error"] == 0.35
         assert results["responses"] is not None
@@ -658,16 +658,16 @@ class TestAdaptiveTest:
             inference_setup={},
         )
         results = await async_runner.run_replay_async(
-            "previous_session_id", metadata, return_dict=True
+            "previous_run_id", metadata, return_dict=True
         )
 
-        mock_client.run_summary.assert_called_once_with("previous_session_id")
+        mock_client.run_summary.assert_called_once_with("previous_run_id")
         mock_client.submit_replay.assert_called_once()
         assert isinstance(results, dict)
-        assert "session_id" in results
+        assert "run_id" in results
         assert "score" in results
         assert "responses" in results
-        assert results["session_id"] == "replay_session_id"
+        assert results["run_id"] == "replay_run_id"
         assert results["score"]["theta"] == 1.3
         assert results["score"]["std_error"] == 0.35
         assert results["responses"] is None
