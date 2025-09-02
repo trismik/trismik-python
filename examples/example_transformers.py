@@ -18,14 +18,14 @@ from trismik.types import (
     AdaptiveTestScore,
     TrismikItem,
     TrismikMultipleChoiceTextItem,
-    TrismikSessionMetadata,
+    TrismikRunMetadata,
 )
 
 
-def create_session_metadata(dataset_name: str) -> TrismikSessionMetadata:
-    """Create session metadata for the given dataset."""
-    return TrismikSessionMetadata(
-        model_metadata=TrismikSessionMetadata.ModelMetadata(
+def create_run_metadata(dataset_name: str) -> TrismikRunMetadata:
+    """Create run metadata for the given dataset."""
+    return TrismikRunMetadata(
+        model_metadata=TrismikRunMetadata.ModelMetadata(
             name="microsoft/Phi-3-small-8k-instruct",
             parameters="3.84B",
             provider="Microsoft",
@@ -136,7 +136,10 @@ def print_score(score: AdaptiveTestScore) -> None:
 
 
 def run_sync_example(
-    pipeline: transformers.pipeline, dataset_name: str
+    pipeline: transformers.pipeline,
+    dataset_name: str,
+    project_id: str,
+    experiment: str,
 ) -> None:
     """Run an adaptive test synchronously using the AdaptiveTest class."""
     print("\n=== Running Synchronous Example ===")
@@ -145,11 +148,13 @@ def run_sync_example(
     print(f"\nStarting run with dataset name: {dataset_name}")
     results = runner.run(
         dataset_name,
-        session_metadata=create_session_metadata(dataset_name),
+        project_id,
+        experiment,
+        run_metadata=create_run_metadata(dataset_name),
         return_dict=False,
     )
 
-    print(f"Session {results.session_id} completed.")
+    print(f"Run {results.run_id} completed.")
 
     if results.score is not None:
         print_score(results.score)
@@ -162,13 +167,16 @@ def run_sync_example(
 
     # print("\nReplay run")
     # results = runner.run_replay(
-    #     results.session_id, session_metadata, with_responses=True
+    #     results.run_id, run_metadata, with_responses=True
     # )
     # print_results(results.results)
 
 
 async def run_async_example(
-    pipeline: transformers.pipeline, dataset_name: str
+    pipeline: transformers.pipeline,
+    dataset_name: str,
+    project_id: str,
+    experiment: str,
 ) -> None:
     """Run an adaptive test asynchronously using the AdaptiveTest class."""
 
@@ -178,11 +186,13 @@ async def run_async_example(
     print(f"\nStarting run with dataset name: {dataset_name}")
     results = await runner.run_async(
         dataset_name,
-        session_metadata=create_session_metadata(dataset_name),
+        project_id,
+        experiment,
+        run_metadata=create_run_metadata(dataset_name),
         return_dict=False,
     )
 
-    print(f"Session {results.session_id} completed.")
+    print(f"Run {results.run_id} completed.")
 
     if results.score is not None:
         print_score(results.score)
@@ -195,7 +205,7 @@ async def run_async_example(
 
     # print("\nReplay run")
     # results = await runner.run_replay_async(
-    #     results.session_id, session_metadata, with_responses=True
+    #     results.run_id, run_metadata, with_responses=True
     # )
     # print_results(results.results)
 
@@ -214,8 +224,20 @@ async def main() -> None:
     parser.add_argument(
         "--dataset-name",
         type=str,
-        default="FinRAG2025",
+        default="MMLUPro2024",
         help="Name of the dataset to run (default: FinRAG2025)",
+    )
+    parser.add_argument(
+        "--project-id",
+        type=str,
+        required=True,
+        help="Project ID for the Trismik run",
+    )
+    parser.add_argument(
+        "--experiment",
+        type=str,
+        required=True,
+        help="Experiment name for the Trismik run",
     )
     args = parser.parse_args()
 
@@ -233,10 +255,14 @@ async def main() -> None:
     )
 
     # Run sync example
-    run_sync_example(pipeline, args.dataset_name)
+    run_sync_example(
+        pipeline, args.dataset_name, args.project_id, args.experiment
+    )
 
     # Run async example
-    await run_async_example(pipeline, args.dataset_name)
+    await run_async_example(
+        pipeline, args.dataset_name, args.project_id, args.experiment
+    )
 
 
 if __name__ == "__main__":

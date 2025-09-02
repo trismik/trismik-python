@@ -1,7 +1,7 @@
-from trismik.types import TrismikSessionMetadata
+from trismik.types import TrismikRunMetadata
 
-sample_metadata: TrismikSessionMetadata = TrismikSessionMetadata(
-    model_metadata=TrismikSessionMetadata.ModelMetadata(
+sample_metadata: TrismikRunMetadata = TrismikRunMetadata(
+    model_metadata=TrismikRunMetadata.ModelMetadata(
         name="example-model",
         version="0.0.1",
         architecture="ExampleNet",
@@ -33,9 +33,9 @@ sample_metadata: TrismikSessionMetadata = TrismikSessionMetadata(
     },
 )
 
-# Replay session metadata with different configuration
-replay_metadata: TrismikSessionMetadata = TrismikSessionMetadata(
-    model_metadata=TrismikSessionMetadata.ModelMetadata(
+# Replay run metadata with different configuration
+replay_metadata: TrismikRunMetadata = TrismikRunMetadata(
+    model_metadata=TrismikRunMetadata.ModelMetadata(
         name="replay-model",
         version="1.0.0",
         architecture="ReplayNet",
@@ -58,7 +58,7 @@ replay_metadata: TrismikSessionMetadata = TrismikSessionMetadata(
         "confidence_score": 0.95,
         "test_stage": "ReplayStage",
         "replay_mode": True,
-        "original_session_id": "placeholder",  # Will be set dynamically
+        "original_run_id": "placeholder",  # Will be set dynamically
     },
     inference_setup={
         "hardware": "ReplayHardware",

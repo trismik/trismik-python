@@ -19,8 +19,8 @@ class TrismikDataset:
 
 
 @dataclass
-class TrismikSession:
-    """Session metadata including ID, URL, and status."""
+class TrismikRun:
+    """Run metadata including ID, URL, and status."""
 
     id: str
     url: str
@@ -28,15 +28,15 @@ class TrismikSession:
 
 
 @dataclass
-class TrismikSessionInfo:
-    """Session info from new API endpoints."""
+class TrismikRunInfo:
+    """Run info from new API endpoints."""
 
     id: str
 
 
 @dataclass
-class TrismikSessionState:
-    """Session state including responses, thetas, and other metrics."""
+class TrismikRunState:
+    """Run state including responses, thetas, and other metrics."""
 
     responses: List[str]
     thetas: List[float]
@@ -46,11 +46,11 @@ class TrismikSessionState:
 
 
 @dataclass
-class TrismikSessionResponse:
-    """Response from session endpoints (start and continue)."""
+class TrismikRunResponse:
+    """Response from run endpoints (start and continue)."""
 
-    session_info: TrismikSessionInfo
-    state: TrismikSessionState
+    run_info: TrismikRunInfo
+    state: TrismikRunState
     next_item: Optional["TrismikItem"]
     completed: bool
 
@@ -59,8 +59,8 @@ class TrismikSessionResponse:
 class TrismikAdaptiveTestState:
     """State tracking for adaptive tests."""
 
-    session_id: str
-    state: TrismikSessionState
+    run_id: str
+    state: TrismikRunState
     completed: bool
 
 
@@ -123,54 +123,54 @@ class TrismikResponse:
 class TrismikRunResults:
     """Test results and responses."""
 
-    session_id: str
+    run_id: str
     score: Optional[AdaptiveTestScore] = None
     responses: Optional[List[TrismikResponse]] = None
 
 
 @dataclass
-class TrismikSessionSummary:
-    """Complete session summary."""
+class TrismikRunSummary:
+    """Complete run summary."""
 
     id: str
-    test_id: str
-    state: TrismikSessionState
+    dataset_id: str
+    state: TrismikRunState
     dataset: List[TrismikItem]
     responses: List[TrismikResponse]
     metadata: dict
 
     @property
     def theta(self) -> float:
-        """Get the theta of the session."""
+        """Get the theta of the run."""
         return self.state.thetas[-1]
 
     @property
     def std_error(self) -> float:
-        """Get the standard error of the session."""
+        """Get the standard error of the run."""
         return self.state.std_error_history[-1]
 
     @property
     def total_responses(self) -> int:
-        """Get the total number of responses in the session."""
+        """Get the total number of responses in the run."""
         return len(self.responses)
 
     @property
     def correct_responses(self) -> int:
-        """Get the number of correct responses in the session."""
+        """Get the number of correct responses in the run."""
         return sum(response.correct for response in self.responses)
 
     @property
     def wrong_responses(self) -> int:
-        """Get the number of wrong responses in the session."""
+        """Get the number of wrong responses in the run."""
         return self.total_responses - self.correct_responses
 
 
 @dataclass
-class TrismikSessionMetadata:
-    """Metadata for a test session."""
+class TrismikRunMetadata:
+    """Metadata for a test run."""
 
     class ModelMetadata:
-        """Model metadata for a test session."""
+        """Model metadata for a test run."""
 
         def __init__(self, name: str, **kwargs: Any):
             """Initialize ModelMetadata with a name and optional attributes."""
@@ -183,7 +183,7 @@ class TrismikSessionMetadata:
     inference_setup: Dict[str, Any]
 
     def toDict(self) -> Dict[str, Any]:
-        """Convert session metadata to a dictionary."""
+        """Convert run metadata to a dictionary."""
         return {
             "model_metadata": vars(self.model_metadata),
             "test_configuration": self.test_configuration,
@@ -201,19 +201,19 @@ class TrismikReplayRequestItem:
 
 @dataclass
 class TrismikReplayRequest:
-    """Request to replay a session with specific responses."""
+    """Request to replay a run with specific responses."""
 
     responses: List[TrismikReplayRequestItem]
 
 
 @dataclass
 class TrismikReplayResponse:
-    """Response from a replay session request."""
+    """Response from a replay run request."""
 
     id: str
-    testId: str
-    state: TrismikSessionState
-    replay_of_session: str
+    datasetId: str
+    state: TrismikRunState
+    replay_of_run: str
     completedAt: Optional[datetime] = None
     createdAt: Optional[datetime] = None
     metadata: Dict[str, Any] = field(default_factory=dict)

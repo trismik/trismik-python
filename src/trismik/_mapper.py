@@ -9,11 +9,11 @@ from trismik.types import (
     TrismikReplayResponse,
     TrismikResponse,
     TrismikResult,
-    TrismikSession,
-    TrismikSessionInfo,
-    TrismikSessionResponse,
-    TrismikSessionState,
-    TrismikSessionSummary,
+    TrismikRun,
+    TrismikRunInfo,
+    TrismikRunResponse,
+    TrismikRunState,
+    TrismikRunSummary,
     TrismikTextChoice,
 )
 
@@ -27,12 +27,12 @@ class TrismikResponseMapper:
     """
 
     @staticmethod
-    def to_tests(json: List[Dict[str, Any]]) -> List[TrismikDataset]:
+    def to_datasets(json: Dict[str, Any]) -> List[TrismikDataset]:
         """
-        Convert JSON response to a list of TrismikTest objects.
+        Convert JSON response to a list of TrismikDataset objects.
 
         Args:
-            json (List[Dict[str, Any]]): JSON response containing test data.
+            json (Dict[str, Any]): JSON response containing dataset data.
 
         Returns:
             List[TrismikDataset]: List of
@@ -43,51 +43,51 @@ class TrismikResponseMapper:
                 id=item["id"],
                 name=item["name"],
             )
-            for item in json
+            for item in json["data"]
         ]
 
     @staticmethod
-    def to_session(json: Dict[str, Any]) -> TrismikSession:
+    def to_run(json: Dict[str, Any]) -> TrismikRun:
         """
-        Convert JSON response to a TrismikSession object.
+        Convert JSON response to a TrismikRun object.
 
         Args:
-            json (Dict[str, Any]): JSON response containing session data.
+            json (Dict[str, Any]): JSON response containing run data.
 
         Returns:
-            TrismikSession: Session object with ID, URL, and status.
+            TrismikRun: Run object with ID, URL, and status.
         """
-        return TrismikSession(
+        return TrismikRun(
             id=json["id"],
             url=json["url"],
             status=json["status"],
         )
 
     @staticmethod
-    def to_session_info(json: Dict[str, Any]) -> TrismikSessionInfo:
+    def to_run_info(json: Dict[str, Any]) -> TrismikRunInfo:
         """
-        Convert JSON response to a TrismikSessionInfo object.
+        Convert JSON response to a TrismikRunInfo object.
 
         Args:
-            json (Dict[str, Any]): JSON response containing session info.
+            json (Dict[str, Any]): JSON response containing run info.
 
         Returns:
-            TrismikSessionInfo: Session info object with ID.
+            TrismikRunInfo: Run info object with ID.
         """
-        return TrismikSessionInfo(id=json["id"])
+        return TrismikRunInfo(id=json["id"])
 
     @staticmethod
-    def to_session_state(json: Dict[str, Any]) -> TrismikSessionState:
+    def to_run_state(json: Dict[str, Any]) -> TrismikRunState:
         """
-        Convert JSON response to a TrismikSessionState object.
+        Convert JSON response to a TrismikRunState object.
 
         Args:
-            json (Dict[str, Any]): JSON response containing session state.
+            json (Dict[str, Any]): JSON response containing run state.
 
         Returns:
-            TrismikSessionState: Session state object.
+            TrismikRunState: Run state object.
         """
-        return TrismikSessionState(
+        return TrismikRunState(
             responses=json.get("responses", []),
             thetas=json.get("thetas", []),
             std_error_history=json.get("std_error_history", []),
@@ -96,21 +96,19 @@ class TrismikResponseMapper:
         )
 
     @staticmethod
-    def to_session_response(json: Dict[str, Any]) -> TrismikSessionResponse:
+    def to_run_response(json: Dict[str, Any]) -> TrismikRunResponse:
         """
-        Convert JSON response to a TrismikSessionResponse object.
+        Convert JSON response to a TrismikRunResponse object.
 
         Args:
-            json (Dict[str, Any]): JSON response from session endpoints.
+            json (Dict[str, Any]): JSON response from run endpoints.
 
         Returns:
-            TrismikSessionResponse: Session response.
+            TrismikRunResponse: Run response.
         """
-        return TrismikSessionResponse(
-            session_info=TrismikResponseMapper.to_session_info(
-                json["sessionInfo"]
-            ),
-            state=TrismikResponseMapper.to_session_state(json["state"]),
+        return TrismikRunResponse(
+            run_info=TrismikResponseMapper.to_run_info(json["runInfo"]),
+            state=TrismikResponseMapper.to_run_state(json["state"]),
             next_item=(
                 TrismikResponseMapper.to_item(json["nextItem"])
                 if json.get("nextItem")
@@ -120,20 +118,20 @@ class TrismikResponseMapper:
         )
 
     @staticmethod
-    def to_session_summary(json: Dict[str, Any]) -> TrismikSessionSummary:
+    def to_run_summary(json: Dict[str, Any]) -> TrismikRunSummary:
         """
-        Convert JSON response to a TrismikSessionSummary object.
+        Convert JSON response to a TrismikRunSummary object.
 
         Args:
-            json (Dict[str, Any]): JSON response from session summary endpoint.
+            json (Dict[str, Any]): JSON response from run summary endpoint.
 
         Returns:
-            TrismikSessionSummary: Complete session summary.
+            TrismikRunSummary: Complete run summary.
         """
-        return TrismikSessionSummary(
+        return TrismikRunSummary(
             id=json["id"],
-            test_id=json["testId"],
-            state=TrismikResponseMapper.to_session_state(json["state"]),
+            dataset_id=json["datasetId"],
+            state=TrismikResponseMapper.to_run_state(json["state"]),
             dataset=[
                 TrismikResponseMapper.to_item(item)
                 for item in json.get("dataset", [])
@@ -244,9 +242,9 @@ class TrismikResponseMapper:
 
         return TrismikReplayResponse(
             id=json["id"],
-            testId=json["testId"],
-            state=TrismikResponseMapper.to_session_state(json["state"]),
-            replay_of_session=json["replay_of_session"],
+            datasetId=json["datasetId"],
+            state=TrismikResponseMapper.to_run_state(json["state"]),
+            replay_of_run=json["replayOfRun"],
             completedAt=completed_at,
             createdAt=created_at,
             metadata=json.get("metadata", {}),
