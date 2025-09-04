@@ -19,6 +19,7 @@ from trismik.types import (
     TrismikAdaptiveTestState,
     TrismikDataset,
     TrismikItem,
+    TrismikMeResponse,
     TrismikReplayRequest,
     TrismikReplayRequestItem,
     TrismikRunMetadata,
@@ -111,6 +112,31 @@ class AdaptiveTest:
             TrismikApiError: If API request fails.
         """
         return await self._client.list_datasets()
+
+    def me(self) -> TrismikMeResponse:
+        """
+        Get current user information synchronously.
+
+        Returns:
+            TrismikMeResponse: User information including validity and payload.
+
+        Raises:
+            TrismikApiError: If API request fails.
+        """
+        loop = self._get_loop()
+        return loop.run_until_complete(self.me_async())
+
+    async def me_async(self) -> TrismikMeResponse:
+        """
+        Get current user information asynchronously.
+
+        Returns:
+            TrismikMeResponse: User information including validity and payload.
+
+        Raises:
+            TrismikApiError: If API request fails.
+        """
+        return await self._client.me()
 
     @overload
     def run(  # noqa: E704

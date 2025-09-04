@@ -528,3 +528,33 @@ class TestTrismikAsyncClient:
         http_client.get.return_value = response
         http_client.post.return_value = response
         return http_client
+
+    @pytest.mark.asyncio
+    async def test_should_get_me_response(self) -> None:
+        client = TrismikAsyncClient(http_client=self._mock_me_response())
+        me_response = await client.me()
+
+        assert me_response.user.id == "user123"
+        assert me_response.user.email == "test@example.com"
+        assert me_response.user.firstname == "Test"
+        assert me_response.user.lastname == "User"
+        assert me_response.user.createdAt == "2025-09-01T11:54:00.261Z"
+        assert me_response.organization.id == "org123"
+        assert me_response.organization.name == "Test Organization"
+        assert me_response.organization.type == "Personal"
+        assert me_response.organization.role == "Owner"
+
+    @pytest.mark.asyncio
+    async def test_should_fail_me_when_api_returned_error(self) -> None:
+        with pytest.raises(TrismikApiError, match="message"):
+            client = TrismikAsyncClient(
+                http_client=self._mock_error_response(401)
+            )
+            await client.me()
+
+    @staticmethod
+    def _mock_me_response() -> httpx.AsyncClient:
+        http_client = MagicMock(httpx.AsyncClient)
+        response = TrismikResponseMocker.me()
+        http_client.get.return_value = response
+        return http_client

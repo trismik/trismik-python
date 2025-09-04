@@ -221,3 +221,25 @@ class TrismikResponseMocker:
                 ],
             },
         )
+
+    @staticmethod
+    def me() -> httpx.Response:
+        return httpx.Response(
+            request=httpx.Request("method", "url"),
+            status_code=200,
+            json={
+                "user": {
+                    "id": "user123",
+                    "email": "test@example.com",
+                    "firstname": "Test",
+                    "lastname": "User",
+                    "createdAt": "2025-09-01T11:54:00.261Z",
+                },
+                "organization": {
+                    "id": "org123",
+                    "name": "Test Organization",
+                    "type": "Personal",
+                    "role": "Owner",
+                },
+            },
+        )
