@@ -14,6 +14,10 @@ from trismik.adaptive_test import AdaptiveTest
 from trismik.client_async import TrismikAsyncClient
 from trismik.types import (
     AdaptiveTestScore,
+    TrismikClassicEvalItem,
+    TrismikClassicEvalMetric,
+    TrismikClassicEvalRequest,
+    TrismikClassicEvalResponse,
     TrismikDataset,
     TrismikItem,
     TrismikMultipleChoiceTextItem,
@@ -26,6 +30,7 @@ from trismik.types import (
     TrismikRunState,
     TrismikRunSummary,
     TrismikTextChoice,
+    TrismikUserInfo,
 )
 
 
@@ -671,3 +676,136 @@ class TestAdaptiveTest:
         assert results["score"]["theta"] == 1.3
         assert results["score"]["std_error"] == 0.35
         assert results["responses"] is None
+
+    def test_submit_classic_eval_sync(self, sync_runner, mock_client):
+        """Test submitting classic evaluation synchronously."""
+        # Create mock response for classic evaluation
+        classic_eval_response = TrismikClassicEvalResponse(
+            id="classic_run_id",
+            organizationId="org123",
+            projectId="proj123",
+            experimentId="exp123",
+            experimentName="test_experiment",
+            datasetId="dataset123",
+            userId="user123",
+            type="Classic",
+            modelName="gpt-4",
+            hyperparameters={"temperature": 0.1},
+            createdAt="2025-09-05T10:00:00.000Z",
+            user=TrismikUserInfo(
+                id="user123",
+                email="test@example.com",
+                firstname="Test",
+                lastname="User",
+            ),
+            responseCount=3,
+        )
+
+        mock_client.submit_classic_eval = AsyncMock(
+            return_value=classic_eval_response
+        )
+
+        # Create test data
+        items = [
+            TrismikClassicEvalItem(
+                modelInput="Test input",
+                modelOutput="Test output",
+                goldOutput="Gold output",
+                metrics={"accuracy": 0.95},
+            )
+        ]
+
+        metrics = [
+            TrismikClassicEvalMetric(
+                metricId="overall_score", valueType="Float", value="0.85"
+            )
+        ]
+
+        request = TrismikClassicEvalRequest(
+            projectId="proj123",
+            experimentName="test_experiment",
+            datasetId="dataset123",
+            modelName="gpt-4",
+            hyperparameters={"temperature": 0.1},
+            items=items,
+            metrics=metrics,
+        )
+
+        response = sync_runner.submit_classic_eval(request)
+
+        # Verify the call was made
+        mock_client.submit_classic_eval.assert_called_once_with(request)
+
+        # Verify response
+        assert response.id == "classic_run_id"
+        assert response.experimentName == "test_experiment"
+        assert response.modelName == "gpt-4"
+        assert response.type == "Classic"
+        assert response.responseCount == 3
+
+    @pytest.mark.asyncio
+    async def test_submit_classic_eval_async(self, async_runner, mock_client):
+        """Test submitting classic evaluation asynchronously."""
+        # Create mock response for classic evaluation
+        classic_eval_response = TrismikClassicEvalResponse(
+            id="classic_run_id",
+            organizationId="org123",
+            projectId="proj123",
+            experimentId="exp123",
+            experimentName="test_experiment",
+            datasetId="dataset123",
+            userId="user123",
+            type="Classic",
+            modelName="gpt-4",
+            hyperparameters={"temperature": 0.1},
+            createdAt="2025-09-05T10:00:00.000Z",
+            user=TrismikUserInfo(
+                id="user123",
+                email="test@example.com",
+                firstname="Test",
+                lastname="User",
+            ),
+            responseCount=3,
+        )
+
+        mock_client.submit_classic_eval = AsyncMock(
+            return_value=classic_eval_response
+        )
+
+        # Create test data
+        items = [
+            TrismikClassicEvalItem(
+                modelInput="Test input",
+                modelOutput="Test output",
+                goldOutput="Gold output",
+                metrics={"accuracy": 0.95},
+            )
+        ]
+
+        metrics = [
+            TrismikClassicEvalMetric(
+                metricId="overall_score", valueType="Float", value="0.85"
+            )
+        ]
+
+        request = TrismikClassicEvalRequest(
+            projectId="proj123",
+            experimentName="test_experiment",
+            datasetId="dataset123",
+            modelName="gpt-4",
+            hyperparameters={"temperature": 0.1},
+            items=items,
+            metrics=metrics,
+        )
+
+        response = await async_runner.submit_classic_eval_async(request)
+
+        # Verify the call was made
+        mock_client.submit_classic_eval.assert_called_once_with(request)
+
+        # Verify response
+        assert response.id == "classic_run_id"
+        assert response.experimentName == "test_experiment"
+        assert response.modelName == "gpt-4"
+        assert response.type == "Classic"
+        assert response.responseCount == 3

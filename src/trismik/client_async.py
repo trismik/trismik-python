@@ -18,6 +18,8 @@ from trismik.exceptions import (
 )
 from trismik.settings import client_settings, environment_settings
 from trismik.types import (
+    TrismikClassicEvalRequest,
+    TrismikClassicEvalResponse,
     TrismikDataset,
     TrismikMeResponse,
     TrismikReplayRequest,
@@ -291,5 +293,67 @@ class TrismikAsyncClient:
             raise TrismikApiError(
                 TrismikUtils.get_error_message(e.response)
             ) from e
+        except httpx.HTTPError as e:
+            raise TrismikApiError(str(e)) from e
+
+    async def submit_classic_eval(
+        self, classic_eval_request: TrismikClassicEvalRequest
+    ) -> TrismikClassicEvalResponse:
+        """
+        Submit a classic evaluation run with pre-computed results.
+
+        Args:
+            classic_eval_request (TrismikClassicEvalRequest): Request containing
+                project info, dataset, model outputs, and metrics.
+
+        Returns:
+            TrismikClassicEvalResponse: Response from the classic evaluation
+                endpoint.
+
+        Raises:
+            TrismikPayloadTooLargeError: If the request payload exceeds the
+                server's size limit.
+            TrismikValidationError: If the request fails validation.
+            TrismikApiError: If API request fails.
+        """
+        try:
+            url = "/runs/classic"
+
+            # Convert request object to dictionary
+            items_dict = [
+                {
+                    "modelInput": item.modelInput,
+                    "modelOutput": item.modelOutput,
+                    "goldOutput": item.goldOutput,
+                    "metrics": item.metrics,
+                }
+                for item in classic_eval_request.items
+            ]
+
+            metrics_dict = [
+                {
+                    "metricId": metric.metricId,
+                    "valueType": metric.valueType,
+                    "value": metric.value,
+                }
+                for metric in classic_eval_request.metrics
+            ]
+
+            body = {
+                "projectId": classic_eval_request.projectId,
+                "experimentName": classic_eval_request.experimentName,
+                "datasetId": classic_eval_request.datasetId,
+                "modelName": classic_eval_request.modelName,
+                "hyperparameters": classic_eval_request.hyperparameters,
+                "items": items_dict,
+                "metrics": metrics_dict,
+            }
+
+            response = await self._http_client.post(url, json=body)
+            response.raise_for_status()
+            json = response.json()
+            return TrismikResponseMapper.to_classic_eval_response(json)
+        except httpx.HTTPStatusError as e:
+            raise self._handle_http_error(e) from e
         except httpx.HTTPError as e:
             raise TrismikApiError(str(e)) from e
