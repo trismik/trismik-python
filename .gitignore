@@ -6,6 +6,9 @@ __pycache__/
 # VS Code
 .vscode/launch.json
 
+# Claude
+.claude/plans
+
 # C extensions
 *.so
 

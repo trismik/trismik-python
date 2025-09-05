@@ -243,3 +243,30 @@ class TrismikResponseMocker:
                 },
             },
         )
+
+    @staticmethod
+    def submit_classic_eval() -> httpx.Response:
+        return httpx.Response(
+            request=httpx.Request("method", "url"),
+            status_code=200,
+            json={
+                "id": "classic_run_id",
+                "organizationId": "org123",
+                "projectId": "proj123",
+                "experimentId": "exp123",
+                "experimentName": "test_experiment",
+                "datasetId": "dataset123",
+                "userId": "user123",
+                "type": "Classic",
+                "modelName": "gpt-4",
+                "hyperparameters": {"temperature": 0.1, "max_tokens": 1500},
+                "createdAt": "2025-09-05T10:00:00.000Z",
+                "user": {
+                    "id": "user123",
+                    "email": "test@example.com",
+                    "firstname": "Test",
+                    "lastname": "User",
+                },
+                "responseCount": 3,
+            },
+        )

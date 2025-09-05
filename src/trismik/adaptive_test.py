@@ -17,6 +17,8 @@ from trismik.settings import evaluation_settings
 from trismik.types import (
     AdaptiveTestScore,
     TrismikAdaptiveTestState,
+    TrismikClassicEvalRequest,
+    TrismikClassicEvalResponse,
     TrismikDataset,
     TrismikItem,
     TrismikMeResponse,
@@ -563,3 +565,53 @@ class AdaptiveTest:
         last_state = states[-1] if states else None
 
         return last_state
+
+    def submit_classic_eval(
+        self, classic_eval_request: TrismikClassicEvalRequest
+    ) -> TrismikClassicEvalResponse:
+        """
+        Submit a classic evaluation run with pre-computed results synchronously.
+
+        Args:
+            classic_eval_request (TrismikClassicEvalRequest): Request containing
+                project info, dataset, model outputs, and metrics.
+
+        Returns:
+            TrismikClassicEvalResponse: Response from the classic evaluation
+                endpoint.
+
+        Raises:
+            TrismikPayloadTooLargeError: If the request payload exceeds the
+                server's size limit.
+            TrismikValidationError: If the request fails validation.
+            TrismikApiError: If API request fails.
+        """
+        loop = self._get_loop()
+        return loop.run_until_complete(
+            self.submit_classic_eval_async(classic_eval_request)
+        )
+
+    async def submit_classic_eval_async(
+        self, classic_eval_request: TrismikClassicEvalRequest
+    ) -> TrismikClassicEvalResponse:
+        """
+        Submit a classic evaluation run with pre-computed results async.
+
+        This method allows you to submit pre-computed model outputs and metrics
+        for evaluation without running an interactive test.
+
+        Args:
+            classic_eval_request (TrismikClassicEvalRequest): Request containing
+                project info, dataset, model outputs, and metrics.
+
+        Returns:
+            TrismikClassicEvalResponse: Response from the classic evaluation
+                endpoint.
+
+        Raises:
+            TrismikPayloadTooLargeError: If the request payload exceeds the
+                server's size limit.
+            TrismikValidationError: If the request fails validation.
+            TrismikApiError: If API request fails.
+        """
+        return await self._client.submit_classic_eval(classic_eval_request)

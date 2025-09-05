@@ -3,6 +3,7 @@ from typing import Any, Dict, List
 
 from trismik.exceptions import TrismikApiError
 from trismik.types import (
+    TrismikClassicEvalResponse,
     TrismikDataset,
     TrismikItem,
     TrismikMeResponse,
@@ -293,4 +294,42 @@ class TrismikResponseMapper:
         return TrismikMeResponse(
             user=user_info,
             organization=organization,
+        )
+
+    @staticmethod
+    def to_classic_eval_response(
+        json: Dict[str, Any]
+    ) -> TrismikClassicEvalResponse:
+        """
+        Convert JSON response to a TrismikClassicEvalResponse object.
+
+        Args:
+            json (Dict[str, Any]): JSON response from classic evaluation
+                endpoint.
+
+        Returns:
+            TrismikClassicEvalResponse: Classic evaluation response object.
+        """
+        user_data = json["user"]
+        user_info = TrismikUserInfo(
+            id=user_data["id"],
+            email=user_data["email"],
+            firstname=user_data["firstname"],
+            lastname=user_data["lastname"],
+        )
+
+        return TrismikClassicEvalResponse(
+            id=json["id"],
+            organizationId=json["organizationId"],
+            projectId=json["projectId"],
+            experimentId=json["experimentId"],
+            experimentName=json["experimentName"],
+            datasetId=json["datasetId"],
+            userId=json["userId"],
+            type=json["type"],
+            modelName=json["modelName"],
+            hyperparameters=json.get("hyperparameters", {}),
+            createdAt=json["createdAt"],
+            user=user_info,
+            responseCount=json["responseCount"],
         )

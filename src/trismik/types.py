@@ -248,3 +248,54 @@ class TrismikMeResponse:
 
     user: TrismikUserInfo
     organization: TrismikOrganization
+
+
+@dataclass
+class TrismikClassicEvalItem:
+    """Item in a classic evaluation request."""
+
+    modelInput: str
+    modelOutput: str
+    goldOutput: str
+    metrics: Dict[str, Any]
+
+
+@dataclass
+class TrismikClassicEvalMetric:
+    """Metric in a classic evaluation request."""
+
+    metricId: str
+    valueType: str
+    value: str
+
+
+@dataclass
+class TrismikClassicEvalRequest:
+    """Request to submit a classic evaluation."""
+
+    projectId: str
+    experimentName: str
+    datasetId: str
+    modelName: str
+    hyperparameters: Dict[str, Any]
+    items: List[TrismikClassicEvalItem]
+    metrics: List[TrismikClassicEvalMetric]
+
+
+@dataclass
+class TrismikClassicEvalResponse:
+    """Response from a classic evaluation submission."""
+
+    id: str
+    organizationId: str
+    projectId: str
+    experimentId: str
+    experimentName: str
+    datasetId: str
+    userId: str
+    type: str
+    modelName: str
+    hyperparameters: Dict[str, Any]
+    createdAt: str
+    user: TrismikUserInfo
+    responseCount: int
