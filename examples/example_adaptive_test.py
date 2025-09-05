@@ -134,9 +134,17 @@ async def run_async_example(
     print("\n=== Running Asynchronous Example ===")
     runner = AdaptiveTest(mock_inference_async)
 
+    # Get user information
+    me_response = await runner.me_async()
+    print(
+        f"User: {me_response.user.firstname} {me_response.user.lastname} "
+        f"({me_response.user.email})"
+    )
+    print(f"Organization: {me_response.organization.name}")
+
     # List available datasets
     available_datasets = runner.list_datasets()
-    print("Available datasets:")
+    print("\nAvailable datasets:")
     for dataset in available_datasets:
         print(f"- {dataset.id}")
 
@@ -192,7 +200,7 @@ async def main() -> None:
         "--dataset-name",
         type=str,
         default="MMLUPro2024",
-        help="Name of the dataset to run (default: FinRAG2025)",
+        help="Name of the dataset to run (default: MMLUPro2024)",
     )
     parser.add_argument(
         "--project-id",

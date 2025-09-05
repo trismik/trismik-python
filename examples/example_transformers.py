@@ -145,6 +145,14 @@ def run_sync_example(
     print("\n=== Running Synchronous Example ===")
     runner = AdaptiveTest(lambda item: inference(pipeline, item))
 
+    # Get user information
+    me_response = runner.me()
+    print(
+        f"User: {me_response.user.firstname} {me_response.user.lastname} "
+        f"({me_response.user.email})"
+    )
+    print(f"Organization: {me_response.organization.name}")
+
     print(f"\nStarting run with dataset name: {dataset_name}")
     results = runner.run(
         dataset_name,
@@ -182,6 +190,14 @@ async def run_async_example(
 
     print("\n=== Running Asynchronous Example ===")
     runner = AdaptiveTest(lambda item: inference(pipeline, item))
+
+    # Get user information
+    me_response = await runner.me_async()
+    print(
+        f"User: {me_response.user.firstname} {me_response.user.lastname} "
+        f"({me_response.user.email})"
+    )
+    print(f"Organization: {me_response.organization.name}")
 
     print(f"\nStarting run with dataset name: {dataset_name}")
     results = await runner.run_async(

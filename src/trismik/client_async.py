@@ -19,6 +19,7 @@ from trismik.exceptions import (
 from trismik.settings import client_settings, environment_settings
 from trismik.types import (
     TrismikDataset,
+    TrismikMeResponse,
     TrismikReplayRequest,
     TrismikReplayResponse,
     TrismikRunMetadata,
@@ -267,5 +268,28 @@ class TrismikAsyncClient:
             return TrismikResponseMapper.to_replay_response(json)
         except httpx.HTTPStatusError as e:
             raise self._handle_http_error(e) from e
+        except httpx.HTTPError as e:
+            raise TrismikApiError(str(e)) from e
+
+    async def me(self) -> TrismikMeResponse:
+        """
+        Get current user information.
+
+        Returns:
+            TrismikMeResponse: User information including validity and payload.
+
+        Raises:
+            TrismikApiError: If API request fails.
+        """
+        try:
+            url = "../admin/api-keys/me"
+            response = await self._http_client.get(url)
+            response.raise_for_status()
+            json = response.json()
+            return TrismikResponseMapper.to_me_response(json)
+        except httpx.HTTPStatusError as e:
+            raise TrismikApiError(
+                TrismikUtils.get_error_message(e.response)
+            ) from e
         except httpx.HTTPError as e:
             raise TrismikApiError(str(e)) from e

@@ -5,7 +5,9 @@ from trismik.exceptions import TrismikApiError
 from trismik.types import (
     TrismikDataset,
     TrismikItem,
+    TrismikMeResponse,
     TrismikMultipleChoiceTextItem,
+    TrismikOrganization,
     TrismikReplayResponse,
     TrismikResponse,
     TrismikResult,
@@ -15,6 +17,7 @@ from trismik.types import (
     TrismikRunState,
     TrismikRunSummary,
     TrismikTextChoice,
+    TrismikUserInfo,
 )
 
 
@@ -255,4 +258,39 @@ class TrismikResponseMapper:
             responses=TrismikResponseMapper.to_responses(
                 json.get("responses", [])
             ),
+        )
+
+    @staticmethod
+    def to_me_response(json: Dict[str, Any]) -> TrismikMeResponse:
+        """
+        Convert JSON response to a TrismikMeResponse object.
+
+        Args:
+            json (Dict[str, Any]): JSON response from /admin/api-keys/me
+                endpoint.
+
+        Returns:
+            TrismikMeResponse: Me response object.
+        """
+        user_data = json["user"]
+        organization_data = json["organization"]
+
+        user_info = TrismikUserInfo(
+            id=user_data["id"],
+            email=user_data["email"],
+            firstname=user_data["firstname"],
+            lastname=user_data["lastname"],
+            createdAt=user_data.get("createdAt"),
+        )
+
+        organization = TrismikOrganization(
+            id=organization_data["id"],
+            name=organization_data["name"],
+            type=organization_data["type"],
+            role=organization_data["role"],
+        )
+
+        return TrismikMeResponse(
+            user=user_info,
+            organization=organization,
         )

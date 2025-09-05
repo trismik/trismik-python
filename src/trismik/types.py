@@ -219,3 +219,32 @@ class TrismikReplayResponse:
     metadata: Dict[str, Any] = field(default_factory=dict)
     dataset: List[TrismikItem] = field(default_factory=list)
     responses: List[TrismikResponse] = field(default_factory=list)
+
+
+@dataclass
+class TrismikOrganization:
+    """Organization information."""
+
+    id: str
+    name: str
+    type: str
+    role: str
+
+
+@dataclass
+class TrismikUserInfo:
+    """User information."""
+
+    id: str
+    email: str
+    firstname: str
+    lastname: str
+    createdAt: Optional[str] = None
+
+
+@dataclass
+class TrismikMeResponse:
+    """Response from the /admin/api-keys/me endpoint."""
+
+    user: TrismikUserInfo
+    organization: TrismikOrganization
