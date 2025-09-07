@@ -66,6 +66,7 @@ def create_classic_eval_request(
     items = []
     for item_data in mock_data["items"]:
         item = TrismikClassicEvalItem(
+            datasetItemId=item_data["datasetItemId"],
             modelInput=item_data["modelInput"],
             modelOutput=item_data["modelOutput"],
             goldOutput=item_data["goldOutput"],
@@ -78,7 +79,6 @@ def create_classic_eval_request(
     for metric_data in mock_data["metrics"]:
         metric = TrismikClassicEvalMetric(
             metricId=metric_data["metricId"],
-            valueType=metric_data["valueType"],
             value=metric_data["value"],
         )
         metrics.append(metric)

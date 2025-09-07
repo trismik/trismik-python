@@ -1,5 +1,5 @@
 import os
-from typing import Optional
+from typing import Optional, Union
 
 import httpx
 
@@ -90,3 +90,32 @@ class TrismikUtils:
         if value is None:
             return default
         return value
+
+    @staticmethod
+    def metric_value_to_type(value: Union[str, float, int, bool]) -> str:
+        """
+        Automatically determine valueType from Python value type.
+
+        Args:
+            value (Union[str, float, int, bool]): The metric value to analyze.
+
+        Returns:
+            str: The corresponding valueType string for the API.
+
+        Raises:
+            TypeError: If the value type is not supported.
+        """
+        if isinstance(value, bool):
+            # Handle bool first since bool is a subclass of int in Python
+            return "Boolean"
+        elif isinstance(value, str):
+            return "String"
+        elif isinstance(value, float):
+            return "Float"
+        elif isinstance(value, int):
+            return "Integer"
+        else:
+            raise TypeError(
+                f"Unsupported metric value type: {type(value).__name__}. "
+                f"Supported types: str, float, int, bool"
+            )

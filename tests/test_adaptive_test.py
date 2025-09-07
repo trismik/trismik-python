@@ -708,6 +708,7 @@ class TestAdaptiveTest:
         # Create test data
         items = [
             TrismikClassicEvalItem(
+                datasetItemId="test-item-id",
                 modelInput="Test input",
                 modelOutput="Test output",
                 goldOutput="Gold output",
@@ -716,9 +717,7 @@ class TestAdaptiveTest:
         ]
 
         metrics = [
-            TrismikClassicEvalMetric(
-                metricId="overall_score", valueType="Float", value="0.85"
-            )
+            TrismikClassicEvalMetric(metricId="overall_score", value=0.85)
         ]
 
         request = TrismikClassicEvalRequest(
@@ -775,6 +774,7 @@ class TestAdaptiveTest:
         # Create test data
         items = [
             TrismikClassicEvalItem(
+                datasetItemId="test-item-id",
                 modelInput="Test input",
                 modelOutput="Test output",
                 goldOutput="Gold output",
@@ -783,9 +783,7 @@ class TestAdaptiveTest:
         ]
 
         metrics = [
-            TrismikClassicEvalMetric(
-                metricId="overall_score", valueType="Float", value="0.85"
-            )
+            TrismikClassicEvalMetric(metricId="overall_score", value=0.85)
         ]
 
         request = TrismikClassicEvalRequest(

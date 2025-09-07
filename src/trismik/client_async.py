@@ -322,6 +322,7 @@ class TrismikAsyncClient:
             # Convert request object to dictionary
             items_dict = [
                 {
+                    "datasetItemId": item.datasetItemId,
                     "modelInput": item.modelInput,
                     "modelOutput": item.modelOutput,
                     "goldOutput": item.goldOutput,
@@ -333,7 +334,9 @@ class TrismikAsyncClient:
             metrics_dict = [
                 {
                     "metricId": metric.metricId,
-                    "valueType": metric.valueType,
+                    "valueType": TrismikUtils.metric_value_to_type(
+                        metric.value
+                    ),
                     "value": metric.value,
                 }
                 for metric in classic_eval_request.metrics

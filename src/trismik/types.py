@@ -7,7 +7,7 @@ library.
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 
 @dataclass
@@ -254,6 +254,7 @@ class TrismikMeResponse:
 class TrismikClassicEvalItem:
     """Item in a classic evaluation request."""
 
+    datasetItemId: str
     modelInput: str
     modelOutput: str
     goldOutput: str
@@ -265,8 +266,7 @@ class TrismikClassicEvalMetric:
     """Metric in a classic evaluation request."""
 
     metricId: str
-    valueType: str
-    value: str
+    value: Union[str, float, int, bool]
 
 
 @dataclass
