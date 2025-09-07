@@ -98,7 +98,7 @@ def create_classic_eval_request(
 
 
 def run_sync_example(project_id: str, experiment: str) -> None:
-    """Run a classic evaluation synchronously using the AdaptiveTest class."""
+    """Submit a classic evaluation synchronously."""
     print("\n=== Running Synchronous Example ===")
     runner = AdaptiveTest(lambda x: None)
 
@@ -117,12 +117,13 @@ def run_sync_example(project_id: str, experiment: str) -> None:
     )
 
     # Submit the evaluation
+    print("Submitting mock output of classic eval run...")
     response = runner.submit_classic_eval(classic_eval_request)
     print(f"Run {response.id} submitted.")
 
 
 async def run_async_example(project_id: str, experiment: str) -> None:
-    """Run a classic evaluation asynchronously using the AdaptiveTest class."""
+    """Submit a classic evaluation asynchronously."""
     print("\n=== Running Asynchronous Example ===")
     runner = AdaptiveTest(lambda x: None)
 
@@ -141,6 +142,7 @@ async def run_async_example(project_id: str, experiment: str) -> None:
     )
 
     # Submit the evaluation
+    print("Submitting mock output of classic eval run...")
     response = await runner.submit_classic_eval_async(classic_eval_request)
     print(f"Run {response.id} submitted.")
 
