@@ -99,78 +99,34 @@ def create_classic_eval_request(
 
 def run_sync_example(project_id: str, experiment: str) -> None:
     """Run a classic evaluation synchronously using the AdaptiveTest class."""
-    print("\n=== Running Synchronous Classic Evaluation Example ===")
+    print("\n=== Running Synchronous Example ===")
+    runner = AdaptiveTest(lambda x: None)
 
-    # Load mock data
-    print("Loading mock data...")
+    # Get user information
+    me_response = runner.me()
+    print(
+        f"User: {me_response.user.firstname} {me_response.user.lastname} "
+        f"({me_response.user.email})"
+    )
+    print(f"Organization: {me_response.organization.name}")
+
+    # Load mock data and create request
     mock_data = load_mock_data()
-
-    # Create the request
-    print("Creating classic evaluation request...")
     classic_eval_request = create_classic_eval_request(
         mock_data, project_id, experiment
     )
 
-    print("Request details:")
-    print(f"- Project ID: {project_id}")
-    print(f"- Experiment: {experiment}")
-    print(f"- Model: {classic_eval_request.modelName}")
-    print(f"- Dataset ID: {classic_eval_request.datasetId}")
-    print(f"- Number of items: {len(classic_eval_request.items)}")
-    print(f"- Number of metrics: {len(classic_eval_request.metrics)}")
-
     # Submit the evaluation
-    print("\nSubmitting classic evaluation...")
-    runner = AdaptiveTest(
-        lambda x: None
-    )  # No item processor needed for classic eval
-
-    try:
-        response = runner.submit_classic_eval(classic_eval_request)
-
-        print("✅ Classic evaluation submitted successfully!")
-        print(f"- Run ID: {response.id}")
-        print(f"- Experiment ID: {response.experimentId}")
-        print(f"- Model Name: {response.modelName}")
-        print(f"- Type: {response.type}")
-        print(f"- Created At: {response.createdAt}")
-        print(f"- User: {response.user.firstname} {response.user.lastname}")
-        print(f"- Response Count: {response.responseCount}")
-
-    except Exception as e:
-        print(f"❌ Error submitting classic evaluation: {e}")
-        raise
+    response = runner.submit_classic_eval(classic_eval_request)
+    print(f"Run {response.id} submitted.")
 
 
 async def run_async_example(project_id: str, experiment: str) -> None:
     """Run a classic evaluation asynchronously using the AdaptiveTest class."""
-    print("\n=== Running Asynchronous Classic Evaluation Example ===")
-
-    # Load mock data
-    print("Loading mock data...")
-    mock_data = load_mock_data()
-
-    # Create the request
-    print("Creating classic evaluation request...")
-    classic_eval_request = create_classic_eval_request(
-        mock_data, project_id, experiment
-    )
-
-    print("Request details:")
-    print(f"- Project ID: {project_id}")
-    print(f"- Experiment: {experiment}")
-    print(f"- Model: {classic_eval_request.modelName}")
-    print(f"- Dataset ID: {classic_eval_request.datasetId}")
-    print(f"- Number of items: {len(classic_eval_request.items)}")
-    print(f"- Number of metrics: {len(classic_eval_request.metrics)}")
-
-    # Initialize runner and get user info
-    runner = AdaptiveTest(
-        lambda x: None
-    )  # No item processor needed for classic eval
+    print("\n=== Running Asynchronous Example ===")
+    runner = AdaptiveTest(lambda x: None)
 
     # Get user information
-    print("\nFetching user information...")
     me_response = await runner.me_async()
     print(
         f"User: {me_response.user.firstname} {me_response.user.lastname} "
@@ -178,24 +134,15 @@ async def run_async_example(project_id: str, experiment: str) -> None:
     )
     print(f"Organization: {me_response.organization.name}")
 
+    # Load mock data and create request
+    mock_data = load_mock_data()
+    classic_eval_request = create_classic_eval_request(
+        mock_data, project_id, experiment
+    )
+
     # Submit the evaluation
-    print("\nSubmitting classic evaluation...")
-
-    try:
-        response = await runner.submit_classic_eval_async(classic_eval_request)
-
-        print("✅ Classic evaluation submitted successfully!")
-        print(f"- Run ID: {response.id}")
-        print(f"- Experiment ID: {response.experimentId}")
-        print(f"- Model Name: {response.modelName}")
-        print(f"- Type: {response.type}")
-        print(f"- Created At: {response.createdAt}")
-        print(f"- User: {response.user.firstname} {response.user.lastname}")
-        print(f"- Response Count: {response.responseCount}")
-
-    except Exception as e:
-        print(f"❌ Error submitting classic evaluation: {e}")
-        raise
+    response = await runner.submit_classic_eval_async(classic_eval_request)
+    print(f"Run {response.id} submitted.")
 
 
 async def main() -> None:
@@ -240,8 +187,10 @@ async def main() -> None:
     elif args.async_only:
         await run_async_example(args.project_id, args.experiment)
     else:
-        # Run both examples by default
+        # Run sync example
         run_sync_example(args.project_id, args.experiment)
+
+        # Run async example
         await run_async_example(args.project_id, args.experiment)
 
 
