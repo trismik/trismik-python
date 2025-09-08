@@ -12,6 +12,9 @@ from trismik.exceptions import (
 )
 from trismik.settings import environment_settings
 from trismik.types import (
+    TrismikClassicEvalItem,
+    TrismikClassicEvalMetric,
+    TrismikClassicEvalRequest,
     TrismikReplayRequest,
     TrismikReplayRequestItem,
     TrismikRunMetadata,
@@ -557,4 +560,126 @@ class TestTrismikAsyncClient:
         http_client = MagicMock(httpx.AsyncClient)
         response = TrismikResponseMocker.me()
         http_client.get.return_value = response
+        return http_client
+
+    @pytest.mark.asyncio
+    async def test_should_submit_classic_eval(self) -> None:
+        client = TrismikAsyncClient(
+            http_client=self._mock_classic_eval_response()
+        )
+
+        # Create test data
+        items = [
+            TrismikClassicEvalItem(
+                datasetItemId="test-item-id",
+                modelInput="Test input",
+                modelOutput="Test output",
+                goldOutput="Gold output",
+                metrics={"accuracy": 0.95},
+            )
+        ]
+
+        metrics = [
+            TrismikClassicEvalMetric(metricId="overall_score", value=0.85)
+        ]
+
+        request = TrismikClassicEvalRequest(
+            projectId="proj123",
+            experimentName="test_experiment",
+            datasetId="dataset123",
+            modelName="gpt-4",
+            hyperparameters={"temperature": 0.1},
+            items=items,
+            metrics=metrics,
+        )
+
+        response = await client.submit_classic_eval(request)
+
+        # Check basic properties
+        assert response.id == "classic_run_id"
+        assert response.projectId == "proj123"
+        assert response.experimentName == "test_experiment"
+        assert response.datasetId == "dataset123"
+        assert response.modelName == "gpt-4"
+        assert response.type == "Classic"
+        assert response.responseCount == 3
+
+        # Check user info
+        assert response.user.id == "user123"
+        assert response.user.email == "test@example.com"
+        assert response.user.firstname == "Test"
+        assert response.user.lastname == "User"
+
+        # Check hyperparameters
+        assert response.hyperparameters["temperature"] == 0.1
+        assert response.hyperparameters["max_tokens"] == 1500
+
+    @pytest.mark.asyncio
+    async def test_should_fail_submit_classic_eval_when_api_returned_error(
+        self,
+    ) -> None:
+        with pytest.raises(TrismikApiError, match="message"):
+            client = TrismikAsyncClient(
+                http_client=self._mock_error_response(401)
+            )
+
+            request = TrismikClassicEvalRequest(
+                projectId="proj123",
+                experimentName="test_experiment",
+                datasetId="dataset123",
+                modelName="gpt-4",
+                hyperparameters={},
+                items=[],
+                metrics=[],
+            )
+
+            await client.submit_classic_eval(request)
+
+    @pytest.mark.asyncio
+    async def test_should_fail_submit_classic_eval_when_payload_too_large(
+        self,
+    ) -> None:
+        with pytest.raises(TrismikPayloadTooLargeError):
+            client = TrismikAsyncClient(
+                http_client=self._mock_error_response(413)
+            )
+
+            request = TrismikClassicEvalRequest(
+                projectId="proj123",
+                experimentName="test_experiment",
+                datasetId="dataset123",
+                modelName="gpt-4",
+                hyperparameters={},
+                items=[],
+                metrics=[],
+            )
+
+            await client.submit_classic_eval(request)
+
+    @pytest.mark.asyncio
+    async def test_should_fail_submit_classic_eval_when_validation_error(
+        self,
+    ) -> None:
+        with pytest.raises(TrismikValidationError):
+            client = TrismikAsyncClient(
+                http_client=self._mock_error_response(422)
+            )
+
+            request = TrismikClassicEvalRequest(
+                projectId="proj123",
+                experimentName="test_experiment",
+                datasetId="dataset123",
+                modelName="gpt-4",
+                hyperparameters={},
+                items=[],
+                metrics=[],
+            )
+
+            await client.submit_classic_eval(request)
+
+    @staticmethod
+    def _mock_classic_eval_response() -> httpx.AsyncClient:
+        http_client = MagicMock(httpx.AsyncClient)
+        response = TrismikResponseMocker.submit_classic_eval()
+        http_client.post.return_value = response
         return http_client

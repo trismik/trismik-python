@@ -1,0 +1,78 @@
+{
+  "datasetId": "dataset-coding-challenges",
+  "modelName": "gpt-4-turbo-2024-04-09",
+  "hyperparameters": {
+    "temperature": 0.1,
+    "max_tokens": 1500,
+    "top_p": 0.95,
+    "presence_penalty": 0.0,
+    "frequency_penalty": 0.0,
+    "prompt with persona": {
+      "name": "prompt with persona",
+      "value": "You are Dr. Elena Rodriguez, a renowned software architect with 15 years of experience in distributed systems and cloud computing. You've led engineering teams at three major tech companies and have a PhD in Computer Science from MIT. You're known for your methodical approach to problem-solving, attention to security considerations, and ability to explain complex technical concepts clearly. You always consider scalability, maintainability, and performance when designing solutions. When writing code, you follow best practices religiously and always include proper error handling and documentation. Your responses should reflect your deep expertise while remaining accessible to junior developers who might be learning from your examples."
+    }
+  },
+  "items": [
+    {
+      "datasetItemId": "item-001",
+      "modelInput": "Write a Python function that finds the longest common subsequence between two strings.",
+      "modelOutput": "def longest_common_subsequence(str1, str2):\n    \"\"\"\n    Find the longest common subsequence between two strings using dynamic programming.\n    \n    Args:\n        str1 (str): First input string\n        str2 (str): Second input string\n        \n    Returns:\n        str: The longest common subsequence\n        \n    Time Complexity: O(m*n) where m and n are lengths of the strings\n    Space Complexity: O(m*n) for the DP table\n    \"\"\"\n    if not str1 or not str2:\n        return \"\"\n    \n    m, n = len(str1), len(str2)\n    # Create DP table\n    dp = [[\"\" for _ in range(n + 1)] for _ in range(m + 1)]\n    \n    # Fill the DP table\n    for i in range(1, m + 1):\n        for j in range(1, n + 1):\n            if str1[i-1] == str2[j-1]:\n                dp[i][j] = dp[i-1][j-1] + str1[i-1]\n            else:\n                dp[i][j] = dp[i-1][j] if len(dp[i-1][j]) > len(dp[i][j-1]) else dp[i][j-1]\n    \n    return dp[m][n]",
+      "goldOutput": "def lcs(X, Y):\n    m = len(X)\n    n = len(Y)\n    dp = [[\"\" for x in range(n + 1)] for x in range(m + 1)]\n    \n    for i in range(m + 1):\n        for j in range(n + 1):\n            if i == 0 or j == 0:\n                dp[i][j] = \"\"\n            elif X[i-1] == Y[j-1]:\n                dp[i][j] = dp[i-1][j-1] + X[i-1]\n            else:\n                dp[i][j] = dp[i-1][j] if len(dp[i-1][j]) > len(dp[i][j-1]) else dp[i][j-1]\n    \n    return dp[m][n]",
+      "metrics": {
+        "overall_code_quality": 0.91,
+        "average_execution_time": 0.045,
+        "security_score": 0.93,
+        "maintainability_index": 85,
+        "test_coverage": 0.78
+      }
+    },
+    {
+      "datasetItemId": "item-002",
+      "modelInput": "Implement a binary search tree with insertion and search operations.",
+      "modelOutput": "class TreeNode:\n    def __init__(self, val=0):\n        self.val = val\n        self.left = None\n        self.right = None\n\nclass BinarySearchTree:\n    \"\"\"\n    A Binary Search Tree implementation with secure input validation.\n    \n    This implementation ensures data integrity and prevents common vulnerabilities\n    that could arise from malformed inputs or edge cases.\n    \"\"\"\n    \n    def __init__(self):\n        self.root = None\n        self._size = 0\n    \n    def insert(self, val):\n        \"\"\"\n        Insert a value into the BST.\n        \n        Args:\n            val: Value to insert (must be comparable)\n            \n        Raises:\n            TypeError: If val is not comparable\n        \"\"\"\n        if val is None:\n            raise ValueError(\"Cannot insert None value\")\n            \n        try:\n            # Test comparability\n            val < val\n        except TypeError:\n            raise TypeError(f\"Value {val} is not comparable\")\n            \n        self.root = self._insert_recursive(self.root, val)\n        self._size += 1\n    \n    def _insert_recursive(self, node, val):\n        if not node:\n            return TreeNode(val)\n        \n        if val < node.val:\n            node.left = self._insert_recursive(node.left, val)\n        elif val > node.val:\n            node.right = self._insert_recursive(node.right, val)\n        # Equal values are ignored to maintain BST property\n        \n        return node\n    \n    def search(self, val):\n        \"\"\"\n        Search for a value in the BST.\n        \n        Args:\n            val: Value to search for\n            \n        Returns:\n            bool: True if value exists, False otherwise\n        \"\"\"\n        if val is None:\n            return False\n            \n        return self._search_recursive(self.root, val)\n    \n    def _search_recursive(self, node, val):\n        if not node:\n            return False\n        \n        if val == node.val:\n            return True\n        elif val < node.val:\n            return self._search_recursive(node.left, val)\n        else:\n            return self._search_recursive(node.right, val)\n    \n    def size(self):\n        \"\"\"Return the number of nodes in the tree.\"\"\"\n        return self._size",
+      "goldOutput": "class TreeNode:\n    def __init__(self, val=0, left=None, right=None):\n        self.val = val\n        self.left = left\n        self.right = right\n\nclass BST:\n    def __init__(self):\n        self.root = None\n    \n    def insert(self, val):\n        self.root = self._insert(self.root, val)\n    \n    def _insert(self, node, val):\n        if not node:\n            return TreeNode(val)\n        if val < node.val:\n            node.left = self._insert(node.left, val)\n        else:\n            node.right = self._insert(node.right, val)\n        return node\n    \n    def search(self, val):\n        return self._search(self.root, val)\n    \n    def _search(self, node, val):\n        if not node or node.val == val:\n            return node is not None\n        if val < node.val:\n            return self._search(node.left, val)\n        return self._search(node.right, val)",
+      "metrics": {
+        "overall_code_quality": 0.93,
+        "average_execution_time": 0.042,
+        "security_score": 0.95,
+        "maintainability_index": 88,
+        "test_coverage": 0.82
+      }
+    },
+    {
+      "datasetItemId": "item-003",
+      "modelInput": "Create a function to validate and parse email addresses.",
+      "modelOutput": "import re\nfrom typing import Optional, Dict, Any\n\ndef validate_and_parse_email(email: str) -> Dict[str, Any]:\n    \"\"\"\n    Validate and parse an email address with comprehensive security checks.\n    \n    This function implements RFC 5322 compliant email validation with additional\n    security measures to prevent common attack vectors like injection attacks.\n    \n    Args:\n        email (str): Email address to validate and parse\n        \n    Returns:\n        Dict[str, Any]: Dictionary containing validation result and parsed components\n        {\n            'valid': bool,\n            'local_part': str or None,\n            'domain': str or None,\n            'errors': List[str]\n        }\n        \n    Security Considerations:\n    - Prevents header injection attacks\n    - Validates against suspicious patterns\n    - Implements length limits to prevent DoS\n    \"\"\"\n    result = {\n        'valid': False,\n        'local_part': None,\n        'domain': None,\n        'errors': []\n    }\n    \n    # Input validation\n    if not isinstance(email, str):\n        result['errors'].append('Email must be a string')\n        return result\n    \n    # Security: Check for potential injection patterns\n    dangerous_patterns = [r'[\\r\\n]', r'<script', r'javascript:']\n    for pattern in dangerous_patterns:\n        if re.search(pattern, email, re.IGNORECASE):\n            result['errors'].append('Email contains suspicious content')\n            return result\n    \n    # Length validation (RFC 5321 limits)\n    if len(email) > 254:\n        result['errors'].append('Email exceeds maximum length (254 characters)')\n        return result\n    \n    # Basic format validation\n    email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$'\n    \n    if not re.match(email_pattern, email):\n        result['errors'].append('Invalid email format')\n        return result\n    \n    # Split and validate components\n    try:\n        local_part, domain = email.rsplit('@', 1)\n        \n        # Validate local part\n        if len(local_part) > 64:\n            result['errors'].append('Local part exceeds maximum length (64 characters)')\n            return result\n        \n        # Validate domain\n        if len(domain) > 253:\n            result['errors'].append('Domain exceeds maximum length (253 characters)')\n            return result\n        \n        # Additional domain validation\n        domain_parts = domain.split('.')\n        if any(len(part) > 63 for part in domain_parts):\n            result['errors'].append('Domain label exceeds maximum length (63 characters)')\n            return result\n        \n        result.update({\n            'valid': True,\n            'local_part': local_part,\n            'domain': domain.lower()  # Normalize domain to lowercase\n        })\n        \n    except ValueError:\n        result['errors'].append('Invalid email structure')\n    \n    return result",
+      "goldOutput": "import re\n\ndef validate_email(email):\n    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$'\n    return re.match(pattern, email) is not None\n\ndef parse_email(email):\n    if '@' not in email:\n        return None, None\n    parts = email.split('@')\n    if len(parts) != 2:\n        return None, None\n    return parts[0], parts[1]",
+      "metrics": {
+        "overall_code_quality": 0.88,
+        "average_execution_time": 0.048,
+        "security_score": 0.98,
+        "maintainability_index": 82,
+        "test_coverage": 0.75
+      }
+    }
+  ],
+  "metrics": [
+    {
+      "metricId": "overall_code_quality",
+      "value": 0.91
+    },
+    {
+      "metricId": "average_execution_time",
+      "value": 0.045
+    },
+    {
+      "metricId": "security_score",
+      "value": 0.93
+    },
+    {
+      "metricId": "maintainability_index",
+      "value": 85
+    },
+    {
+      "metricId": "test_coverage",
+      "value": 0.78
+    }
+  ]
+}
