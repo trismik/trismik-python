@@ -15,6 +15,7 @@ from trismik.types import (
     TrismikClassicEvalItem,
     TrismikClassicEvalMetric,
     TrismikClassicEvalRequest,
+    TrismikProject,
     TrismikReplayRequest,
     TrismikReplayRequestItem,
     TrismikRunMetadata,
@@ -682,5 +683,174 @@ class TestTrismikAsyncClient:
     def _mock_classic_eval_response() -> httpx.AsyncClient:
         http_client = MagicMock(httpx.AsyncClient)
         response = TrismikResponseMocker.submit_classic_eval()
+        http_client.post.return_value = response
+        return http_client
+
+    @pytest.mark.asyncio
+    async def test_should_create_project_with_description(self) -> None:
+        """Test successful project creation with name and description."""
+        client = TrismikAsyncClient(
+            http_client=self._mock_create_project_response()
+        )
+
+        project = await client.create_project(
+            name="Test Project",
+            organization_id="org123",
+            description="A test project",
+        )
+
+        # Verify response mapping
+        assert isinstance(project, TrismikProject)
+        assert project.id == "project123"
+        assert project.name == "Test Project"
+        assert project.description == "A test project"
+        assert project.organizationId == "org123"
+        assert project.createdAt == "2025-09-12T10:00:00.000Z"
+        assert project.updatedAt == "2025-09-12T10:00:00.000Z"
+
+    @pytest.mark.asyncio
+    async def test_should_create_project_without_description(self) -> None:
+        """Test successful project creation with name only."""
+        client = TrismikAsyncClient(
+            http_client=self._mock_create_project_no_description_response()
+        )
+
+        project = await client.create_project(
+            name="Test Project No Desc", organization_id="org123"
+        )
+
+        # Verify response mapping
+        assert isinstance(project, TrismikProject)
+        assert project.id == "project456"
+        assert project.name == "Test Project No Desc"
+        assert project.description is None
+        assert project.organizationId == "org123"
+        assert project.createdAt == "2025-09-12T10:00:00.000Z"
+        assert project.updatedAt == "2025-09-12T10:00:00.000Z"
+
+    @pytest.mark.asyncio
+    async def test_should_create_project_with_proper_request_body_and_headers(
+        self,
+    ) -> None:
+        """Test that create_project sends correct request body and headers."""
+        # Mock the HTTP client to capture the request
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.raise_for_status.return_value = None
+        mock_response.json.return_value = {
+            "id": "project789",
+            "name": "Mock Project",
+            "description": "Mock description",
+            "organizationId": "org456",
+            "createdAt": "2025-09-12T11:00:00.000Z",
+            "updatedAt": "2025-09-12T11:00:00.000Z",
+        }
+        mock_client.post = AsyncMock(return_value=mock_response)
+
+        client = TrismikAsyncClient(http_client=mock_client)
+
+        await client.create_project(
+            name="Mock Project",
+            organization_id="org456",
+            description="Mock description",
+        )
+
+        # Verify the request was made correctly
+        mock_client.post.assert_called_once()
+        call_args = mock_client.post.call_args
+
+        # Check URL
+        assert call_args[0][0] == "../admin/public/projects"
+
+        # Check request body
+        assert call_args[1]["json"] == {
+            "name": "Mock Project",
+            "description": "Mock description",
+        }
+
+        # Check headers
+        assert call_args[1]["headers"] == {"x-organization-id": "org456"}
+
+    @pytest.mark.asyncio
+    async def test_should_create_project_without_description_in_body(
+        self,
+    ) -> None:
+        """Test that description is omitted from body when None."""
+        # Mock the HTTP client to capture the request
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.raise_for_status.return_value = None
+        mock_response.json.return_value = {
+            "id": "project999",
+            "name": "No Desc Project",
+            "description": None,
+            "organizationId": "org789",
+            "createdAt": "2025-09-12T12:00:00.000Z",
+            "updatedAt": "2025-09-12T12:00:00.000Z",
+        }
+        mock_client.post = AsyncMock(return_value=mock_response)
+
+        client = TrismikAsyncClient(http_client=mock_client)
+
+        await client.create_project(
+            name="No Desc Project", organization_id="org789"
+        )
+
+        # Verify the request was made correctly
+        mock_client.post.assert_called_once()
+        call_args = mock_client.post.call_args
+
+        # Check request body - should not contain description key
+        assert call_args[1]["json"] == {"name": "No Desc Project"}
+
+        # Check headers
+        assert call_args[1]["headers"] == {"x-organization-id": "org789"}
+
+    @pytest.mark.asyncio
+    async def test_should_fail_create_project_when_api_returned_error(
+        self,
+    ) -> None:
+        """Test that general API errors raise TrismikApiError."""
+        with pytest.raises(TrismikApiError, match="message"):
+            client = TrismikAsyncClient(
+                http_client=self._mock_error_response(401)
+            )
+            await client.create_project("Test Project", "org123")
+
+    @pytest.mark.asyncio
+    async def test_should_fail_create_project_when_validation_error(
+        self,
+    ) -> None:
+        """Test that 422 validation error raises TrismikValidationError."""
+        with pytest.raises(TrismikValidationError):
+            client = TrismikAsyncClient(
+                http_client=self._mock_error_response(422)
+            )
+            await client.create_project(
+                "", "org123"
+            )  # Empty name for validation error
+
+    @pytest.mark.asyncio
+    async def test_should_fail_create_project_when_payload_too_large(
+        self,
+    ) -> None:
+        """Test that 413 error raises TrismikPayloadTooLargeError."""
+        with pytest.raises(TrismikPayloadTooLargeError):
+            client = TrismikAsyncClient(
+                http_client=self._mock_error_response(413)
+            )
+            await client.create_project("Test Project", "org123")
+
+    @staticmethod
+    def _mock_create_project_response() -> httpx.AsyncClient:
+        http_client = MagicMock(httpx.AsyncClient)
+        response = TrismikResponseMocker.create_project()
+        http_client.post.return_value = response
+        return http_client
+
+    @staticmethod
+    def _mock_create_project_no_description_response() -> httpx.AsyncClient:
+        http_client = MagicMock(httpx.AsyncClient)
+        response = TrismikResponseMocker.create_project_no_description()
         http_client.post.return_value = response
         return http_client

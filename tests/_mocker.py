@@ -272,3 +272,33 @@ class TrismikResponseMocker:
                 "responseCount": 3,
             },
         )
+
+    @staticmethod
+    def create_project() -> httpx.Response:
+        return httpx.Response(
+            request=httpx.Request("method", "url"),
+            status_code=201,
+            json={
+                "id": "project123",
+                "name": "Test Project",
+                "description": "A test project",
+                "organizationId": "org123",
+                "createdAt": "2025-09-12T10:00:00.000Z",
+                "updatedAt": "2025-09-12T10:00:00.000Z",
+            },
+        )
+
+    @staticmethod
+    def create_project_no_description() -> httpx.Response:
+        return httpx.Response(
+            request=httpx.Request("method", "url"),
+            status_code=201,
+            json={
+                "id": "project456",
+                "name": "Test Project No Desc",
+                "description": None,
+                "organizationId": "org123",
+                "createdAt": "2025-09-12T10:00:00.000Z",
+                "updatedAt": "2025-09-12T10:00:00.000Z",
+            },
+        )

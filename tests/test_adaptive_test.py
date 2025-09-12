@@ -21,6 +21,7 @@ from trismik.types import (
     TrismikDataset,
     TrismikItem,
     TrismikMultipleChoiceTextItem,
+    TrismikProject,
     TrismikReplayResponse,
     TrismikResponse,
     TrismikRunInfo,
@@ -180,6 +181,18 @@ class TestAdaptiveTest:
         )
         client.run_summary = AsyncMock(return_value=run_summary_response)
         client.submit_replay = AsyncMock(return_value=replay_response)
+
+        # Mock create_project response
+        create_project_response = TrismikProject(
+            id="project123",
+            name="Test Project",
+            description="A test project",
+            organizationId="org456",
+            createdAt="2025-09-12T10:00:00.000Z",
+            updatedAt="2025-09-12T10:00:00.000Z",
+        )
+
+        client.create_project = AsyncMock(return_value=create_project_response)
         return client
 
     @pytest.fixture
@@ -807,3 +820,201 @@ class TestAdaptiveTest:
         assert response.modelName == "gpt-4"
         assert response.type == "Classic"
         assert response.responseCount == 3
+
+    def test_create_project_sync(self, sync_runner, mock_client):
+        """Test creating a project synchronously."""
+        project = sync_runner.create_project(
+            name="Test Project",
+            organization_id="org456",
+            description="A test project",
+        )
+
+        # Verify the call was made
+        mock_client.create_project.assert_called_once_with(
+            "Test Project", "org456", "A test project"
+        )
+
+        # Verify response
+        assert isinstance(project, TrismikProject)
+        assert project.id == "project123"
+        assert project.name == "Test Project"
+        assert project.description == "A test project"
+        assert project.organizationId == "org456"
+        assert project.createdAt == "2025-09-12T10:00:00.000Z"
+        assert project.updatedAt == "2025-09-12T10:00:00.000Z"
+
+    def test_create_project_sync_without_description(
+        self, sync_runner, mock_client
+    ):
+        """Test creating a project synchronously without description."""
+        project = sync_runner.create_project(
+            name="Test Project", organization_id="org456"
+        )
+
+        # Verify the call was made with None description
+        mock_client.create_project.assert_called_once_with(
+            "Test Project", "org456", None
+        )
+
+        # Verify response
+        assert isinstance(project, TrismikProject)
+        assert project.id == "project123"
+        assert project.name == "Test Project"
+        assert project.description == "A test project"  # From mock response
+        assert project.organizationId == "org456"
+
+    @pytest.mark.asyncio
+    async def test_create_project_async(self, async_runner, mock_client):
+        """Test creating a project asynchronously."""
+        project = await async_runner.create_project_async(
+            name="Test Project",
+            organization_id="org456",
+            description="A test project",
+        )
+
+        # Verify the call was made
+        mock_client.create_project.assert_called_once_with(
+            "Test Project", "org456", "A test project"
+        )
+
+        # Verify response
+        assert isinstance(project, TrismikProject)
+        assert project.id == "project123"
+        assert project.name == "Test Project"
+        assert project.description == "A test project"
+        assert project.organizationId == "org456"
+        assert project.createdAt == "2025-09-12T10:00:00.000Z"
+        assert project.updatedAt == "2025-09-12T10:00:00.000Z"
+
+    @pytest.mark.asyncio
+    async def test_create_project_async_without_description(
+        self, async_runner, mock_client
+    ):
+        """Test creating a project asynchronously without description."""
+        project = await async_runner.create_project_async(
+            name="Test Project", organization_id="org456"
+        )
+
+        # Verify the call was made with None description
+        mock_client.create_project.assert_called_once_with(
+            "Test Project", "org456", None
+        )
+
+        # Verify response
+        assert isinstance(project, TrismikProject)
+        assert project.id == "project123"
+        assert project.name == "Test Project"
+        assert project.description == "A test project"  # From mock response
+        assert project.organizationId == "org456"
+
+    def test_create_project_sync_delegates_to_async(
+        self, sync_runner, mock_client
+    ):
+        """Test that sync create_project method delegates to async version."""
+        # Reset the mock to track calls more precisely
+        mock_client.reset_mock()
+
+        # Set up a specific mock response for this test
+        mock_project_response = TrismikProject(
+            id="sync_project_123",
+            name="Sync Test Project",
+            description="Sync description",
+            organizationId="sync_org_456",
+            createdAt="2025-09-12T15:00:00.000Z",
+            updatedAt="2025-09-12T15:00:00.000Z",
+        )
+        mock_client.create_project = AsyncMock(
+            return_value=mock_project_response
+        )
+
+        project = sync_runner.create_project(
+            name="Sync Test Project",
+            organization_id="sync_org_456",
+            description="Sync description",
+        )
+
+        # Verify the async client method was called
+        mock_client.create_project.assert_called_once_with(
+            "Sync Test Project", "sync_org_456", "Sync description"
+        )
+
+        # Verify response is correct
+        assert project.id == "sync_project_123"
+        assert project.name == "Sync Test Project"
+        assert project.description == "Sync description"
+        assert project.organizationId == "sync_org_456"
+
+    def test_create_project_sync_parameter_passing_with_special_chars(
+        self, sync_runner, mock_client
+    ):
+        """Test that sync method handles special characters in parameters."""
+        # Reset the mock
+        mock_client.reset_mock()
+        mock_project_response = TrismikProject(
+            id="special_chars_proj",
+            name="Special Chars Project: éñ中文",
+            description="Description with symbols: @#$%^&*()",
+            organizationId="org_special_123",
+            createdAt="2025-09-12T16:00:00.000Z",
+            updatedAt="2025-09-12T16:00:00.000Z",
+        )
+        mock_client.create_project = AsyncMock(
+            return_value=mock_project_response
+        )
+
+        project = sync_runner.create_project(
+            name="Special Chars Project: éñ中文",
+            organization_id="org_special_123",
+            description="Description with symbols: @#$%^&*()",
+        )
+
+        # Verify parameters were passed correctly
+        mock_client.create_project.assert_called_once_with(
+            "Special Chars Project: éñ中文",
+            "org_special_123",
+            "Description with symbols: @#$%^&*()",
+        )
+
+        # Verify response
+        assert project.name == "Special Chars Project: éñ中文"
+        assert project.description == "Description with symbols: @#$%^&*()"
+
+    @pytest.mark.asyncio
+    async def test_create_project_async_parameter_passing_with_long_strings(
+        self, async_runner, mock_client
+    ):
+        """Test that async method handles long string parameters."""
+        # Reset the mock
+        mock_client.reset_mock()
+
+        long_description = (
+            "This is a very long description that contains many words and "
+            "should test the parameter passing capability. "
+        ) * 20
+
+        mock_project_response = TrismikProject(
+            id="long_strings_proj",
+            name="Long Strings Project",
+            description=long_description,
+            organizationId="org_long_456",
+            createdAt="2025-09-12T17:00:00.000Z",
+            updatedAt="2025-09-12T17:00:00.000Z",
+        )
+        mock_client.create_project = AsyncMock(
+            return_value=mock_project_response
+        )
+
+        project = await async_runner.create_project_async(
+            name="Long Strings Project",
+            organization_id="org_long_456",
+            description=long_description,
+        )
+
+        # Verify parameters were passed correctly
+        mock_client.create_project.assert_called_once_with(
+            "Long Strings Project", "org_long_456", long_description
+        )
+
+        # Verify response
+        assert project.name == "Long Strings Project"
+        assert project.description == long_description

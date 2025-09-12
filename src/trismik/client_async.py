@@ -22,6 +22,7 @@ from trismik.types import (
     TrismikClassicEvalResponse,
     TrismikDataset,
     TrismikMeResponse,
+    TrismikProject,
     TrismikReplayRequest,
     TrismikReplayResponse,
     TrismikRunMetadata,
@@ -356,6 +357,47 @@ class TrismikAsyncClient:
             response.raise_for_status()
             json = response.json()
             return TrismikResponseMapper.to_classic_eval_response(json)
+        except httpx.HTTPStatusError as e:
+            raise self._handle_http_error(e) from e
+        except httpx.HTTPError as e:
+            raise TrismikApiError(str(e)) from e
+
+    async def create_project(
+        self,
+        name: str,
+        organization_id: str,
+        description: Optional[str] = None,
+    ) -> TrismikProject:
+        """
+        Create a new project.
+
+        Args:
+            name (str): Name of the project.
+            organization_id (str): ID of the organization to create the
+                project in.
+            description (Optional[str]): Optional description of the project.
+
+        Returns:
+            TrismikProject: Created project information.
+
+        Raises:
+            TrismikValidationError: If the request fails validation.
+            TrismikApiError: If API request fails.
+        """
+        try:
+            url = "../admin/public/projects"
+
+            body = {"name": name}
+            if description is not None:
+                body["description"] = description
+
+            headers = {"x-organization-id": organization_id}
+            response = await self._http_client.post(
+                url, json=body, headers=headers
+            )
+            response.raise_for_status()
+            json = response.json()
+            return TrismikResponseMapper.to_project(json)
         except httpx.HTTPStatusError as e:
             raise self._handle_http_error(e) from e
         except httpx.HTTPError as e:
