@@ -542,10 +542,11 @@ class TestTrismikAsyncClient:
         assert me_response.user.firstname == "Test"
         assert me_response.user.lastname == "User"
         assert me_response.user.createdAt == "2025-09-01T11:54:00.261Z"
-        assert me_response.organization.id == "org123"
-        assert me_response.organization.name == "Test Organization"
-        assert me_response.organization.type == "Personal"
-        assert me_response.organization.role == "Owner"
+        assert len(me_response.organizations) == 1
+        assert me_response.organizations[0].id == "org123"
+        assert me_response.organizations[0].name == "Test Organization"
+        assert me_response.organizations[0].type == "Personal"
+        assert me_response.organizations[0].role == "Owner"
 
     @pytest.mark.asyncio
     async def test_should_fail_me_when_api_returned_error(self) -> None:
