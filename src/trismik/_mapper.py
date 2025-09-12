@@ -274,7 +274,7 @@ class TrismikResponseMapper:
             TrismikMeResponse: Me response object.
         """
         user_data = json["user"]
-        organization_data = json["organization"]
+        organizations_data = json["organizations"]
 
         user_info = TrismikUserInfo(
             id=user_data["id"],
@@ -284,16 +284,19 @@ class TrismikResponseMapper:
             createdAt=user_data.get("createdAt"),
         )
 
-        organization = TrismikOrganization(
-            id=organization_data["id"],
-            name=organization_data["name"],
-            type=organization_data["type"],
-            role=organization_data["role"],
-        )
+        organizations = [
+            TrismikOrganization(
+                id=org_data["id"],
+                name=org_data["name"],
+                type=org_data["type"],
+                role=org_data["role"],
+            )
+            for org_data in organizations_data
+        ]
 
         return TrismikMeResponse(
             user=user_info,
-            organization=organization,
+            organizations=organizations,
         )
 
     @staticmethod

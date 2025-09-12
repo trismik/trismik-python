@@ -139,7 +139,8 @@ def run_sync_example(
         f"User: {me_response.user.firstname} {me_response.user.lastname} "
         f"({me_response.user.email})"
     )
-    print(f"Organization: {me_response.organization.name}")
+    org_names = [org.name for org in me_response.organizations]
+    print(f"Organizations: {', '.join(org_names)}")
 
     print(f"\nStarting run with dataset name: {dataset_name}")
     results = runner.run(
@@ -181,7 +182,8 @@ async def run_async_example(
         f"User: {me_response.user.firstname} {me_response.user.lastname} "
         f"({me_response.user.email})"
     )
-    print(f"Organization: {me_response.organization.name}")
+    org_names = [org.name for org in me_response.organizations]
+    print(f"Organizations: {', '.join(org_names)}")
 
     print(f"\nStarting run with dataset name: {dataset_name}")
     results = await runner.run_async(

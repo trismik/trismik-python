@@ -235,12 +235,14 @@ class TrismikResponseMocker:
                     "lastname": "User",
                     "createdAt": "2025-09-01T11:54:00.261Z",
                 },
-                "organization": {
-                    "id": "org123",
-                    "name": "Test Organization",
-                    "type": "Personal",
-                    "role": "Owner",
-                },
+                "organizations": [
+                    {
+                        "id": "org123",
+                        "name": "Test Organization",
+                        "type": "Personal",
+                        "role": "Owner",
+                    }
+                ],
             },
         )
 

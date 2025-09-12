@@ -247,7 +247,7 @@ class TrismikMeResponse:
     """Response from the /admin/api-keys/me endpoint."""
 
     user: TrismikUserInfo
-    organization: TrismikOrganization
+    organizations: List[TrismikOrganization]
 
 
 @dataclass
