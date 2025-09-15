@@ -299,3 +299,23 @@ class TrismikClassicEvalResponse:
     createdAt: str
     user: TrismikUserInfo
     responseCount: int
+
+
+@dataclass
+class TrismikProjectRequest:
+    """Request to create a new project."""
+
+    name: str
+    description: Optional[str] = None
+
+
+@dataclass
+class TrismikProject:
+    """Project information."""
+
+    id: str
+    name: str
+    description: Optional[str]
+    organizationId: str
+    createdAt: str
+    updatedAt: str

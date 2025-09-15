@@ -22,6 +22,7 @@ from trismik.types import (
     TrismikDataset,
     TrismikItem,
     TrismikMeResponse,
+    TrismikProject,
     TrismikReplayRequest,
     TrismikReplayRequestItem,
     TrismikRunMetadata,
@@ -139,6 +140,59 @@ class AdaptiveTest:
             TrismikApiError: If API request fails.
         """
         return await self._client.me()
+
+    def create_project(
+        self,
+        name: str,
+        organization_id: str,
+        description: Optional[str] = None,
+    ) -> TrismikProject:
+        """
+        Create a new project synchronously.
+
+        Args:
+            name (str): Name of the project.
+            organization_id (str): ID of the organization to create the
+                project in.
+            description (Optional[str]): Optional description of the project.
+
+        Returns:
+            TrismikProject: Created project information.
+
+        Raises:
+            TrismikValidationError: If the request fails validation.
+            TrismikApiError: If API request fails.
+        """
+        loop = self._get_loop()
+        return loop.run_until_complete(
+            self.create_project_async(name, organization_id, description)
+        )
+
+    async def create_project_async(
+        self,
+        name: str,
+        organization_id: str,
+        description: Optional[str] = None,
+    ) -> TrismikProject:
+        """
+        Create a new project asynchronously.
+
+        Args:
+            name (str): Name of the project.
+            organization_id (str): ID of the organization to create the
+                project in.
+            description (Optional[str]): Optional description of the project.
+
+        Returns:
+            TrismikProject: Created project information.
+
+        Raises:
+            TrismikValidationError: If the request fails validation.
+            TrismikApiError: If API request fails.
+        """
+        return await self._client.create_project(
+            name, organization_id, description
+        )
 
     @overload
     def run(  # noqa: E704

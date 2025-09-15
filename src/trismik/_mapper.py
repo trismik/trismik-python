@@ -9,6 +9,7 @@ from trismik.types import (
     TrismikMeResponse,
     TrismikMultipleChoiceTextItem,
     TrismikOrganization,
+    TrismikProject,
     TrismikReplayResponse,
     TrismikResponse,
     TrismikResult,
@@ -335,4 +336,24 @@ class TrismikResponseMapper:
             createdAt=json["createdAt"],
             user=user_info,
             responseCount=json["responseCount"],
+        )
+
+    @staticmethod
+    def to_project(json: Dict[str, Any]) -> TrismikProject:
+        """
+        Convert JSON response to a TrismikProject object.
+
+        Args:
+            json (Dict[str, Any]): JSON response from project creation endpoint.
+
+        Returns:
+            TrismikProject: Project object.
+        """
+        return TrismikProject(
+            id=json["id"],
+            name=json["name"],
+            description=json.get("description"),
+            organizationId=json["organizationId"],
+            createdAt=json["createdAt"],
+            updatedAt=json["updatedAt"],
         )
