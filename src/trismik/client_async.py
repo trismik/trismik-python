@@ -72,7 +72,7 @@ class TrismikAsyncClient:
         default_headers = {"x-api-key": self._api_key}
 
         self._http_client = http_client or httpx.AsyncClient(
-            base_url=self._service_url, headers=default_headers
+            base_url=self._service_url, headers=default_headers, timeout=30.0
         )
 
     def _handle_http_error(self, e: httpx.HTTPStatusError) -> Exception:
