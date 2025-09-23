@@ -10,6 +10,11 @@ authors = [
 ]
 readme = "README.md"
 requires-python = ">=3.9"
+dependencies = [
+    "httpx (>=0.27.2,<1.0.0)",
+    "nest-asyncio (>=1.6.0,<2.0.0)",
+    "tqdm (>=4.67.1, <5.0.0)",
+]
 
 [project.optional-dependencies]
 examples = [
@@ -30,10 +35,6 @@ version = "0.0.0" # managed by poetry-dynamic-versioning
 [tool.poetry.requires-plugins]
 poetry-dynamic-versioning = { version = ">=1.0.0,<2.0.0", extras = ["plugin"] }
 
-[tool.poetry.group.main.dependencies]
-httpx = "^0.27.2"
-nest-asyncio = "^1.6.0"
-tqdm = "^4.67.1"
 
 
 
