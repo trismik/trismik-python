@@ -29,12 +29,12 @@ class TrismikResponseMocker:
                 request=httpx.Request("method", "url"),
                 status_code=status,
                 json={
+                    "title": "message",
                     "timestamp": "timestamp",
                     "path": "path",
                     "status": status,
                     "error": "error",
                     "requestId": "request_id",
-                    "message": "message",
                 },
             )
 

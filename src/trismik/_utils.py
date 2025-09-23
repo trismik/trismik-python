@@ -27,8 +27,11 @@ class TrismikUtils:
         """
         try:
             json_data = response.json()
-            message = json_data.get("message", "Unknown error")
-            return str(message)  # Ensure we return a string
+            title = str(json_data.get("title", "Unknown error"))
+            message = str(json_data.get("detail", ""))
+            if len(message):
+                return title + ": " + message
+            return title
         except (httpx.RequestError, ValueError):
             error_message: str = response.content.decode(
                 "utf-8", errors="ignore"
