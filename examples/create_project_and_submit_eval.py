@@ -2,9 +2,8 @@
 Example usage of project creation and classic evaluation through Trismik API.
 
 This file demonstrates how to use the AdaptiveTest class to:
-1. Auto-detect the user's default organization (where org.name == user.email)
-2. Create a new project with auto-generated names
-3. Submit a classic evaluation run to that newly created project
+- Create a new project with auto-generated names
+- Submit a classic evaluation run to that newly created project
 
 This example shows both sync and async usage patterns for creating
 projects and submitting evaluations. It loads mock data from mock_data.json
@@ -62,37 +61,6 @@ def generate_random_hash() -> str:
         str: Random 8-character string suitable for project/experiment names.
     """
     return secrets.token_hex(4)  # 4 bytes = 8 hex characters
-
-
-def find_user_default_team_account_id(runner: AdaptiveTest) -> str:
-    """
-    Find the user's default team account ID.
-
-    The default team is the one where team.name == user.email.
-
-    Args:
-        runner (AdaptiveTest): AdaptiveTest instance to use for API calls.
-
-    Returns:
-        str: Account ID of the user's default team.
-
-    Raises:
-        ValueError: If no default team is found.
-    """
-    me_response = runner.me()
-    user_email = me_response.user.email
-
-    for team in me_response.teams:
-        if team.name == user_email:
-            return team.account_id
-
-    # If no match found, raise an error with helpful information
-    team_names = [team.name for team in me_response.teams]
-    raise ValueError(
-        f"No default team found for user {user_email}. "
-        f"Available teams: {', '.join(team_names)}. "
-        "Expected to find a team where team.name == user.email."
-    )
 
 
 async def find_user_default_team_account_id_async(runner: AdaptiveTest) -> str:
@@ -180,7 +148,7 @@ def run_sync_example(project_description: Optional[str] = None) -> None:
     print("\n=== Running Synchronous Example ===")
     runner = AdaptiveTest(lambda x: None)
 
-    # Get user information and find default organization
+    # Get user information
     me_response = runner.me()
     print(
         f"User: {me_response.user.firstname} {me_response.user.lastname} "
@@ -188,11 +156,6 @@ def run_sync_example(project_description: Optional[str] = None) -> None:
     )
     team_names = [team.name for team in me_response.teams]
     print(f"Teams: {', '.join(team_names)}")
-
-    # Find the user's default team (where team.name == user.email)
-    account_id = find_user_default_team_account_id(runner)
-    default_team_name = me_response.user.email
-    print(f"Using default team: {default_team_name} ({account_id})")
 
     # Generate random names for project and experiment
     project_name = f"example_{generate_random_hash()}"
@@ -208,7 +171,6 @@ def run_sync_example(project_description: Optional[str] = None) -> None:
     print(f"Creating new project '{project_name}'...")
     project: TrismikProject = runner.create_project(
         name=project_name,
-        organization_id=account_id,
         description=description,
     )
     print(f"Project created successfully: {project.name} (ID: {project.id})")
@@ -230,7 +192,7 @@ async def run_async_example(project_description: Optional[str] = None) -> None:
     print("\n=== Running Asynchronous Example ===")
     runner = AdaptiveTest(lambda x: None)
 
-    # Get user information and find default organization
+    # Get user information
     me_response = await runner.me_async()
     print(
         f"User: {me_response.user.firstname} {me_response.user.lastname} "
@@ -238,11 +200,6 @@ async def run_async_example(project_description: Optional[str] = None) -> None:
     )
     team_names = [team.name for team in me_response.teams]
     print(f"Teams: {', '.join(team_names)}")
-
-    # Find the user's default team (where team.name == user.email)
-    account_id = await find_user_default_team_account_id_async(runner)
-    default_team_name = me_response.user.email
-    print(f"Using default team: {default_team_name} ({account_id})")
 
     # Generate random names for project and experiment
     project_name = f"example_{generate_random_hash()}"
@@ -258,7 +215,6 @@ async def run_async_example(project_description: Optional[str] = None) -> None:
     print(f"Creating new project '{project_name}'...")
     project: TrismikProject = await runner.create_project_async(
         name=project_name,
-        organization_id=account_id,
         description=description,
     )
     print(f"Project created successfully: {project.name} (ID: {project.id})")
@@ -279,9 +235,8 @@ async def main() -> None:
     """
     Run both synchronous and asynchronous project creation and evaluation.
 
-    This example auto-detects the user's default organization and generates
-    random project and experiment names, making it easy to run without
-    specifying arguments.
+    This examples generates random project and experiment names, making it
+    easy to run without specifying arguments.
 
     Assumes TRISMIK_SERVICE_URL and TRISMIK_API_KEY are set either in
     environment or in .env file.
@@ -290,7 +245,8 @@ async def main() -> None:
     parser = argparse.ArgumentParser(
         description=(
             "Create project and submit classic evaluation to Trismik. "
-            "Auto-generates project names and detects default organization."
+            "Auto-generates project names and submits it to the "
+            "user's personal team."
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
@@ -331,9 +287,8 @@ Examples:
     print("Project Creation and Classic Evaluation Example")
     print("=" * 60)
     print("This example will:")
-    print("1. Auto-detect your default organization")
-    print("2. Generate random project and experiment names")
-    print("3. Create projects and submit evaluations")
+    print("- Generate random project and experiment names")
+    print("- Create projects and submit evaluations")
     print("=" * 60)
 
     if args.sync_only:

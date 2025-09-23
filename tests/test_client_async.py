@@ -696,7 +696,7 @@ class TestTrismikAsyncClient:
 
         project = await client.create_project(
             name="Test Project",
-            organization_id="org123",
+            team_id="org123",
             description="A test project",
         )
 
@@ -705,7 +705,7 @@ class TestTrismikAsyncClient:
         assert project.id == "project123"
         assert project.name == "Test Project"
         assert project.description == "A test project"
-        assert project.organizationId == "org123"
+        assert project.accountId == "org123"
         assert project.createdAt == "2025-09-12T10:00:00.000Z"
         assert project.updatedAt == "2025-09-12T10:00:00.000Z"
 
@@ -717,7 +717,7 @@ class TestTrismikAsyncClient:
         )
 
         project = await client.create_project(
-            name="Test Project No Desc", organization_id="org123"
+            name="Test Project No Desc", team_id="org123"
         )
 
         # Verify response mapping
@@ -725,7 +725,7 @@ class TestTrismikAsyncClient:
         assert project.id == "project456"
         assert project.name == "Test Project No Desc"
         assert project.description is None
-        assert project.organizationId == "org123"
+        assert project.accountId == "org123"
         assert project.createdAt == "2025-09-12T10:00:00.000Z"
         assert project.updatedAt == "2025-09-12T10:00:00.000Z"
 
@@ -742,7 +742,7 @@ class TestTrismikAsyncClient:
             "id": "project789",
             "name": "Mock Project",
             "description": "Mock description",
-            "organizationId": "org456",
+            "accountId": "org456",
             "createdAt": "2025-09-12T11:00:00.000Z",
             "updatedAt": "2025-09-12T11:00:00.000Z",
         }
@@ -752,7 +752,7 @@ class TestTrismikAsyncClient:
 
         await client.create_project(
             name="Mock Project",
-            organization_id="org456",
+            team_id="org456",
             description="Mock description",
         )
 
@@ -767,10 +767,8 @@ class TestTrismikAsyncClient:
         assert call_args[1]["json"] == {
             "name": "Mock Project",
             "description": "Mock description",
+            "teamId": "org456",
         }
-
-        # Check headers
-        assert call_args[1]["headers"] == {"x-organization-id": "org456"}
 
     @pytest.mark.asyncio
     async def test_should_create_project_without_description_in_body(
@@ -785,7 +783,7 @@ class TestTrismikAsyncClient:
             "id": "project999",
             "name": "No Desc Project",
             "description": None,
-            "organizationId": "org789",
+            "accountId": "org789",
             "createdAt": "2025-09-12T12:00:00.000Z",
             "updatedAt": "2025-09-12T12:00:00.000Z",
         }
@@ -793,19 +791,17 @@ class TestTrismikAsyncClient:
 
         client = TrismikAsyncClient(http_client=mock_client)
 
-        await client.create_project(
-            name="No Desc Project", organization_id="org789"
-        )
+        await client.create_project(name="No Desc Project", team_id="org789")
 
         # Verify the request was made correctly
         mock_client.post.assert_called_once()
         call_args = mock_client.post.call_args
 
-        # Check request body - should not contain description key
-        assert call_args[1]["json"] == {"name": "No Desc Project"}
-
-        # Check headers
-        assert call_args[1]["headers"] == {"x-organization-id": "org789"}
+        # Check request body - should contain teamId but not description
+        assert call_args[1]["json"] == {
+            "name": "No Desc Project",
+            "teamId": "org789",
+        }
 
     @pytest.mark.asyncio
     async def test_should_fail_create_project_when_api_returned_error(

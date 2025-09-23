@@ -187,7 +187,7 @@ class TestAdaptiveTest:
             id="project123",
             name="Test Project",
             description="A test project",
-            organizationId="org456",
+            accountId="org456",
             createdAt="2025-09-12T10:00:00.000Z",
             updatedAt="2025-09-12T10:00:00.000Z",
         )
@@ -827,7 +827,7 @@ class TestAdaptiveTest:
         """Test creating a project synchronously."""
         project = sync_runner.create_project(
             name="Test Project",
-            organization_id="org456",
+            team_id="org456",
             description="A test project",
         )
 
@@ -841,7 +841,7 @@ class TestAdaptiveTest:
         assert project.id == "project123"
         assert project.name == "Test Project"
         assert project.description == "A test project"
-        assert project.organizationId == "org456"
+        assert project.accountId == "org456"
         assert project.createdAt == "2025-09-12T10:00:00.000Z"
         assert project.updatedAt == "2025-09-12T10:00:00.000Z"
 
@@ -850,7 +850,7 @@ class TestAdaptiveTest:
     ):
         """Test creating a project synchronously without description."""
         project = sync_runner.create_project(
-            name="Test Project", organization_id="org456"
+            name="Test Project", team_id="org456"
         )
 
         # Verify the call was made with None description
@@ -863,14 +863,14 @@ class TestAdaptiveTest:
         assert project.id == "project123"
         assert project.name == "Test Project"
         assert project.description == "A test project"  # From mock response
-        assert project.organizationId == "org456"
+        assert project.accountId == "org456"
 
     @pytest.mark.asyncio
     async def test_create_project_async(self, async_runner, mock_client):
         """Test creating a project asynchronously."""
         project = await async_runner.create_project_async(
             name="Test Project",
-            organization_id="org456",
+            team_id="org456",
             description="A test project",
         )
 
@@ -884,7 +884,7 @@ class TestAdaptiveTest:
         assert project.id == "project123"
         assert project.name == "Test Project"
         assert project.description == "A test project"
-        assert project.organizationId == "org456"
+        assert project.accountId == "org456"
         assert project.createdAt == "2025-09-12T10:00:00.000Z"
         assert project.updatedAt == "2025-09-12T10:00:00.000Z"
 
@@ -894,7 +894,7 @@ class TestAdaptiveTest:
     ):
         """Test creating a project asynchronously without description."""
         project = await async_runner.create_project_async(
-            name="Test Project", organization_id="org456"
+            name="Test Project", team_id="org456"
         )
 
         # Verify the call was made with None description
@@ -907,7 +907,7 @@ class TestAdaptiveTest:
         assert project.id == "project123"
         assert project.name == "Test Project"
         assert project.description == "A test project"  # From mock response
-        assert project.organizationId == "org456"
+        assert project.accountId == "org456"
 
     def test_create_project_sync_delegates_to_async(
         self, sync_runner, mock_client
@@ -921,7 +921,7 @@ class TestAdaptiveTest:
             id="sync_project_123",
             name="Sync Test Project",
             description="Sync description",
-            organizationId="sync_org_456",
+            accountId="sync_org_456",
             createdAt="2025-09-12T15:00:00.000Z",
             updatedAt="2025-09-12T15:00:00.000Z",
         )
@@ -931,7 +931,7 @@ class TestAdaptiveTest:
 
         project = sync_runner.create_project(
             name="Sync Test Project",
-            organization_id="sync_org_456",
+            team_id="sync_org_456",
             description="Sync description",
         )
 
@@ -944,7 +944,7 @@ class TestAdaptiveTest:
         assert project.id == "sync_project_123"
         assert project.name == "Sync Test Project"
         assert project.description == "Sync description"
-        assert project.organizationId == "sync_org_456"
+        assert project.accountId == "sync_org_456"
 
     def test_create_project_sync_parameter_passing_with_special_chars(
         self, sync_runner, mock_client
@@ -956,7 +956,7 @@ class TestAdaptiveTest:
             id="special_chars_proj",
             name="Special Chars Project: éñ中文",
             description="Description with symbols: @#$%^&*()",
-            organizationId="org_special_123",
+            accountId="org_special_123",
             createdAt="2025-09-12T16:00:00.000Z",
             updatedAt="2025-09-12T16:00:00.000Z",
         )
@@ -966,7 +966,7 @@ class TestAdaptiveTest:
 
         project = sync_runner.create_project(
             name="Special Chars Project: éñ中文",
-            organization_id="org_special_123",
+            team_id="org_special_123",
             description="Description with symbols: @#$%^&*()",
         )
 
@@ -998,7 +998,7 @@ class TestAdaptiveTest:
             id="long_strings_proj",
             name="Long Strings Project",
             description=long_description,
-            organizationId="org_long_456",
+            accountId="org_long_456",
             createdAt="2025-09-12T17:00:00.000Z",
             updatedAt="2025-09-12T17:00:00.000Z",
         )
@@ -1008,7 +1008,7 @@ class TestAdaptiveTest:
 
         project = await async_runner.create_project_async(
             name="Long Strings Project",
-            organization_id="org_long_456",
+            team_id="org_long_456",
             description=long_description,
         )
 

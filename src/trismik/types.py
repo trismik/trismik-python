@@ -317,6 +317,6 @@ class TrismikProject:
     id: str
     name: str
     description: Optional[str]
-    organizationId: str
+    accountId: str
     createdAt: str
     updatedAt: str
