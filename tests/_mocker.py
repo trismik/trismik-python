@@ -234,13 +234,14 @@ class TrismikResponseMocker:
                     "firstname": "Test",
                     "lastname": "User",
                     "createdAt": "2025-09-01T11:54:00.261Z",
+                    "accountId": "acc123",
                 },
-                "organizations": [
+                "teams": [
                     {
-                        "id": "org123",
-                        "name": "Test Organization",
-                        "type": "Personal",
+                        "id": "team123",
+                        "name": "Test Team",
                         "role": "Owner",
+                        "accountId": "acc123",
                     }
                 ],
             },
@@ -253,7 +254,7 @@ class TrismikResponseMocker:
             status_code=200,
             json={
                 "id": "classic_run_id",
-                "organizationId": "org123",
+                "accountId": "acc123",
                 "projectId": "proj123",
                 "experimentId": "exp123",
                 "experimentName": "test_experiment",
@@ -268,6 +269,7 @@ class TrismikResponseMocker:
                     "email": "test@example.com",
                     "firstname": "Test",
                     "lastname": "User",
+                    "accountId": "acc123",
                 },
                 "responseCount": 3,
             },

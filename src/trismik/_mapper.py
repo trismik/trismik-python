@@ -17,8 +17,9 @@ from trismik.types import (
     TrismikRunResponse,
     TrismikRunState,
     TrismikRunSummary,
+    TrismikTeam,
     TrismikTextChoice,
-    TrismikUserInfo, TrismikTeam,
+    TrismikUserInfo,
 )
 
 
@@ -295,10 +296,7 @@ class TrismikResponseMapper:
             for team_data in teams_data
         ]
 
-        return TrismikMeResponse(
-            user=user_info,
-            teams=teams
-        )
+        return TrismikMeResponse(user=user_info, teams=teams)
 
     @staticmethod
     def to_classic_eval_response(
