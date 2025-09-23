@@ -215,7 +215,7 @@ class TrismikAsyncClient:
             TrismikApiError: If API request fails.
         """
         try:
-            url = f"/runs/{run_id}"
+            url = f"/runs/adaptive/{run_id}"
             response = await self._http_client.get(url)
             response.raise_for_status()
             json = response.json()

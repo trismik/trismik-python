@@ -64,65 +64,65 @@ def generate_random_hash() -> str:
     return secrets.token_hex(4)  # 4 bytes = 8 hex characters
 
 
-def find_user_default_organization_id(runner: AdaptiveTest) -> str:
+def find_user_default_team_account_id(runner: AdaptiveTest) -> str:
     """
-    Find the user's default organization ID.
+    Find the user's default team account ID.
 
-    The default organization is the one where organization.name == user.email.
+    The default team is the one where team.name == user.email.
 
     Args:
         runner (AdaptiveTest): AdaptiveTest instance to use for API calls.
 
     Returns:
-        str: Organization ID of the user's default organization.
+        str: Account ID of the user's default team.
 
     Raises:
-        ValueError: If no default organization is found.
+        ValueError: If no default team is found.
     """
     me_response = runner.me()
     user_email = me_response.user.email
 
-    for org in me_response.organizations:
-        if org.name == user_email:
-            return org.id
+    for team in me_response.teams:
+        if team.name == user_email:
+            return team.account_id
 
     # If no match found, raise an error with helpful information
-    org_names = [org.name for org in me_response.organizations]
+    team_names = [team.name for team in me_response.teams]
     raise ValueError(
-        f"No default organization found for user {user_email}. "
-        f"Available organizations: {', '.join(org_names)}. "
-        "Expected to find an organization where org.name == user.email."
+        f"No default team found for user {user_email}. "
+        f"Available teams: {', '.join(team_names)}. "
+        "Expected to find a team where team.name == user.email."
     )
 
 
-async def find_user_default_organization_id_async(runner: AdaptiveTest) -> str:
+async def find_user_default_team_account_id_async(runner: AdaptiveTest) -> str:
     """
-    Find the user's default organization ID asynchronously.
+    Find the user's default team account ID asynchronously.
 
-    The default organization is the one where organization.name == user.email.
+    The default team is the one where team.name == user.email.
 
     Args:
         runner (AdaptiveTest): AdaptiveTest instance to use for API calls.
 
     Returns:
-        str: Organization ID of the user's default organization.
+        str: Account ID of the user's default team.
 
     Raises:
-        ValueError: If no default organization is found.
+        ValueError: If no default team is found.
     """
     me_response = await runner.me_async()
     user_email = me_response.user.email
 
-    for org in me_response.organizations:
-        if org.name == user_email:
-            return org.id
+    for team in me_response.teams:
+        if team.name == user_email:
+            return team.account_id
 
     # If no match found, raise an error with helpful information
-    org_names = [org.name for org in me_response.organizations]
+    team_names = [team.name for team in me_response.teams]
     raise ValueError(
-        f"No default organization found for user {user_email}. "
-        f"Available organizations: {', '.join(org_names)}. "
-        "Expected to find an organization where org.name == user.email."
+        f"No default team found for user {user_email}. "
+        f"Available teams: {', '.join(team_names)}. "
+        "Expected to find a team where team.name == user.email."
     )
 
 
@@ -186,13 +186,13 @@ def run_sync_example(project_description: Optional[str] = None) -> None:
         f"User: {me_response.user.firstname} {me_response.user.lastname} "
         f"({me_response.user.email})"
     )
-    org_names = [org.name for org in me_response.organizations]
-    print(f"Organizations: {', '.join(org_names)}")
+    team_names = [team.name for team in me_response.teams]
+    print(f"Teams: {', '.join(team_names)}")
 
-    # Find the user's default organization (where org.name == user.email)
-    organization_id = find_user_default_organization_id(runner)
-    default_org_name = me_response.user.email
-    print(f"Using default organization: {default_org_name} ({organization_id})")
+    # Find the user's default team (where team.name == user.email)
+    account_id = find_user_default_team_account_id(runner)
+    default_team_name = me_response.user.email
+    print(f"Using default team: {default_team_name} ({account_id})")
 
     # Generate random names for project and experiment
     project_name = f"example_{generate_random_hash()}"
@@ -208,7 +208,7 @@ def run_sync_example(project_description: Optional[str] = None) -> None:
     print(f"Creating new project '{project_name}'...")
     project: TrismikProject = runner.create_project(
         name=project_name,
-        organization_id=organization_id,
+        organization_id=account_id,
         description=description,
     )
     print(f"Project created successfully: {project.name} (ID: {project.id})")
@@ -236,13 +236,13 @@ async def run_async_example(project_description: Optional[str] = None) -> None:
         f"User: {me_response.user.firstname} {me_response.user.lastname} "
         f"({me_response.user.email})"
     )
-    org_names = [org.name for org in me_response.organizations]
-    print(f"Organizations: {', '.join(org_names)}")
+    team_names = [team.name for team in me_response.teams]
+    print(f"Teams: {', '.join(team_names)}")
 
-    # Find the user's default organization (where org.name == user.email)
-    organization_id = await find_user_default_organization_id_async(runner)
-    default_org_name = me_response.user.email
-    print(f"Using default organization: {default_org_name} ({organization_id})")
+    # Find the user's default team (where team.name == user.email)
+    account_id = await find_user_default_team_account_id_async(runner)
+    default_team_name = me_response.user.email
+    print(f"Using default team: {default_team_name} ({account_id})")
 
     # Generate random names for project and experiment
     project_name = f"example_{generate_random_hash()}"
@@ -258,7 +258,7 @@ async def run_async_example(project_description: Optional[str] = None) -> None:
     print(f"Creating new project '{project_name}'...")
     project: TrismikProject = await runner.create_project_async(
         name=project_name,
-        organization_id=organization_id,
+        organization_id=account_id,
         description=description,
     )
     print(f"Project created successfully: {project.name} (ID: {project.id})")

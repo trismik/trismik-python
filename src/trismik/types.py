@@ -222,13 +222,13 @@ class TrismikReplayResponse:
 
 
 @dataclass
-class TrismikOrganization:
-    """Organization information."""
+class TrismikTeam:
+    """Team information."""
 
     id: str
     name: str
-    type: str
     role: str
+    account_id: str
 
 
 @dataclass
@@ -239,6 +239,7 @@ class TrismikUserInfo:
     email: str
     firstname: str
     lastname: str
+    account_id: str
     createdAt: Optional[str] = None
 
 
@@ -247,7 +248,7 @@ class TrismikMeResponse:
     """Response from the /admin/api-keys/me endpoint."""
 
     user: TrismikUserInfo
-    organizations: List[TrismikOrganization]
+    teams: List[TrismikTeam]
 
 
 @dataclass
@@ -287,7 +288,7 @@ class TrismikClassicEvalResponse:
     """Response from a classic evaluation submission."""
 
     id: str
-    organizationId: str
+    accountId: str
     projectId: str
     experimentId: str
     experimentName: str

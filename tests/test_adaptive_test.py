@@ -695,7 +695,7 @@ class TestAdaptiveTest:
         # Create mock response for classic evaluation
         classic_eval_response = TrismikClassicEvalResponse(
             id="classic_run_id",
-            organizationId="org123",
+            accountId="acc123",
             projectId="proj123",
             experimentId="exp123",
             experimentName="test_experiment",
@@ -710,6 +710,7 @@ class TestAdaptiveTest:
                 email="test@example.com",
                 firstname="Test",
                 lastname="User",
+                account_id="acc123",
             ),
             responseCount=3,
         )
@@ -761,7 +762,7 @@ class TestAdaptiveTest:
         # Create mock response for classic evaluation
         classic_eval_response = TrismikClassicEvalResponse(
             id="classic_run_id",
-            organizationId="org123",
+            accountId="acc123",
             projectId="proj123",
             experimentId="exp123",
             experimentName="test_experiment",
@@ -776,6 +777,7 @@ class TestAdaptiveTest:
                 email="test@example.com",
                 firstname="Test",
                 lastname="User",
+                account_id="acc123",
             ),
             responseCount=3,
         )
