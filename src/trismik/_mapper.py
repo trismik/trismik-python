@@ -8,7 +8,6 @@ from trismik.types import (
     TrismikItem,
     TrismikMeResponse,
     TrismikMultipleChoiceTextItem,
-    TrismikOrganization,
     TrismikProject,
     TrismikReplayResponse,
     TrismikResponse,
@@ -19,7 +18,7 @@ from trismik.types import (
     TrismikRunState,
     TrismikRunSummary,
     TrismikTextChoice,
-    TrismikUserInfo,
+    TrismikUserInfo, TrismikTeam,
 )
 
 
@@ -275,7 +274,7 @@ class TrismikResponseMapper:
             TrismikMeResponse: Me response object.
         """
         user_data = json["user"]
-        organizations_data = json["organizations"]
+        teams_data = json["teams"]
 
         user_info = TrismikUserInfo(
             id=user_data["id"],
@@ -283,21 +282,22 @@ class TrismikResponseMapper:
             firstname=user_data["firstname"],
             lastname=user_data["lastname"],
             createdAt=user_data.get("createdAt"),
+            account_id=user_data.get("accountId"),
         )
 
-        organizations = [
-            TrismikOrganization(
-                id=org_data["id"],
-                name=org_data["name"],
-                type=org_data["type"],
-                role=org_data["role"],
+        teams = [
+            TrismikTeam(
+                id=team_data["id"],
+                name=team_data["name"],
+                role=team_data["role"],
+                account_id=team_data["accountId"],
             )
-            for org_data in organizations_data
+            for team_data in teams_data
         ]
 
         return TrismikMeResponse(
             user=user_info,
-            organizations=organizations,
+            teams=teams
         )
 
     @staticmethod
@@ -320,11 +320,12 @@ class TrismikResponseMapper:
             email=user_data["email"],
             firstname=user_data["firstname"],
             lastname=user_data["lastname"],
+            account_id=user_data.get("accountId"),
         )
 
         return TrismikClassicEvalResponse(
             id=json["id"],
-            organizationId=json["organizationId"],
+            accountId=json["accountId"],
             projectId=json["projectId"],
             experimentId=json["experimentId"],
             experimentName=json["experimentName"],

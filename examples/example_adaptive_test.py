@@ -140,8 +140,8 @@ async def run_async_example(
         f"User: {me_response.user.firstname} {me_response.user.lastname} "
         f"({me_response.user.email})"
     )
-    org_names = [org.name for org in me_response.organizations]
-    print(f"Organizations: {', '.join(org_names)}")
+    team_names = [org.name for org in me_response.teams]
+    print(f"Teams: {', '.join(team_names)}")
 
     # List available datasets
     available_datasets = runner.list_datasets()

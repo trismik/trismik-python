@@ -108,8 +108,8 @@ def run_sync_example(project_id: str, experiment: str) -> None:
         f"User: {me_response.user.firstname} {me_response.user.lastname} "
         f"({me_response.user.email})"
     )
-    org_names = [org.name for org in me_response.organizations]
-    print(f"Organizations: {', '.join(org_names)}")
+    team_names = [team.name for team in me_response.teams]
+    print(f"Teams: {', '.join(team_names)}")
 
     # Load mock data and create request
     mock_data = load_mock_data()
@@ -134,8 +134,8 @@ async def run_async_example(project_id: str, experiment: str) -> None:
         f"User: {me_response.user.firstname} {me_response.user.lastname} "
         f"({me_response.user.email})"
     )
-    org_names = [org.name for org in me_response.organizations]
-    print(f"Organizations: {', '.join(org_names)}")
+    team_names = [team.name for team in me_response.teams]
+    print(f"Team: {', '.join(team_names)}")
 
     # Load mock data and create request
     mock_data = load_mock_data()
