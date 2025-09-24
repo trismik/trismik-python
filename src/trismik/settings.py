@@ -4,7 +4,7 @@ evaluation_settings = {
     "max_iterations": 150,
 }
 
-client_settings = {"endpoint": "https://dashboard.trismik.com/api"}
+client_settings = {"endpoint": "https://api.trismik.com/adaptive-testing"}
 
 # Environment variable names used by the Trismik client
 environment_settings = {
