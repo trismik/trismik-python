@@ -144,7 +144,7 @@ class AdaptiveTest:
     def create_project(
         self,
         name: str,
-        organization_id: str,
+        team_id: Optional[str] = None,
         description: Optional[str] = None,
     ) -> TrismikProject:
         """
@@ -152,7 +152,7 @@ class AdaptiveTest:
 
         Args:
             name (str): Name of the project.
-            organization_id (str): ID of the organization to create the
+            team_id (str): ID of the team to create the
                 project in.
             description (Optional[str]): Optional description of the project.
 
@@ -165,13 +165,13 @@ class AdaptiveTest:
         """
         loop = self._get_loop()
         return loop.run_until_complete(
-            self.create_project_async(name, organization_id, description)
+            self.create_project_async(name, team_id, description)
         )
 
     async def create_project_async(
         self,
         name: str,
-        organization_id: str,
+        team_id: Optional[str] = None,
         description: Optional[str] = None,
     ) -> TrismikProject:
         """
@@ -179,7 +179,7 @@ class AdaptiveTest:
 
         Args:
             name (str): Name of the project.
-            organization_id (str): ID of the organization to create the
+            team_id (str): ID of the team to create the
                 project in.
             description (Optional[str]): Optional description of the project.
 
@@ -190,9 +190,7 @@ class AdaptiveTest:
             TrismikValidationError: If the request fails validation.
             TrismikApiError: If API request fails.
         """
-        return await self._client.create_project(
-            name, organization_id, description
-        )
+        return await self._client.create_project(name, team_id, description)
 
     @overload
     def run(  # noqa: E704

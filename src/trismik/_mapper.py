@@ -352,7 +352,7 @@ class TrismikResponseMapper:
             id=json["id"],
             name=json["name"],
             description=json.get("description"),
-            organizationId=json["organizationId"],
+            accountId=json["accountId"],
             createdAt=json["createdAt"],
             updatedAt=json["updatedAt"],
         )

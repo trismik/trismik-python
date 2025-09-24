@@ -365,7 +365,7 @@ class TrismikAsyncClient:
     async def create_project(
         self,
         name: str,
-        organization_id: str,
+        team_id: Optional[str] = None,
         description: Optional[str] = None,
     ) -> TrismikProject:
         """
@@ -373,7 +373,7 @@ class TrismikAsyncClient:
 
         Args:
             name (str): Name of the project.
-            organization_id (str): ID of the organization to create the
+            team_id (Optional[str]): ID of the team to create the
                 project in.
             description (Optional[str]): Optional description of the project.
 
@@ -387,14 +387,15 @@ class TrismikAsyncClient:
         try:
             url = "../admin/public/projects"
 
-            body = {"name": name}
+            body = {
+                "name": name,
+            }
+            if team_id is not None:
+                body["teamId"] = team_id
             if description is not None:
                 body["description"] = description
 
-            headers = {"x-organization-id": organization_id}
-            response = await self._http_client.post(
-                url, json=body, headers=headers
-            )
+            response = await self._http_client.post(url, json=body)
             response.raise_for_status()
             json = response.json()
             return TrismikResponseMapper.to_project(json)

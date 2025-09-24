@@ -18,7 +18,7 @@ class TestTrismikResponseMapper:
             "id": "project123",
             "name": "Test Project",
             "description": "A comprehensive test project",
-            "organizationId": "org456",
+            "accountId": "org456",
             "createdAt": "2025-09-12T10:30:00.000Z",
             "updatedAt": "2025-09-12T11:45:00.000Z",
         }
@@ -29,7 +29,7 @@ class TestTrismikResponseMapper:
         assert project.id == "project123"
         assert project.name == "Test Project"
         assert project.description == "A comprehensive test project"
-        assert project.organizationId == "org456"
+        assert project.accountId == "org456"
         assert project.createdAt == "2025-09-12T10:30:00.000Z"
         assert project.updatedAt == "2025-09-12T11:45:00.000Z"
 
@@ -39,7 +39,7 @@ class TestTrismikResponseMapper:
             "id": "project789",
             "name": "Project No Description",
             "description": None,
-            "organizationId": "org999",
+            "accountId": "org999",
             "createdAt": "2025-09-12T12:00:00.000Z",
             "updatedAt": "2025-09-12T12:00:00.000Z",
         }
@@ -50,7 +50,7 @@ class TestTrismikResponseMapper:
         assert project.id == "project789"
         assert project.name == "Project No Description"
         assert project.description is None
-        assert project.organizationId == "org999"
+        assert project.accountId == "org999"
         assert project.createdAt == "2025-09-12T12:00:00.000Z"
         assert project.updatedAt == "2025-09-12T12:00:00.000Z"
 
@@ -59,7 +59,7 @@ class TestTrismikResponseMapper:
         json_data = {
             "id": "project456",
             "name": "Project Missing Desc Key",
-            "organizationId": "org777",
+            "accountId": "org777",
             "createdAt": "2025-09-12T13:00:00.000Z",
             "updatedAt": "2025-09-12T13:00:00.000Z",
         }
@@ -72,7 +72,7 @@ class TestTrismikResponseMapper:
         assert (
             project.description is None
         )  # .get() should return None for missing key
-        assert project.organizationId == "org777"
+        assert project.accountId == "org777"
         assert project.createdAt == "2025-09-12T13:00:00.000Z"
         assert project.updatedAt == "2025-09-12T13:00:00.000Z"
 
@@ -82,7 +82,7 @@ class TestTrismikResponseMapper:
             "id": "project001",
             "name": "Project Empty Desc",
             "description": "",
-            "organizationId": "org888",
+            "accountId": "org888",
             "createdAt": "2025-09-12T14:00:00.000Z",
             "updatedAt": "2025-09-12T14:00:00.000Z",
         }
@@ -93,7 +93,7 @@ class TestTrismikResponseMapper:
         assert project.id == "project001"
         assert project.name == "Project Empty Desc"
         assert project.description == ""  # Empty string should be preserved
-        assert project.organizationId == "org888"
+        assert project.accountId == "org888"
         assert project.createdAt == "2025-09-12T14:00:00.000Z"
         assert project.updatedAt == "2025-09-12T14:00:00.000Z"
 
@@ -104,7 +104,7 @@ class TestTrismikResponseMapper:
             "id": "project_iso",
             "name": "ISO Date Project",
             "description": "Testing ISO dates",
-            "organizationId": "org_iso",
+            "accountId": "org_iso",
             "createdAt": "2025-09-12T15:30:45.123456Z",
             "updatedAt": "2025-09-12T16:45:30.987654Z",
         }
@@ -115,7 +115,7 @@ class TestTrismikResponseMapper:
         assert project.id == "project_iso"
         assert project.name == "ISO Date Project"
         assert project.description == "Testing ISO dates"
-        assert project.organizationId == "org_iso"
+        assert project.accountId == "org_iso"
         assert project.createdAt == "2025-09-12T15:30:45.123456Z"
         assert project.updatedAt == "2025-09-12T16:45:30.987654Z"
 
@@ -125,7 +125,7 @@ class TestTrismikResponseMapper:
             "id": "project_special",
             "name": "Test Project with Special Chars: éñ中文",
             "description": 'Description with symbols: @#$%^&*()[]{}|\\:;"',
-            "organizationId": "org_special_123",
+            "accountId": "org_special_123",
             "createdAt": "2025-09-12T17:00:00.000Z",
             "updatedAt": "2025-09-12T17:00:00.000Z",
         }
@@ -139,7 +139,7 @@ class TestTrismikResponseMapper:
             project.description
             == 'Description with symbols: @#$%^&*()[]{}|\\:;"'
         )
-        assert project.organizationId == "org_special_123"
+        assert project.accountId == "org_special_123"
         assert project.createdAt == "2025-09-12T17:00:00.000Z"
         assert project.updatedAt == "2025-09-12T17:00:00.000Z"
 
@@ -155,7 +155,7 @@ class TestTrismikResponseMapper:
             "id": "project_long",
             "name": "Project with Long Description",
             "description": long_description,
-            "organizationId": "org_long",
+            "accountId": "org_long",
             "createdAt": "2025-09-12T18:00:00.000Z",
             "updatedAt": "2025-09-12T18:00:00.000Z",
         }
@@ -166,6 +166,6 @@ class TestTrismikResponseMapper:
         assert project.id == "project_long"
         assert project.name == "Project with Long Description"
         assert project.description == long_description
-        assert project.organizationId == "org_long"
+        assert project.accountId == "org_long"
         assert project.createdAt == "2025-09-12T18:00:00.000Z"
         assert project.updatedAt == "2025-09-12T18:00:00.000Z"
