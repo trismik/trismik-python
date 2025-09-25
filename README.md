@@ -111,13 +111,13 @@ poetry run python examples/example_adaptive_test.py # or any other example
 
 ### Theta (θ)
 
-Our adversarial test returns several values; however, you will be interested mainly in `theta`. Theta ($\theta$) is our metric; it measures the ability of the model on a certain dataset, and it can be used as a proxy to approximate the original metric used on that dataset. For example, on an accuracy-based dataset, a high theta correlates with a high accuracy, and low theta correlates with low accuracy.
+Our adaptive test returns several values; however, you will be interested mainly in `theta`. Theta ($\theta$) is our metric; it measures the ability of the model on a certain dataset, and it can be used as a proxy to approximate the original metric used on that dataset. For example, on an accuracy-based dataset, a high theta correlates with a high accuracy, and low theta correlates with low accuracy.
 
-To interpret a theta score, consider that $\theta=0$ corresponds to a 50% chance for a model to get an answer right - in other words, to an accuracy of 50%.
-A negative theta means that the model will give more bad answers then good ones, while a positive theta means that the model will give more good answers then bad answers.
+$\theta$ is intrinsically linked to the difficulty of the items a model can answer correctly. On a datasets where the item difficulties are balanced and evenly distributed, $\theta=0$ corresponds to a 50% chance for a model to get an answer right - in other words, to an accuracy of 50%.
+A negative theta means that the model will give more bad answers than good ones, while a positive theta means that the model will give more good answers than bad answers.
 While theta is unbounded in our implementation (i.e. $-\infty < \theta < \infty$), in practice we have that for most cases $\theta$ will take values between -3 and 3.
 
-Compared to classical benchmark testing, the estimated accuracy from adaptive testing uses fewer but more informative items while avoiding noise from overly easy or difficult questions. This makes it a more efficient and stable measure, especially on very large datasets.
+Compared to classical benchmark testing, $\theta$ from adaptive testing uses fewer but more informative items while avoiding noise from overly easy or difficult questions. This makes it a more efficient and stable measure, especially on very large datasets.
 
 ### Other Metrics
 
@@ -137,7 +137,7 @@ Compared to classical benchmark testing, the estimated accuracy from adaptive te
 
 - **Total Responses (`responsesTotal`)**:
   - The number of items processed before reaching a stable theta.
-  - Expected range: 60 ≤ responses_total ≤ 80
+  - Expected range: 60 ≤ responses_total ≤ 150
 
 ## Contributing
 
