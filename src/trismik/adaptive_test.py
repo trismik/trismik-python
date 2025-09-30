@@ -10,7 +10,6 @@ import asyncio
 from typing import Any, Callable, Dict, List, Literal, Optional, Union, overload
 
 import nest_asyncio
-from tqdm.auto import tqdm
 
 from trismik.client_async import TrismikAsyncClient
 from trismik.settings import evaluation_settings
@@ -494,22 +493,18 @@ class AdaptiveTest:
 
         # Build replay request by processing each item in the original order
         replay_items = []
-        with tqdm(
-            total=len(original_summary.dataset), desc="Running replay..."
-        ) as pbar:
-            for item in original_summary.dataset:
-                # Handle both sync and async item processors
-                if asyncio.iscoroutinefunction(self._item_processor):
-                    response = await self._item_processor(item)
-                else:
-                    response = self._item_processor(item)
+        for item in original_summary.dataset:
+            # Handle both sync and async item processors
+            if asyncio.iscoroutinefunction(self._item_processor):
+                response = await self._item_processor(item)
+            else:
+                response = self._item_processor(item)
 
-                # Create replay request item
-                replay_item = TrismikReplayRequestItem(
-                    itemId=item.id, itemChoiceId=response
-                )
-                replay_items.append(replay_item)
-                pbar.update(1)
+            # Create replay request item
+            replay_item = TrismikReplayRequestItem(
+                itemId=item.id, itemChoiceId=response
+            )
+            replay_items.append(replay_item)
 
         # Create replay request
         replay_request = TrismikReplayRequest(responses=replay_items)
@@ -583,36 +578,31 @@ class AdaptiveTest:
             TrismikApiError: If API request fails.
         """
         item = first_item
-        with tqdm(total=self._max_items, desc="Evaluating") as pbar:
-            while item is not None:
-                # Handle both sync and async item processors
-                if asyncio.iscoroutinefunction(self._item_processor):
-                    response = await self._item_processor(item)
-                else:
-                    response = self._item_processor(item)
+        while item is not None:
+            # Handle both sync and async item processors
+            if asyncio.iscoroutinefunction(self._item_processor):
+                response = await self._item_processor(item)
+            else:
+                response = self._item_processor(item)
 
-                # Continue run with response
-                continue_response = await self._client.continue_run(
-                    run_id, response
+            # Continue run with response
+            continue_response = await self._client.continue_run(
+                run_id, response
+            )
+
+            # Update state tracking
+            states.append(
+                TrismikAdaptiveTestState(
+                    run_id=run_id,
+                    state=continue_response.state,
+                    completed=continue_response.completed,
                 )
+            )
 
-                # Update state tracking
-                states.append(
-                    TrismikAdaptiveTestState(
-                        run_id=run_id,
-                        state=continue_response.state,
-                        completed=continue_response.completed,
-                    )
-                )
+            if continue_response.completed:
+                break
 
-                pbar.update(1)
-
-                if continue_response.completed:
-                    pbar.total = pbar.n  # Update total to current position
-                    pbar.refresh()
-                    break
-
-                item = continue_response.next_item
+            item = continue_response.next_item
 
         last_state = states[-1] if states else None
 

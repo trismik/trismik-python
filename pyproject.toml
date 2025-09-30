@@ -13,7 +13,6 @@ requires-python = ">=3.9"
 dependencies = [
     "httpx (>=0.27.2,<1.0.0)",
     "nest-asyncio (>=1.6.0,<2.0.0)",
-    "tqdm (>=4.67.1, <5.0.0)",
 ]
 
 [project.optional-dependencies]
@@ -24,7 +23,8 @@ examples = [
     "torchaudio>=2.7.0,<3.0.0",
     "accelerate>=1.7.0,<2.0.0",
     "openai>=1.81.0,<2.0.0",
-    "notebook>=7.4.4,<8.0.0"
+    "notebook>=7.4.4,<8.0.0",
+    "tqdm>=4.67.1,<5.0.0"
 ]
 
 
@@ -49,6 +49,7 @@ Flake8-pyproject = "^1.2.3"
 flake8 = "^7.0.0"
 mypy = "^1.15.0"
 autoflake = "^2.3.1"
+unasync = "^0.6.0"
 
 [tool.poetry-dynamic-versioning]
 # Expected Git tags: vX.Y.Z, vX.Y.Z-alphaN, vX.Y.Z-betaN, vX.Y.Z-rcN
@@ -89,3 +90,18 @@ install_types = true
 
 [tool.flake8] # note that this depends on Flake8-pyproject
 ignore = ["D202", "W503", "W504"]
+
+[tool.unasync]
+[[tool.unasync.rules]]
+fromdir = "src/trismik/_async/"
+todir = "src/trismik/_sync/"
+exclude = [
+    "**/helpers.py"  # Manually maintained in both versions
+]
+
+# Only custom replacements (defaults handle async/await/async with/async for automatically)
+[tool.unasync.rules.replacements]
+"TrismikAsyncClient" = "TrismikClient"
+"AsyncClient" = "Client"
+"_async" = "_sync"
+"aclose" = "close"

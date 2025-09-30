@@ -49,6 +49,12 @@ repos:
 
 -   repo: local
     hooks:
+    -   id: unasync
+        name: Generate sync code from async
+        entry: poetry run python run_unasync.py
+        language: system
+        pass_filenames: false
+        files: ^src/trismik/_async/.*\.py$
     -   id: pytest
         name: pytest
         entry: poetry run pytest
