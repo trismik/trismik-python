@@ -22,6 +22,6 @@ def process_item(item_processor: Callable[[TrismikItem], Any], item: TrismikItem
     """
     if asyncio.iscoroutinefunction(item_processor):
         raise TypeError(
-            "Sync client cannot use async item_processor. " "Use TrismikAsyncClient instead."
+            "Sync client cannot use async item_processor. Use TrismikAsyncClient instead."
         )
     return item_processor(item)

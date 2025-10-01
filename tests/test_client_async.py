@@ -745,7 +745,7 @@ class TestTrismikAsyncClient:
     @pytest.mark.asyncio
     async def test_context_manager_should_enter_and_exit(self) -> None:
         """Test async context manager enters and exits correctly."""
-        mock_client = MagicMock(httpx.AsyncClient)
+        mock_client = MagicMock(spec=httpx.AsyncClient)
         mock_client.aclose = AsyncMock()
 
         async with TrismikAsyncClient(api_key="test_key", http_client=mock_client) as client:
@@ -775,7 +775,7 @@ class TestTrismikAsyncClient:
         self,
     ) -> None:
         """Test context manager doesn't close user-provided client."""
-        mock_client = MagicMock(httpx.AsyncClient)
+        mock_client = MagicMock(spec=httpx.AsyncClient)
         mock_client.aclose = AsyncMock()
 
         client = TrismikAsyncClient(api_key="test_key", http_client=mock_client)
@@ -805,7 +805,7 @@ class TestTrismikAsyncClient:
         self,
     ) -> None:
         """Test explicit aclose() doesn't close user-provided client."""
-        mock_client = MagicMock(httpx.AsyncClient)
+        mock_client = MagicMock(spec=httpx.AsyncClient)
         mock_client.aclose = AsyncMock()
 
         client = TrismikAsyncClient(api_key="test_key", http_client=mock_client)
