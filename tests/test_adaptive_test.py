@@ -10,8 +10,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from trismik.adaptive_test import AdaptiveTest
-from trismik.client_async import TrismikAsyncClient
+from trismik import AdaptiveTest, TrismikAsyncClient
 from trismik.types import (
     AdaptiveTestScore,
     TrismikClassicEvalItem,
@@ -176,9 +175,7 @@ class TestAdaptiveTest:
 
         client.list_datasets = AsyncMock(return_value=list_datasets_response)
         client.start_run = AsyncMock(return_value=start_response)
-        client.continue_run = AsyncMock(
-            side_effect=[continue_response, end_response]
-        )
+        client.continue_run = AsyncMock(side_effect=[continue_response, end_response])
         client.run_summary = AsyncMock(return_value=run_summary_response)
         client.submit_replay = AsyncMock(return_value=replay_response)
 
@@ -269,9 +266,7 @@ class TestAdaptiveTest:
             "test_id", "project_id", "experiment", metadata
         )
         assert mock_client.continue_run.call_count == 2
-        mock_client.continue_run.assert_called_with(
-            "run_id", "processed_response"
-        )
+        mock_client.continue_run.assert_called_with("run_id", "processed_response")
         assert isinstance(results, TrismikRunResults)
         assert isinstance(results.score, AdaptiveTestScore)
         assert results.score.theta == 1.3  # Final theta value from mock
@@ -292,9 +287,7 @@ class TestAdaptiveTest:
             "test_id", "project_id", "experiment", metadata
         )
         assert mock_client.continue_run.call_count == 2
-        mock_client.continue_run.assert_called_with(
-            "run_id", "processed_response"
-        )
+        mock_client.continue_run.assert_called_with("run_id", "processed_response")
         assert isinstance(results, TrismikRunResults)
         assert isinstance(results.score, AdaptiveTestScore)
         assert results.score.theta == 1.3  # Final theta value from mock
@@ -341,9 +334,7 @@ class TestAdaptiveTest:
             test_configuration={},
             inference_setup={},
         )
-        results = sync_runner.run_replay(
-            "previous_run_id", metadata, return_dict=False
-        )
+        results = sync_runner.run_replay("previous_run_id", metadata, return_dict=False)
 
         # Verify run_summary was called
         mock_client.run_summary.assert_called_once_with("previous_run_id")
@@ -359,9 +350,7 @@ class TestAdaptiveTest:
         assert results.run_id == "replay_run_id"
         assert isinstance(results.score, AdaptiveTestScore)
         assert results.score.theta == 1.3  # Final theta from replay response
-        assert (
-            results.score.std_error == 0.35
-        )  # Final std_error from replay response
+        assert results.score.std_error == 0.35  # Final std_error from replay response
 
     @pytest.mark.asyncio
     async def test_run_replay_async(self, async_runner, mock_client):
@@ -389,9 +378,7 @@ class TestAdaptiveTest:
         assert results.run_id == "replay_run_id"
         assert isinstance(results.score, AdaptiveTestScore)
         assert results.score.theta == 1.3  # Final theta from replay response
-        assert (
-            results.score.std_error == 0.35
-        )  # Final std_error from replay response
+        assert results.score.std_error == 0.35  # Final std_error from replay response
 
     def test_run_replay_with_responses_sync(self, sync_runner, mock_client):
         """Test replaying a test with responses synchronously."""
@@ -423,9 +410,7 @@ class TestAdaptiveTest:
         assert results.responses[1].dataset_item_id == "item_2"
 
     @pytest.mark.asyncio
-    async def test_run_replay_with_responses_async(
-        self, async_runner, mock_client
-    ):
+    async def test_run_replay_with_responses_async(self, async_runner, mock_client):
         """Test replaying a test with responses asynchronously."""
         metadata = TrismikRunMetadata(
             model_metadata=TrismikRunMetadata.ModelMetadata(name="test_model"),
@@ -461,9 +446,7 @@ class TestAdaptiveTest:
             test_configuration={},
             inference_setup={},
         )
-        results = async_runner.run_replay(
-            "previous_run_id", metadata, return_dict=False
-        )
+        results = async_runner.run_replay("previous_run_id", metadata, return_dict=False)
 
         # Verify run_summary was called
         mock_client.run_summary.assert_called_once_with("previous_run_id")
@@ -476,9 +459,7 @@ class TestAdaptiveTest:
         assert results.run_id == "replay_run_id"
         assert isinstance(results.score, AdaptiveTestScore)
 
-    def test_should_create_client_when_api_key_provided(
-        self, sync_item_processor
-    ):
+    def test_should_create_client_when_api_key_provided(self, sync_item_processor):
         """Test that the runner creates a client when api_key is provided."""
         runner = AdaptiveTest(
             item_processor=sync_item_processor,
@@ -507,17 +488,13 @@ class TestAdaptiveTest:
             test_configuration={},
             inference_setup={},
         )
-        results = sync_runner.run(
-            "test_id", "project_id", "experiment", metadata, return_dict=True
-        )
+        results = sync_runner.run("test_id", "project_id", "experiment", metadata, return_dict=True)
 
         mock_client.start_run.assert_called_once_with(
             "test_id", "project_id", "experiment", metadata
         )
         assert mock_client.continue_run.call_count == 2
-        mock_client.continue_run.assert_called_with(
-            "run_id", "processed_response"
-        )
+        mock_client.continue_run.assert_called_with("run_id", "processed_response")
         assert isinstance(results, dict)
         assert "run_id" in results
         assert "score" in results
@@ -598,9 +575,7 @@ class TestAdaptiveTest:
             test_configuration={},
             inference_setup={},
         )
-        results = sync_runner.run_replay(
-            "previous_run_id", metadata, return_dict=True
-        )
+        results = sync_runner.run_replay("previous_run_id", metadata, return_dict=True)
 
         mock_client.run_summary.assert_called_once_with("previous_run_id")
         mock_client.submit_replay.assert_called_once()
@@ -620,9 +595,7 @@ class TestAdaptiveTest:
             test_configuration={},
             inference_setup={},
         )
-        results = sync_runner.run_replay(
-            "previous_run_id", metadata, return_dict=False
-        )
+        results = sync_runner.run_replay("previous_run_id", metadata, return_dict=False)
 
         mock_client.run_summary.assert_called_once_with("previous_run_id")
         mock_client.submit_replay.assert_called_once()
@@ -631,9 +604,7 @@ class TestAdaptiveTest:
         assert isinstance(results.score, AdaptiveTestScore)
         assert results.score.theta == 1.3
 
-    def test_run_replay_with_responses_return_dict_true(
-        self, sync_runner, mock_client
-    ):
+    def test_run_replay_with_responses_return_dict_true(self, sync_runner, mock_client):
         """Test replaying a test with responses and return_dict=True."""
         metadata = TrismikRunMetadata(
             model_metadata=TrismikRunMetadata.ModelMetadata(name="test_model"),
@@ -666,18 +637,14 @@ class TestAdaptiveTest:
         assert results["responses"][1]["correct"] is False
 
     @pytest.mark.asyncio
-    async def test_run_replay_async_return_dict_true(
-        self, async_runner, mock_client
-    ):
+    async def test_run_replay_async_return_dict_true(self, async_runner, mock_client):
         """Test replaying a test asynchronously with return_dict=True."""
         metadata = TrismikRunMetadata(
             model_metadata=TrismikRunMetadata.ModelMetadata(name="test_model"),
             test_configuration={},
             inference_setup={},
         )
-        results = await async_runner.run_replay_async(
-            "previous_run_id", metadata, return_dict=True
-        )
+        results = await async_runner.run_replay_async("previous_run_id", metadata, return_dict=True)
 
         mock_client.run_summary.assert_called_once_with("previous_run_id")
         mock_client.submit_replay.assert_called_once()
@@ -715,9 +682,7 @@ class TestAdaptiveTest:
             responseCount=3,
         )
 
-        mock_client.submit_classic_eval = AsyncMock(
-            return_value=classic_eval_response
-        )
+        mock_client.submit_classic_eval = AsyncMock(return_value=classic_eval_response)
 
         # Create test data
         items = [
@@ -730,9 +695,7 @@ class TestAdaptiveTest:
             )
         ]
 
-        metrics = [
-            TrismikClassicEvalMetric(metricId="overall_score", value=0.85)
-        ]
+        metrics = [TrismikClassicEvalMetric(metricId="overall_score", value=0.85)]
 
         request = TrismikClassicEvalRequest(
             projectId="proj123",
@@ -782,9 +745,7 @@ class TestAdaptiveTest:
             responseCount=3,
         )
 
-        mock_client.submit_classic_eval = AsyncMock(
-            return_value=classic_eval_response
-        )
+        mock_client.submit_classic_eval = AsyncMock(return_value=classic_eval_response)
 
         # Create test data
         items = [
@@ -797,9 +758,7 @@ class TestAdaptiveTest:
             )
         ]
 
-        metrics = [
-            TrismikClassicEvalMetric(metricId="overall_score", value=0.85)
-        ]
+        metrics = [TrismikClassicEvalMetric(metricId="overall_score", value=0.85)]
 
         request = TrismikClassicEvalRequest(
             projectId="proj123",
@@ -845,18 +804,12 @@ class TestAdaptiveTest:
         assert project.createdAt == "2025-09-12T10:00:00.000Z"
         assert project.updatedAt == "2025-09-12T10:00:00.000Z"
 
-    def test_create_project_sync_without_description(
-        self, sync_runner, mock_client
-    ):
+    def test_create_project_sync_without_description(self, sync_runner, mock_client):
         """Test creating a project synchronously without description."""
-        project = sync_runner.create_project(
-            name="Test Project", team_id="org456"
-        )
+        project = sync_runner.create_project(name="Test Project", team_id="org456")
 
         # Verify the call was made with None description
-        mock_client.create_project.assert_called_once_with(
-            "Test Project", "org456", None
-        )
+        mock_client.create_project.assert_called_once_with("Test Project", "org456", None)
 
         # Verify response
         assert isinstance(project, TrismikProject)
@@ -889,18 +842,12 @@ class TestAdaptiveTest:
         assert project.updatedAt == "2025-09-12T10:00:00.000Z"
 
     @pytest.mark.asyncio
-    async def test_create_project_async_without_description(
-        self, async_runner, mock_client
-    ):
+    async def test_create_project_async_without_description(self, async_runner, mock_client):
         """Test creating a project asynchronously without description."""
-        project = await async_runner.create_project_async(
-            name="Test Project", team_id="org456"
-        )
+        project = await async_runner.create_project_async(name="Test Project", team_id="org456")
 
         # Verify the call was made with None description
-        mock_client.create_project.assert_called_once_with(
-            "Test Project", "org456", None
-        )
+        mock_client.create_project.assert_called_once_with("Test Project", "org456", None)
 
         # Verify response
         assert isinstance(project, TrismikProject)
@@ -909,9 +856,7 @@ class TestAdaptiveTest:
         assert project.description == "A test project"  # From mock response
         assert project.accountId == "org456"
 
-    def test_create_project_sync_delegates_to_async(
-        self, sync_runner, mock_client
-    ):
+    def test_create_project_sync_delegates_to_async(self, sync_runner, mock_client):
         """Test that sync create_project method delegates to async version."""
         # Reset the mock to track calls more precisely
         mock_client.reset_mock()
@@ -925,9 +870,7 @@ class TestAdaptiveTest:
             createdAt="2025-09-12T15:00:00.000Z",
             updatedAt="2025-09-12T15:00:00.000Z",
         )
-        mock_client.create_project = AsyncMock(
-            return_value=mock_project_response
-        )
+        mock_client.create_project = AsyncMock(return_value=mock_project_response)
 
         project = sync_runner.create_project(
             name="Sync Test Project",
@@ -960,9 +903,7 @@ class TestAdaptiveTest:
             createdAt="2025-09-12T16:00:00.000Z",
             updatedAt="2025-09-12T16:00:00.000Z",
         )
-        mock_client.create_project = AsyncMock(
-            return_value=mock_project_response
-        )
+        mock_client.create_project = AsyncMock(return_value=mock_project_response)
 
         project = sync_runner.create_project(
             name="Special Chars Project: éñ中文",
@@ -1002,9 +943,7 @@ class TestAdaptiveTest:
             createdAt="2025-09-12T17:00:00.000Z",
             updatedAt="2025-09-12T17:00:00.000Z",
         )
-        mock_client.create_project = AsyncMock(
-            return_value=mock_project_response
-        )
+        mock_client.create_project = AsyncMock(return_value=mock_project_response)
 
         project = await async_runner.create_project_async(
             name="Long Strings Project",

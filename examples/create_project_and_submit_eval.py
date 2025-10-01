@@ -165,8 +165,7 @@ def run_sync_example(project_description: Optional[str] = None) -> None:
 
     # Create a new project
     description = (
-        project_description
-        or f"Auto-generated project for {experiment} evaluation example"
+        project_description or f"Auto-generated project for {experiment} evaluation example"
     )
     print(f"Creating new project '{project_name}'...")
     project: TrismikProject = runner.create_project(
@@ -177,9 +176,7 @@ def run_sync_example(project_description: Optional[str] = None) -> None:
 
     # Load mock data and create request using the new project
     mock_data = load_mock_data()
-    classic_eval_request = create_classic_eval_request(
-        mock_data, project.id, experiment
-    )
+    classic_eval_request = create_classic_eval_request(mock_data, project.id, experiment)
 
     # Submit the evaluation
     print("Submitting mock output of classic eval run...")
@@ -209,8 +206,7 @@ async def run_async_example(project_description: Optional[str] = None) -> None:
 
     # Create a new project
     description = (
-        project_description
-        or f"Auto-generated project for {experiment} evaluation example"
+        project_description or f"Auto-generated project for {experiment} evaluation example"
     )
     print(f"Creating new project '{project_name}'...")
     project: TrismikProject = await runner.create_project_async(
@@ -221,9 +217,7 @@ async def run_async_example(project_description: Optional[str] = None) -> None:
 
     # Load mock data and create request using the new project
     mock_data = load_mock_data()
-    classic_eval_request = create_classic_eval_request(
-        mock_data, project.id, experiment
-    )
+    classic_eval_request = create_classic_eval_request(mock_data, project.id, experiment)
 
     # Submit the evaluation
     print("Submitting mock output of classic eval run...")

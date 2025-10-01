@@ -95,3 +95,8 @@ Before submitting any changes, please ensure:
 **Important**: Pull requests will only be merged if all tests pass and the code meets our quality standards. Make sure to run the test suite locally before submitting your changes.
 
 Thank you for contributing to Trismik!
+
+## Tests
+
+Write comprehensive async tests (the source of truth), strategic sync tests (verify transformation + sync-specific behavior),
+and use automated checks + manual review for confidence.

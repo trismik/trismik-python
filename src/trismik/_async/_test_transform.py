@@ -26,17 +26,13 @@ class TrismikAsyncClient:
         """Initialize test client."""
         self._api_key = api_key
         self._owns_client = http_client is None
-        self._http_client = http_client or httpx.AsyncClient(
-            headers={"x-api-key": api_key}
-        )
+        self._http_client = http_client or httpx.AsyncClient(headers={"x-api-key": api_key})
 
     async def __aenter__(self) -> "TrismikAsyncClient":
         """Enter async context manager."""
         return self
 
-    async def __aexit__(
-        self, exc_type: object, exc_val: object, exc_tb: object
-    ) -> None:
+    async def __aexit__(self, exc_type: object, exc_val: object, exc_tb: object) -> None:
         """Exit async context manager."""
         if self._owns_client:
             await self._http_client.aclose()

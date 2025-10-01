@@ -48,9 +48,7 @@ generation_args = {
 }
 
 
-def inference(
-    pipeline: transformers.pipeline, item: TrismikItem, max_retries: int = 5
-) -> str:
+def inference(pipeline: transformers.pipeline, item: TrismikItem, max_retries: int = 5) -> str:
     """
     Run inference on an item using a Hugging Face model.
 
@@ -236,9 +234,7 @@ async def main() -> None:
     environment or in .env file.
     """
     # Parse command line arguments
-    parser = argparse.ArgumentParser(
-        description="Run adaptive testing examples with Trismik API"
-    )
+    parser = argparse.ArgumentParser(description="Run adaptive testing examples with Trismik API")
     parser.add_argument(
         "--dataset-name",
         type=str,
@@ -273,14 +269,10 @@ async def main() -> None:
     )
 
     # Run sync example
-    run_sync_example(
-        pipeline, args.dataset_name, args.project_id, args.experiment
-    )
+    run_sync_example(pipeline, args.dataset_name, args.project_id, args.experiment)
 
     # Run async example
-    await run_async_example(
-        pipeline, args.dataset_name, args.project_id, args.experiment
-    )
+    await run_async_example(pipeline, args.dataset_name, args.project_id, args.experiment)
 
 
 if __name__ == "__main__":

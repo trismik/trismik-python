@@ -20,11 +20,7 @@ from _sample_metadata import replay_metadata, sample_metadata
 from dotenv import load_dotenv
 
 from trismik.adaptive_test import AdaptiveTest
-from trismik.types import (
-    AdaptiveTestScore,
-    TrismikItem,
-    TrismikMultipleChoiceTextItem,
-)
+from trismik.types import AdaptiveTestScore, TrismikItem, TrismikMultipleChoiceTextItem
 
 
 def mock_inference(item: TrismikItem) -> Any:
@@ -85,9 +81,7 @@ def print_score(score: AdaptiveTestScore) -> None:
     print(f"Final standard error: {score.std_error}")
 
 
-def run_sync_example(
-    dataset_name: str, project_id: str, experiment: str
-) -> None:
+def run_sync_example(dataset_name: str, project_id: str, experiment: str) -> None:
     """Run an adaptive test synchronously using the AdaptiveTest class."""
     print("\n=== Running Synchronous Example ===")
     runner = AdaptiveTest(mock_inference)
@@ -127,9 +121,7 @@ def run_sync_example(
         print(f"Number of responses: {len(replay_results.responses)}")
 
 
-async def run_async_example(
-    dataset_name: str, project_id: str, experiment: str
-) -> None:
+async def run_async_example(dataset_name: str, project_id: str, experiment: str) -> None:
     """Run an adaptive test asynchronously using the AdaptiveTest class."""
     print("\n=== Running Asynchronous Example ===")
     runner = AdaptiveTest(mock_inference_async)
@@ -194,9 +186,7 @@ async def main() -> None:
     environment or in .env file.
     """
     # Parse command line arguments
-    parser = argparse.ArgumentParser(
-        description="Run adaptive testing examples with Trismik API"
-    )
+    parser = argparse.ArgumentParser(description="Run adaptive testing examples with Trismik API")
     parser.add_argument(
         "--dataset-name",
         type=str,

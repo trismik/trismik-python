@@ -126,9 +126,7 @@ def print_score(score: AdaptiveTestScore) -> None:
     print(f"Final standard error: {score.std_error}")
 
 
-def run_sync_example(
-    client: OpenAI, dataset_name: str, project_id: str, experiment: str
-) -> None:
+def run_sync_example(client: OpenAI, dataset_name: str, project_id: str, experiment: str) -> None:
     """Run an adaptive test synchronously using the AdaptiveTest class."""
     print("\n=== Running Synchronous Example ===")
     runner = AdaptiveTest(lambda item: inference(client, item))
@@ -220,9 +218,7 @@ async def main() -> None:
     environment or in .env file.
     """
     # Parse command line arguments
-    parser = argparse.ArgumentParser(
-        description="Run adaptive testing examples with Trismik API"
-    )
+    parser = argparse.ArgumentParser(description="Run adaptive testing examples with Trismik API")
     parser.add_argument(
         "--dataset-name",
         type=str,
@@ -248,14 +244,10 @@ async def main() -> None:
     client = OpenAI()
 
     # Run sync example
-    run_sync_example(
-        client, args.dataset_name, args.project_id, args.experiment
-    )
+    run_sync_example(client, args.dataset_name, args.project_id, args.experiment)
 
     # Run async example
-    await run_async_example(
-        client, args.dataset_name, args.project_id, args.experiment
-    )
+    await run_async_example(client, args.dataset_name, args.project_id, args.experiment)
 
 
 if __name__ == "__main__":

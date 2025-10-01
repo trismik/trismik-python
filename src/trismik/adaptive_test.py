@@ -11,7 +11,7 @@ from typing import Any, Callable, Dict, List, Literal, Optional, Union, overload
 
 import nest_asyncio
 
-from trismik.client_async import TrismikAsyncClient
+from trismik import TrismikAsyncClient
 from trismik.settings import evaluation_settings
 from trismik.types import (
     AdaptiveTestScore,
@@ -61,9 +61,7 @@ class AdaptiveTest:
             TrismikApiError: If API request fails.
         """
         if client and api_key:
-            raise ValueError(
-                "Either 'client' or 'api_key' should be provided, not both."
-            )
+            raise ValueError("Either 'client' or 'api_key' should be provided, not both.")
         self._item_processor = item_processor
         if client:
             self._client = client
@@ -163,9 +161,7 @@ class AdaptiveTest:
             TrismikApiError: If API request fails.
         """
         loop = self._get_loop()
-        return loop.run_until_complete(
-            self.create_project_async(name, team_id, description)
-        )
+        return loop.run_until_complete(self.create_project_async(name, team_id, description))
 
     async def create_project_async(
         self,
@@ -323,14 +319,10 @@ class AdaptiveTest:
             NotImplementedError: If with_responses = True (not yet implemented).
         """
         if with_responses:
-            raise NotImplementedError(
-                "with_responses is not yet implemented for the new API flow"
-            )
+            raise NotImplementedError("with_responses is not yet implemented for the new API flow")
 
         # Start run and get first item
-        start_response = await self._client.start_run(
-            test_id, project_id, experiment, run_metadata
-        )
+        start_response = await self._client.start_run(test_id, project_id, experiment, run_metadata)
 
         # Initialize state tracking
         states: List[TrismikAdaptiveTestState] = []
@@ -346,14 +338,10 @@ class AdaptiveTest:
         )
 
         # Run the test and get last state
-        last_state = await self._run_async(
-            run_id, start_response.next_item, states
-        )
+        last_state = await self._run_async(run_id, start_response.next_item, states)
 
         if not last_state:
-            raise RuntimeError(
-                "Test run completed but no final state was captured"
-            )
+            raise RuntimeError("Test run completed but no final state was captured")
 
         score = AdaptiveTestScore(
             theta=last_state.state.thetas[-1],
@@ -501,9 +489,7 @@ class AdaptiveTest:
                 response = self._item_processor(item)
 
             # Create replay request item
-            replay_item = TrismikReplayRequestItem(
-                itemId=item.id, itemChoiceId=response
-            )
+            replay_item = TrismikReplayRequestItem(itemId=item.id, itemChoiceId=response)
             replay_items.append(replay_item)
 
         # Create replay request
@@ -586,9 +572,7 @@ class AdaptiveTest:
                 response = self._item_processor(item)
 
             # Continue run with response
-            continue_response = await self._client.continue_run(
-                run_id, response
-            )
+            continue_response = await self._client.continue_run(run_id, response)
 
             # Update state tracking
             states.append(
@@ -629,9 +613,7 @@ class AdaptiveTest:
             TrismikApiError: If API request fails.
         """
         loop = self._get_loop()
-        return loop.run_until_complete(
-            self.submit_classic_eval_async(classic_eval_request)
-        )
+        return loop.run_until_complete(self.submit_classic_eval_async(classic_eval_request))
 
     async def submit_classic_eval_async(
         self, classic_eval_request: TrismikClassicEvalRequest

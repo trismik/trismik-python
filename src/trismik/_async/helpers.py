@@ -6,9 +6,7 @@ from typing import Any, Callable
 from trismik.types import TrismikItem
 
 
-async def process_item(
-    item_processor: Callable[[TrismikItem], Any], item: TrismikItem
-) -> Any:
+async def process_item(item_processor: Callable[[TrismikItem], Any], item: TrismikItem) -> Any:
     """
     Process a test item with either sync or async processor.
 

@@ -18,11 +18,7 @@ class TrismikResponseMocker:
             return httpx.Response(
                 request=httpx.Request("method", "url"),
                 status_code=status,
-                json={
-                    "detail": (
-                        "metadata size must be less than 10KB (10240 bytes)."
-                    )
-                },
+                json={"detail": ("metadata size must be less than 10KB (10240 bytes).")},
             )
         else:
             return httpx.Response(
@@ -179,9 +175,7 @@ class TrismikResponseMocker:
 
     @staticmethod
     def no_content() -> httpx.Response:
-        return httpx.Response(
-            request=httpx.Request("method", "url"), status_code=204, json=None
-        )
+        return httpx.Response(request=httpx.Request("method", "url"), status_code=204, json=None)
 
     @staticmethod
     def run_replay() -> httpx.Response:

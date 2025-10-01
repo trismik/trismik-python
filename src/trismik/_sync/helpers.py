@@ -6,9 +6,7 @@ from typing import Any, Callable
 from trismik.types import TrismikItem
 
 
-def process_item(
-    item_processor: Callable[[TrismikItem], Any], item: TrismikItem
-) -> Any:
+def process_item(item_processor: Callable[[TrismikItem], Any], item: TrismikItem) -> Any:
     """
     Process a test item with sync processor only.
 
@@ -24,7 +22,6 @@ def process_item(
     """
     if asyncio.iscoroutinefunction(item_processor):
         raise TypeError(
-            "Sync client cannot use async item_processor. "
-            "Use TrismikAsyncClient instead."
+            "Sync client cannot use async item_processor. " "Use TrismikAsyncClient instead."
         )
     return item_processor(item)

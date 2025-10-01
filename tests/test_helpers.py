@@ -23,9 +23,7 @@ class TestAsyncHelpers:
         return TrismikItem(id="test_item_1")
 
     @pytest.mark.asyncio
-    async def test_process_item_with_sync_processor(
-        self, sample_item: TrismikItem
-    ) -> None:
+    async def test_process_item_with_sync_processor(self, sample_item: TrismikItem) -> None:
         """Test async process_item with sync processor."""
 
         def sync_processor(item: TrismikItem) -> str:
@@ -35,9 +33,7 @@ class TestAsyncHelpers:
         assert result == "processed_test_item_1"
 
     @pytest.mark.asyncio
-    async def test_process_item_with_async_processor(
-        self, sample_item: TrismikItem
-    ) -> None:
+    async def test_process_item_with_async_processor(self, sample_item: TrismikItem) -> None:
         """Test async process_item with async processor."""
 
         async def async_processor(item: TrismikItem) -> str:
@@ -48,9 +44,7 @@ class TestAsyncHelpers:
         assert result == "async_processed_test_item_1"
 
     @pytest.mark.asyncio
-    async def test_process_item_returns_any_type(
-        self, sample_item: TrismikItem
-    ) -> None:
+    async def test_process_item_returns_any_type(self, sample_item: TrismikItem) -> None:
         """Test that process_item can return any type."""
 
         def processor_dict(item: TrismikItem) -> dict[str, Any]:
@@ -68,9 +62,7 @@ class TestSyncHelpers:
         """Create a sample TrismikItem for testing."""
         return TrismikItem(id="test_item_1")
 
-    def test_process_item_with_sync_processor(
-        self, sample_item: TrismikItem
-    ) -> None:
+    def test_process_item_with_sync_processor(self, sample_item: TrismikItem) -> None:
         """Test sync process_item with sync processor."""
 
         def sync_processor(item: TrismikItem) -> str:
@@ -79,9 +71,7 @@ class TestSyncHelpers:
         result = sync_process_item(sync_processor, sample_item)
         assert result == "processed_test_item_1"
 
-    def test_process_item_rejects_async_processor(
-        self, sample_item: TrismikItem
-    ) -> None:
+    def test_process_item_rejects_async_processor(self, sample_item: TrismikItem) -> None:
         """Test that sync process_item rejects async processors."""
 
         async def async_processor(item: TrismikItem) -> str:
@@ -90,14 +80,10 @@ class TestSyncHelpers:
         with pytest.raises(TypeError) as exc_info:
             sync_process_item(async_processor, sample_item)
 
-        assert "Sync client cannot use async item_processor" in str(
-            exc_info.value
-        )
+        assert "Sync client cannot use async item_processor" in str(exc_info.value)
         assert "Use TrismikAsyncClient instead" in str(exc_info.value)
 
-    def test_process_item_returns_any_type(
-        self, sample_item: TrismikItem
-    ) -> None:
+    def test_process_item_returns_any_type(self, sample_item: TrismikItem) -> None:
         """Test that process_item can return any type."""
 
         def processor_dict(item: TrismikItem) -> dict[str, Any]:

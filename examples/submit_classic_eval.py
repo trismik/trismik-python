@@ -113,9 +113,7 @@ def run_sync_example(project_id: str, experiment: str) -> None:
 
     # Load mock data and create request
     mock_data = load_mock_data()
-    classic_eval_request = create_classic_eval_request(
-        mock_data, project_id, experiment
-    )
+    classic_eval_request = create_classic_eval_request(mock_data, project_id, experiment)
 
     # Submit the evaluation
     print("Submitting mock output of classic eval run...")
@@ -139,9 +137,7 @@ async def run_async_example(project_id: str, experiment: str) -> None:
 
     # Load mock data and create request
     mock_data = load_mock_data()
-    classic_eval_request = create_classic_eval_request(
-        mock_data, project_id, experiment
-    )
+    classic_eval_request = create_classic_eval_request(mock_data, project_id, experiment)
 
     # Submit the evaluation
     print("Submitting mock output of classic eval run...")
