@@ -12,6 +12,10 @@
   - [Installation](#installation)
   - [API Key Setup](#api-key-setup)
   - [Basic Usage](#basic-usage)
+- [Features](#features)
+  - [Progress Reporting](#progress-reporting)
+  - [Replay Functionality](#replay-functionality)
+- [Examples](#examples)
 - [Interpreting Results](#interpreting-results)
   - [Theta (θ)](#theta-θ)
   - [Other Metrics](#other-metrics)
@@ -58,53 +62,130 @@ You can provide your API key in one of the following ways:
 
 3. **Direct Initialization**:
    ```python
-   client = TrismikAsyncClient(api_key="YOUR_API_KEY")
+   client = TrismikClient(api_key="YOUR_API_KEY")
    ```
 
 ### Basic Usage
 
-Running a test is straightforward:
-
-1. Implement a method that wraps model inference over a dataset item
-2. Create an `AdaptiveTest` instance
-3. Run the test!
-
-Here's a basic example:
+Here's the simplest way to run an adaptive test:
 
 ```python
-def model_inference(item: TrismikItem) -> Any:
-    model_output = ...  # call your model here
-    return model_output
+from trismik import TrismikClient, TrismikRunMetadata
+from trismik.types import TrismikItem
 
-
-# Initialize the test runner
-runner = AdaptiveTest(model_inference)
+# Define your item processor
+def model_inference(item: TrismikItem) -> str:
+    # Your model inference logic here
+    # See examples/ folder for real-world implementations
+    return item.choices[0].id  # Example: pick first choice
 
 # Run the test
-results = await runner.run_async(
-    "MMLUPro2025",  # or any dataset we support
-    with_responses=True,
-    run_metadata=sample_metadata,
-)
+with TrismikClient() as client:
+    results = client.run(
+        test_id="MMLUPro2024",
+        project_id="your-project-id",  # Get from dashboard or create with client.create_project()
+        experiment="my-experiment",
+        run_metadata=TrismikRunMetadata(
+            model_metadata={"name": "my-model", "provider": "local"},
+            test_configuration={"task_name": "MMLUPro2024"},
+            inference_setup={},
+        ),
+        item_processor=model_inference,
+    )
 
-# Print the test output
-for result in results:
-    print(f"{result.trait} ({result.name}): {result.value}")
+    print(f"Theta: {results.score.theta}")
+    print(f"Standard Error: {results.score.std_error}")
 ```
 
-### Examples
+**For async usage:**
 
-You can find more examples in the `examples` folder:
-- [`example_transformers.py`](examples/example_transformers.py) - Example using Hugging Face Transformers models
-- [`example_openai.py`](examples/example_openai.py) - Example using OpenAI models
-- [`example_adaptive_test.py`](examples/example_adaptive_test.py) - Example of adaptive testing configuration
+```python
+from trismik import TrismikAsyncClient
 
-To run the examples, you will need to clone this repo, navigate to the
-source folder, and then run:
+async with TrismikAsyncClient() as client:
+    results = await client.run(
+        test_id="MMLUPro2024",
+        project_id="your-project-id",
+        experiment="my-experiment",
+        run_metadata=TrismikRunMetadata(...),
+        item_processor=model_inference,  # Can be sync or async
+    )
+```
+
+## Features
+
+### Progress Reporting
+
+Add optional progress tracking with a callback:
+
+```python
+from tqdm.auto import tqdm
+from trismik.settings import evaluation_settings
+
+def create_progress_callback():
+    pbar = tqdm(total=evaluation_settings["max_iterations"], desc="Running test")
+
+    def callback(current: int, total: int):
+        pbar.total = total
+        pbar.n = current
+        pbar.refresh()
+        if current >= total:
+            pbar.close()
+
+    return callback
+
+# Use it in your run
+with TrismikClient() as client:
+    results = client.run(
+        # ... other parameters ...
+        on_progress=create_progress_callback(),
+    )
+```
+
+The library is silent by default - progress reporting is entirely optional.
+
+### Replay Functionality
+
+Replay the exact sequence of questions from a previous run to test model stability:
+
+```python
+with TrismikClient() as client:
+    # Run initial test
+    results = client.run(
+        test_id="MMLUPro2024",
+        project_id="your-project-id",
+        experiment="experiment-1",
+        run_metadata=metadata,
+        item_processor=model_inference,
+    )
+
+    # Replay with same questions
+    replay_results = client.run_replay(
+        previous_run_id=results.run_id,
+        run_metadata=new_metadata,
+        item_processor=model_inference,
+        with_responses=True,  # Include individual responses
+    )
+```
+
+## Examples
+
+Complete working examples are available in the `examples/` folder:
+
+- **[`example_adaptive_test.py`](examples/example_adaptive_test.py)** - Basic adaptive testing with both sync and async patterns, including replay functionality
+- **[`example_openai.py`](examples/example_openai.py)** - Integration with OpenAI API models
+- **[`example_transformers.py`](examples/example_transformers.py)** - Integration with Hugging Face Transformers models
+
+To run the examples:
 
 ```bash
+# Clone the repository and install with examples dependencies
+git clone https://github.com/trismik/trismik-python
+cd trismik-python
 poetry install --with examples
-poetry run python examples/example_adaptive_test.py # or any other example
+
+# Run an example
+poetry run python examples/example_adaptive_test.py --dataset-name MMLUPro2024
 ```
 
 ## Interpreting Results
@@ -131,7 +212,7 @@ Compared to classical benchmark testing, $\theta$ from adaptive testing uses few
 
   - **Important note**: A higher number of correct answers does not necessarily
   correlate with a high theta. Our algorithm navigates the dataset to find a
-   balance of “hard” and “easy” items for your model, so by the end of the test,
+   balance of "hard" and "easy" items for your model, so by the end of the test,
   it encounters a representative mix of inputs it can and cannot handle. In
    practice, expect responsesCorrect to be roughly half of responsesTotal.
 
