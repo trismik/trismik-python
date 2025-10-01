@@ -13,6 +13,7 @@ or test parameters when replaying runs.
 """
 
 import asyncio
+import time
 from typing import Any
 
 from _cli_helpers import create_base_parser, create_progress_callback, generate_random_hash
@@ -109,6 +110,9 @@ def run_sync_example(dataset_name: str, project_id: str, experiment: str) -> Non
         # Note that we use different metadata for the replay run, for example
         # to track that we're using a different model.
         replay_metadata.test_configuration["original_run_id"] = results.run_id
+
+        # Wait a few seconds while the run is saved by the backend
+        time.sleep(5)
 
         replay_results = client.run_replay(
             results.run_id,
@@ -221,7 +225,7 @@ async def main() -> None:
         experiment = args.experiment
 
     # Run sync example
-    # run_sync_example(args.dataset_name, project_id, experiment)
+    run_sync_example(args.dataset_name, project_id, experiment)
 
     # Run async example
     await run_async_example(args.dataset_name, project_id, experiment)

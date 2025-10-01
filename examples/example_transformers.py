@@ -4,16 +4,18 @@ Example of adaptive testing of a Hugging Face model through the Trismik API.
 This example uses Phi-3-small-8k-instruct as an example. You can use any
 other model that you have access to. Remember to provide your own Trismik
 API key in the .env file.
+
+This example demonstrates synchronous usage, which is appropriate for local
+model inference since transformers.pipeline() is blocking (GPU/CPU-bound work).
 """
 
-import asyncio
 import re
 
 import transformers
 from _cli_helpers import create_base_parser, create_progress_callback, generate_random_hash
 from dotenv import load_dotenv
 
-from trismik import TrismikAsyncClient, TrismikClient
+from trismik import TrismikClient
 from trismik.types import (
     AdaptiveTestScore,
     TrismikItem,
@@ -43,8 +45,6 @@ def create_run_metadata(dataset_name: str) -> TrismikRunMetadata:
 generation_args = {
     "max_new_tokens": 1024,
     "return_full_text": False,
-    "temperature": 0.0,
-    "do_sample": False,
 }
 
 
@@ -133,7 +133,7 @@ def print_score(score: AdaptiveTestScore) -> None:
     print(f"Final standard error: {score.std_error}")
 
 
-def run_sync_example(
+def run_example(
     pipeline: transformers.pipeline,
     dataset_name: str,
     project_id: str,
@@ -188,65 +188,9 @@ def run_sync_example(
         #     print_score(replay_results.score)
 
 
-async def run_async_example(
-    pipeline: transformers.pipeline,
-    dataset_name: str,
-    project_id: str,
-    experiment: str,
-) -> None:
-    """Run an adaptive test asynchronously using the TrismikAsyncClient."""
-
-    print("\n=== Running Asynchronous Example ===")
-
-    async with TrismikAsyncClient() as trismik_client:
-        # Get user information
-        me_response = await trismik_client.me()
-        print(
-            f"User: {me_response.user.firstname} {me_response.user.lastname} "
-            f"({me_response.user.email})"
-        )
-        team_names = [team.name for team in me_response.teams]
-        print(f"Teams: {', '.join(team_names)}")
-
-        print(f"\nStarting run with dataset name: {dataset_name}")
-        results = await trismik_client.run(
-            dataset_name,
-            project_id,
-            experiment,
-            run_metadata=create_run_metadata(dataset_name),
-            item_processor=lambda item: inference(pipeline, item),
-            on_progress=create_progress_callback("Running test"),
-            return_dict=False,
-        )
-
-        print(f"Run {results.run_id} completed.")
-
-        if results.score is not None:
-            print_score(results.score)
-        else:
-            print("No score available.")
-
-        # Uncomment to replay the exact same questions from the previous run.
-        # This is useful to test the stability of the model - note that this
-        # works best with temperature > 0.
-
-        # print("\nReplay run")
-        # replay_results = await trismik_client.run_replay(
-        #     results.run_id,
-        #     create_run_metadata(dataset_name),
-        #     item_processor=lambda item: inference(pipeline, item),
-        #     on_progress=create_progress_callback("Replaying test"),
-        #     with_responses=True,
-        #     return_dict=False,
-        # )
-        # print(f"Replay run {replay_results.run_id} completed.")
-        # if replay_results.score is not None:
-        #     print_score(replay_results.score)
-
-
-async def main() -> None:
+def main() -> None:
     """
-    Run both synchronous and asynchronous examples.
+    Run synchronous adaptive testing example with Hugging Face transformers.
 
     Assumes TRISMIK_SERVICE_URL and TRISMIK_API_KEY are set either in
     environment or in .env file.
@@ -254,7 +198,7 @@ async def main() -> None:
     Project and experiment names are auto-generated if not specified via CLI.
     """
     # Parse command line arguments using base parser
-    parser = create_base_parser("Run adaptive testing examples with Trismik API")
+    parser = create_base_parser("Run adaptive testing example with Trismik API")
     args = parser.parse_args()
 
     load_dotenv()
@@ -285,16 +229,13 @@ async def main() -> None:
     pipeline = transformers.pipeline(
         "text-generation",
         model="microsoft/Phi-4-mini-instruct",
-        model_kwargs={"torch_dtype": "auto"},
+        dtype="auto",
         device_map="auto",
     )
 
     # Run sync example
-    run_sync_example(pipeline, args.dataset_name, project_id, experiment)
-
-    # Run async example
-    await run_async_example(pipeline, args.dataset_name, project_id, experiment)
+    run_example(pipeline, args.dataset_name, project_id, experiment)
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
