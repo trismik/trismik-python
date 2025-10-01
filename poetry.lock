@@ -4173,6 +4173,18 @@ files = [
 markers = {main = "extra == \"examples\" and python_version < \"3.11\"", dev = "python_version < \"3.11\""}
 
 [[package]]
+name = "tomlkit"
+version = "0.13.3"
+description = "Style preserving TOML library"
+optional = false
+python-versions = ">=3.8"
+groups = ["dev"]
+files = [
+    {file = "tomlkit-0.13.3-py3-none-any.whl", hash = "sha256:c89c649d79ee40629a9fda55f8ace8c6a1b42deb912b2a8fd8d942ddadb606b0"},
+    {file = "tomlkit-0.13.3.tar.gz", hash = "sha256:430cf247ee57df2b94ee3fbe588e71d362a941ebb545dec29b53961d61add2a1"},
+]
+
+[[package]]
 name = "torch"
 version = "2.7.1"
 description = "Tensors and Dynamic neural networks in Python with strong GPU acceleration"
@@ -4851,4 +4863,4 @@ examples = ["accelerate", "notebook", "openai", "torch", "torchaudio", "torchvis
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9"
-content-hash = "0624f2fe4f50b2df8274d372ed65f5b33efc60db7b261f2cb3d1f0ea9812fd48"
+content-hash = "021a78d318bd7465b709404376b08a5e60e85279cfe7333853334b2b3f392e47"

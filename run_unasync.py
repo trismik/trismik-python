@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 """Script to run unasync transformation based on pyproject.toml config."""
 
-import tomllib
 from pathlib import Path
 
+import tomlkit
 from unasync import Rule, unasync_files
 
 
@@ -11,8 +11,8 @@ def main() -> None:
     """Run unasync transformation."""
     # Load configuration from pyproject.toml
     pyproject_path = Path(__file__).parent / "pyproject.toml"
-    with open(pyproject_path, "rb") as f:
-        config = tomllib.load(f)
+    with open(pyproject_path, "r") as f:
+        config = tomlkit.load(f)
 
     unasync_config = config.get("tool", {}).get("unasync", {})
     rules_list = unasync_config.get("rules", [])

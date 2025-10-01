@@ -50,6 +50,7 @@ flake8 = "^7.0.0"
 mypy = "^1.15.0"
 autoflake = "^2.3.1"
 unasync = "^0.6.0"
+tomlkit = "^0.13.2"
 
 [tool.poetry-dynamic-versioning]
 # Expected Git tags: vX.Y.Z, vX.Y.Z-alphaN, vX.Y.Z-betaN, vX.Y.Z-rcN
