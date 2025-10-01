@@ -5,7 +5,7 @@ This module provides an asynchronous client for interacting with the Trismik
 API. It uses httpx for making HTTP requests.
 """
 
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Literal, Optional, Union, overload
 
 import httpx
 
@@ -440,6 +440,32 @@ class TrismikAsyncClient:
 
     # ===== Test Orchestration Methods =====
 
+    @overload
+    async def run(  # noqa: E704
+        self,
+        test_id: str,
+        project_id: str,
+        experiment: str,
+        run_metadata: TrismikRunMetadata,
+        item_processor: Callable[[TrismikItem], Any],
+        on_progress: Optional[Callable[[int, int], None]] = None,
+        return_dict: Literal[True] = True,
+        with_responses: bool = False,
+    ) -> Dict[str, Any]: ...
+
+    @overload
+    async def run(  # noqa: E704
+        self,
+        test_id: str,
+        project_id: str,
+        experiment: str,
+        run_metadata: TrismikRunMetadata,
+        item_processor: Callable[[TrismikItem], Any],
+        on_progress: Optional[Callable[[int, int], None]] = None,
+        return_dict: Literal[False] = False,
+        with_responses: bool = False,
+    ) -> TrismikRunResults: ...
+
     async def run(
         self,
         test_id: str,
@@ -585,6 +611,28 @@ class TrismikAsyncClient:
             item = continue_response.next_item
 
         return states[-1] if states else None
+
+    @overload
+    async def run_replay(  # noqa: E704
+        self,
+        previous_run_id: str,
+        run_metadata: TrismikRunMetadata,
+        item_processor: Callable[[TrismikItem], Any],
+        on_progress: Optional[Callable[[int, int], None]] = None,
+        return_dict: Literal[True] = True,
+        with_responses: bool = False,
+    ) -> Dict[str, Any]: ...
+
+    @overload
+    async def run_replay(  # noqa: E704
+        self,
+        previous_run_id: str,
+        run_metadata: TrismikRunMetadata,
+        item_processor: Callable[[TrismikItem], Any],
+        on_progress: Optional[Callable[[int, int], None]] = None,
+        return_dict: Literal[False] = False,
+        with_responses: bool = False,
+    ) -> TrismikRunResults: ...
 
     async def run_replay(
         self,

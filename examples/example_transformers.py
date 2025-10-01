@@ -6,14 +6,12 @@ other model that you have access to. Remember to provide your own Trismik
 API key in the .env file.
 """
 
-import argparse
 import asyncio
 import re
-from typing import Callable, Optional
 
 import transformers
+from _cli_helpers import create_base_parser, create_progress_callback, generate_random_hash
 from dotenv import load_dotenv
-from tqdm.auto import tqdm
 
 from trismik import TrismikAsyncClient, TrismikClient
 from trismik.types import (
@@ -126,35 +124,6 @@ Please adhere strictly to the instructions.
 
     assert isinstance(final_answer, str)
     return final_answer
-
-
-def create_progress_callback(desc: str = "Progress") -> Callable[[int, int], None]:
-    """
-    Create a progress callback that uses tqdm.
-
-    Args:
-        desc: Description for the progress bar.
-
-    Returns:
-        Callback function compatible with client.run() on_progress parameter.
-    """
-    pbar: Optional[tqdm] = None
-
-    def callback(current: int, total: int) -> None:
-        nonlocal pbar
-
-        if pbar is None:
-            pbar = tqdm(total=total, desc=desc)
-
-        pbar.total = total
-        pbar.n = current
-        pbar.refresh()
-
-        if current >= total and pbar is not None:
-            pbar.close()
-            pbar = None
-
-    return callback
 
 
 def print_score(score: AdaptiveTestScore) -> None:
@@ -281,30 +250,33 @@ async def main() -> None:
 
     Assumes TRISMIK_SERVICE_URL and TRISMIK_API_KEY are set either in
     environment or in .env file.
+
+    Project and experiment names are auto-generated if not specified via CLI.
     """
-    # Parse command line arguments
-    parser = argparse.ArgumentParser(description="Run adaptive testing examples with Trismik API")
-    parser.add_argument(
-        "--dataset-name",
-        type=str,
-        default="MMLUPro2024",
-        help="Name of the dataset to run (default: FinRAG2025)",
-    )
-    parser.add_argument(
-        "--project-id",
-        type=str,
-        required=True,
-        help="Project ID for the Trismik run",
-    )
-    parser.add_argument(
-        "--experiment",
-        type=str,
-        required=True,
-        help="Experiment name for the Trismik run",
-    )
+    # Parse command line arguments using base parser
+    parser = create_base_parser("Run adaptive testing examples with Trismik API")
     args = parser.parse_args()
 
     load_dotenv()
+
+    # Handle project creation or use provided ID
+    if args.project_id is None:
+        project_name = f"example_project_{generate_random_hash()}"
+        print(f"Creating new project: {project_name}")
+        with TrismikClient() as temp_client:
+            project = temp_client.create_project(name=project_name)
+            project_id = project.id
+            print(f"Created project: {project.name} (ID: {project.id})")
+    else:
+        project_id = args.project_id
+        print(f"Using existing project ID: {project_id}")
+
+    # Handle experiment name
+    if args.experiment is None:
+        experiment = f"example_experiment_{generate_random_hash()}"
+        print(f"Generated experiment name: {experiment}")
+    else:
+        experiment = args.experiment
 
     # We choose Phi-4-mini-instruct as an example as it requires
     # relatively low memory to run (< 8 GB). You can use any other
@@ -318,10 +290,10 @@ async def main() -> None:
     )
 
     # Run sync example
-    run_sync_example(pipeline, args.dataset_name, args.project_id, args.experiment)
+    run_sync_example(pipeline, args.dataset_name, project_id, experiment)
 
     # Run async example
-    await run_async_example(pipeline, args.dataset_name, args.project_id, args.experiment)
+    await run_async_example(pipeline, args.dataset_name, project_id, experiment)
 
 
 if __name__ == "__main__":

@@ -1,21 +1,24 @@
 """
-Example usage of classic evaluation through the Trismik API.
+Example usage of project creation and classic evaluation through Trismik API.
 
-This file demonstrates how to use the Trismik client to submit a classic
-evaluation run with pre-computed model outputs and metrics. Unlike adaptive
-testing, classic evaluation allows you to submit all results at once rather
-than answering questions iteratively.
+This file demonstrates how to use the Trismik client to:
+- Create a new project with auto-generated names
+- Submit a classic evaluation run to that newly created project
 
-This example loads mock data from mock_data.json and submits it to the Trismik
-API for evaluation recording and analysis.
+This example shows both sync and async usage patterns for creating
+projects and submitting evaluations. It loads mock data from mock_data.json
+and submits it to the Trismik API for evaluation recording and analysis.
+
+The example auto-generates project and experiment names using random hashes,
+making it easy to run without specifying arguments.
 """
 
-import argparse
 import asyncio
 import json
 from pathlib import Path
 from typing import Any, Dict
 
+from _cli_helpers import create_base_parser, generate_random_hash
 from dotenv import load_dotenv
 
 from trismik import TrismikAsyncClient, TrismikClient
@@ -98,7 +101,7 @@ def create_classic_eval_request(
 
 
 def run_sync_example(project_id: str, experiment: str) -> None:
-    """Submit a classic evaluation synchronously."""
+    """Submit a classic evaluation synchronously using provided project."""
     print("\n=== Running Synchronous Example ===")
 
     with TrismikClient() as client:
@@ -118,11 +121,11 @@ def run_sync_example(project_id: str, experiment: str) -> None:
         # Submit the evaluation
         print("Submitting mock output of classic eval run...")
         response = client.submit_classic_eval(classic_eval_request)
-        print(f"Run {response.id} submitted.")
+        print(f"Run {response.id} submitted to project {project_id}.")
 
 
 async def run_async_example(project_id: str, experiment: str) -> None:
-    """Submit a classic evaluation asynchronously."""
+    """Submit a classic evaluation asynchronously using provided project."""
     print("\n=== Running Asynchronous Example ===")
 
     async with TrismikAsyncClient() as client:
@@ -142,32 +145,21 @@ async def run_async_example(project_id: str, experiment: str) -> None:
         # Submit the evaluation
         print("Submitting mock output of classic eval run...")
         response = await client.submit_classic_eval(classic_eval_request)
-        print(f"Run {response.id} submitted.")
+        print(f"Run {response.id} submitted to project {project_id}.")
 
 
 async def main() -> None:
     """
-    Run both synchronous and asynchronous classic evaluation examples.
+    Run both synchronous and asynchronous project creation and evaluation.
+
+    Generates random project and experiment names if not specified via CLI.
+    Sync and async examples share the same project for comparison.
 
     Assumes TRISMIK_SERVICE_URL and TRISMIK_API_KEY are set either in
     environment or in .env file.
     """
-    # Parse command line arguments
-    parser = argparse.ArgumentParser(
-        description="Submit classic evaluation examples to Trismik API"
-    )
-    parser.add_argument(
-        "--project-id",
-        type=str,
-        required=True,
-        help="Project ID for the Trismik evaluation",
-    )
-    parser.add_argument(
-        "--experiment",
-        type=str,
-        required=True,
-        help="Experiment name for the Trismik evaluation",
-    )
+    # Parse command line arguments using base parser
+    parser = create_base_parser("Create project and submit classic evaluation to Trismik")
     parser.add_argument(
         "--sync-only",
         action="store_true",
@@ -182,16 +174,43 @@ async def main() -> None:
 
     load_dotenv()
 
-    if args.sync_only:
-        run_sync_example(args.project_id, args.experiment)
-    elif args.async_only:
-        await run_async_example(args.project_id, args.experiment)
-    else:
-        # Run sync example
-        run_sync_example(args.project_id, args.experiment)
+    print("=" * 60)
+    print("Project Creation and Classic Evaluation Example")
+    print("=" * 60)
 
-        # Run async example
-        await run_async_example(args.project_id, args.experiment)
+    # Handle project creation or use provided ID
+    if args.project_id is None:
+        project_name = f"example_project_{generate_random_hash()}"
+        print(f"Creating new project: {project_name}")
+        with TrismikClient() as temp_client:
+            project = temp_client.create_project(name=project_name)
+            project_id = project.id
+            print(f"Created project: {project.name} (ID: {project.id})")
+    else:
+        project_id = args.project_id
+        print(f"Using existing project ID: {project_id}")
+
+    # Handle experiment name
+    if args.experiment is None:
+        experiment = f"example_experiment_{generate_random_hash()}"
+        print(f"Generated experiment name: {experiment}")
+    else:
+        experiment = args.experiment
+
+    print("=" * 60)
+
+    if args.sync_only:
+        run_sync_example(project_id, experiment)
+    elif args.async_only:
+        await run_async_example(project_id, experiment)
+    else:
+        # Run both sync and async examples with shared project
+        run_sync_example(project_id, experiment)
+        await run_async_example(project_id, experiment)
+
+    print("\n" + "=" * 60)
+    print("Examples completed successfully!")
+    print("=" * 60)
 
 
 if __name__ == "__main__":
