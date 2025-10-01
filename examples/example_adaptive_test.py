@@ -1,10 +1,10 @@
 """
 Example usage adaptive testing through the Trismik API.
 
-This file provides a skeleton for how to use the AdaptiveTest class to run
-tests. In this class, we mock the item processing by picking the first choice.
-In a real application, you would implement your own model inference in
-either process_item_sync or process_item_async.
+This file provides a skeleton for how to use the TrismikClient and
+TrismikAsyncClient classes to run tests. In this example, we mock the item
+processing by picking the first choice. In a real application, you would
+implement your own model inference in either a sync or async function.
 
 This example also demonstrates replay functionality with custom metadata.
 The replay runs use different metadata than the original runs to
@@ -14,12 +14,13 @@ or test parameters when replaying runs.
 
 import argparse
 import asyncio
-from typing import Any
+from typing import Any, Callable, Optional
 
 from _sample_metadata import replay_metadata, sample_metadata
 from dotenv import load_dotenv
+from tqdm.auto import tqdm
 
-from trismik.adaptive_test import AdaptiveTest
+from trismik import TrismikAsyncClient, TrismikClient
 from trismik.types import AdaptiveTestScore, TrismikItem, TrismikMultipleChoiceTextItem
 
 
@@ -74,6 +75,35 @@ async def mock_inference_async(item: TrismikItem) -> Any:
         raise RuntimeError("Encountered unknown item type")
 
 
+def create_progress_callback(desc: str = "Progress") -> Callable[[int, int], None]:
+    """
+    Create a progress callback that uses tqdm.
+
+    Args:
+        desc: Description for the progress bar.
+
+    Returns:
+        Callback function compatible with client.run() on_progress parameter.
+    """
+    pbar: Optional[tqdm] = None
+
+    def callback(current: int, total: int) -> None:
+        nonlocal pbar
+
+        if pbar is None:
+            pbar = tqdm(total=total, desc=desc)
+
+        pbar.total = total
+        pbar.n = current
+        pbar.refresh()
+
+        if current >= total and pbar is not None:
+            pbar.close()
+            pbar = None
+
+    return callback
+
+
 def print_score(score: AdaptiveTestScore) -> None:
     """Print adaptive test score with thetas, standard errors, and KL info."""
     print("\nAdaptive Test Score...")
@@ -82,100 +112,108 @@ def print_score(score: AdaptiveTestScore) -> None:
 
 
 def run_sync_example(dataset_name: str, project_id: str, experiment: str) -> None:
-    """Run an adaptive test synchronously using the AdaptiveTest class."""
+    """Run an adaptive test synchronously using the TrismikClient."""
     print("\n=== Running Synchronous Example ===")
-    runner = AdaptiveTest(mock_inference)
 
-    print(f"\nStarting run with dataset name: {dataset_name}")
-    results = runner.run(
-        dataset_name,
-        project_id,
-        experiment,
-        run_metadata=sample_metadata,
-        return_dict=False,
-    )
+    with TrismikClient() as client:
+        print(f"\nStarting run with dataset name: {dataset_name}")
+        results = client.run(
+            dataset_name,
+            project_id,
+            experiment,
+            run_metadata=sample_metadata,
+            item_processor=mock_inference,
+            on_progress=create_progress_callback("Running test"),
+            return_dict=False,
+        )
 
-    print(f"Run {results.run_id} completed.")
+        print(f"Run {results.run_id} completed.")
 
-    if results.score is not None:
-        print_score(results.score)
-    else:
-        print("No score available.")
+        if results.score is not None:
+            print_score(results.score)
+        else:
+            print("No score available.")
 
-    print("\nReplay run")
-    # Update replay metadata with the original run ID
-    # Note that we use different metadata for the replay run, for example
-    # to track that we're using a different model.
-    replay_metadata.test_configuration["original_run_id"] = results.run_id
+        print("\nReplay run")
+        # Update replay metadata with the original run ID
+        # Note that we use different metadata for the replay run, for example
+        # to track that we're using a different model.
+        replay_metadata.test_configuration["original_run_id"] = results.run_id
 
-    replay_results = runner.run_replay(
-        results.run_id,
-        replay_metadata,
-        with_responses=True,
-        return_dict=False,
-    )
-    print(f"Replay run {replay_results.run_id} completed.")
-    if replay_results.score is not None:
-        print_score(replay_results.score)
-    if replay_results.responses is not None:
-        print(f"Number of responses: {len(replay_results.responses)}")
+        replay_results = client.run_replay(
+            results.run_id,
+            replay_metadata,
+            item_processor=mock_inference,
+            on_progress=create_progress_callback("Replaying test"),
+            with_responses=True,
+            return_dict=False,
+        )
+        print(f"Replay run {replay_results.run_id} completed.")
+        if replay_results.score is not None:
+            print_score(replay_results.score)
+        if replay_results.responses is not None:
+            print(f"Number of responses: {len(replay_results.responses)}")
 
 
 async def run_async_example(dataset_name: str, project_id: str, experiment: str) -> None:
-    """Run an adaptive test asynchronously using the AdaptiveTest class."""
+    """Run an adaptive test asynchronously using the TrismikAsyncClient."""
     print("\n=== Running Asynchronous Example ===")
-    runner = AdaptiveTest(mock_inference_async)
 
-    # Get user information
-    me_response = await runner.me_async()
-    print(
-        f"User: {me_response.user.firstname} {me_response.user.lastname} "
-        f"({me_response.user.email})"
-    )
-    team_names = [org.name for org in me_response.teams]
-    print(f"Teams: {', '.join(team_names)}")
+    async with TrismikAsyncClient() as client:
+        # Get user information
+        me_response = await client.me()
+        print(
+            f"User: {me_response.user.firstname} {me_response.user.lastname} "
+            f"({me_response.user.email})"
+        )
+        team_names = [org.name for org in me_response.teams]
+        print(f"Teams: {', '.join(team_names)}")
 
-    # List available datasets
-    available_datasets = runner.list_datasets()
-    print("\nAvailable datasets:")
-    for dataset in available_datasets:
-        print(f"- {dataset.id}")
+        # List available datasets
+        available_datasets = await client.list_datasets()
+        print("\nAvailable datasets:")
+        for dataset in available_datasets:
+            print(f"- {dataset.id}")
 
-    print(f"\nStarting run with dataset name: {dataset_name}")
-    results = await runner.run_async(
-        dataset_name,
-        project_id,
-        experiment,
-        run_metadata=sample_metadata,
-        return_dict=False,
-    )
+        print(f"\nStarting run with dataset name: {dataset_name}")
+        results = await client.run(
+            dataset_name,
+            project_id,
+            experiment,
+            run_metadata=sample_metadata,
+            item_processor=mock_inference_async,
+            on_progress=create_progress_callback("Running test"),
+            return_dict=False,
+        )
 
-    print(f"Run {results.run_id} completed.")
+        print(f"Run {results.run_id} completed.")
 
-    if results.score is not None:
-        print_score(results.score)
-    else:
-        print("No score available.")
+        if results.score is not None:
+            print_score(results.score)
+        else:
+            print("No score available.")
 
-    print("\nReplay run")
-    # Update replay metadata with the original run ID
-    # This demonstrates how you can customize metadata for replay runs
-    # to track different model configurations, hardware, or test parameters
+        print("\nReplay run")
+        # Update replay metadata with the original run ID
+        # This demonstrates how you can customize metadata for replay runs
+        # to track different model configurations, hardware, or test parameters
 
-    replay_metadata.test_configuration["original_run_id"] = results.run_id
+        replay_metadata.test_configuration["original_run_id"] = results.run_id
 
-    await asyncio.sleep(10)  # Wait 10 seconds before replay
-    replay_results = await runner.run_replay_async(
-        results.run_id,
-        replay_metadata,
-        with_responses=True,
-        return_dict=False,
-    )
-    print(f"Replay run {replay_results.run_id} completed.")
-    if replay_results.score is not None:
-        print_score(replay_results.score)
-    if replay_results.responses is not None:
-        print(f"Number of responses: {len(replay_results.responses)}")
+        await asyncio.sleep(10)  # Wait 10 seconds before replay
+        replay_results = await client.run_replay(
+            results.run_id,
+            replay_metadata,
+            item_processor=mock_inference_async,
+            on_progress=create_progress_callback("Replaying test"),
+            with_responses=True,
+            return_dict=False,
+        )
+        print(f"Replay run {replay_results.run_id} completed.")
+        if replay_results.score is not None:
+            print_score(replay_results.score)
+        if replay_results.responses is not None:
+            print(f"Number of responses: {len(replay_results.responses)}")
 
 
 async def main() -> None:
