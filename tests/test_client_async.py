@@ -920,3 +920,128 @@ class TestTrismikAsyncClient:
         response = TrismikResponseMocker.create_project_no_description()
         http_client.post.return_value = response
         return http_client
+
+    @pytest.mark.asyncio
+    async def test_run_should_call_progress_callback(self) -> None:
+        """Test that run() calls on_progress callback with correct arguments."""
+        client = TrismikAsyncClient(
+            http_client=self._mock_complete_run_flow(),
+            max_items=60,
+        )
+        metadata = TrismikRunMetadata(
+            model_metadata=TrismikRunMetadata.ModelMetadata(name="test_model"),
+            test_configuration={},
+            inference_setup={},
+        )
+
+        progress_calls = []
+
+        def progress_callback(current: int, total: int) -> None:
+            progress_calls.append((current, total))
+
+        def processor(item):
+            return item.choices[0].id
+
+        await client.run(
+            test_id="test_123",
+            project_id="proj_456",
+            experiment="exp_1",
+            run_metadata=metadata,
+            item_processor=processor,
+            on_progress=progress_callback,
+        )
+
+        # Should be called: (0, 60), (1, 60), (2, 60), (3, 3) final
+        assert len(progress_calls) >= 3
+        # First call should be (0, max_items=60)
+        assert progress_calls[0] == (0, 60)
+        # Final call should be (current, current) when complete
+        assert progress_calls[-1][0] == progress_calls[-1][1]
+
+    @pytest.mark.asyncio
+    async def test_run_should_work_without_progress_callback(self) -> None:
+        """Test that run() works when on_progress is None."""
+        client = TrismikAsyncClient(http_client=self._mock_complete_run_flow())
+        metadata = TrismikRunMetadata(
+            model_metadata=TrismikRunMetadata.ModelMetadata(name="test_model"),
+            test_configuration={},
+            inference_setup={},
+        )
+
+        def processor(item):
+            return item.choices[0].id
+
+        # Should not raise when on_progress is None
+        results = await client.run(
+            test_id="test_123",
+            project_id="proj_456",
+            experiment="exp_1",
+            run_metadata=metadata,
+            item_processor=processor,
+            on_progress=None,
+        )
+
+        assert results["run_id"] == "run_id"
+
+    @pytest.mark.asyncio
+    async def test_run_replay_should_call_progress_callback(self) -> None:
+        """Test that run_replay() calls on_progress callback."""
+        # Create mock client that returns summary then accepts replay
+        mock_client = MagicMock(httpx.AsyncClient)
+        mock_client.get = AsyncMock(return_value=TrismikResponseMocker.run_summary())
+        mock_client.post = AsyncMock(return_value=TrismikResponseMocker.run_replay())
+
+        client = TrismikAsyncClient(http_client=mock_client)
+        metadata = TrismikRunMetadata(
+            model_metadata=TrismikRunMetadata.ModelMetadata(name="test_model"),
+            test_configuration={},
+            inference_setup={},
+        )
+
+        progress_calls = []
+
+        def progress_callback(current: int, total: int) -> None:
+            progress_calls.append((current, total))
+
+        def processor(item):
+            return item.choices[0].id
+
+        await client.run_replay(
+            previous_run_id="run_123",
+            run_metadata=metadata,
+            item_processor=processor,
+            on_progress=progress_callback,
+        )
+
+        # Should be called for each item in the dataset plus final call
+        assert len(progress_calls) >= 1
+        # Final call should be (total, total)
+        assert progress_calls[-1][0] == progress_calls[-1][1]
+
+    @pytest.mark.asyncio
+    async def test_run_replay_should_work_without_progress_callback(self) -> None:
+        """Test that run_replay() works when on_progress is None."""
+        # Create mock client that returns summary then accepts replay
+        mock_client = MagicMock(httpx.AsyncClient)
+        mock_client.get = AsyncMock(return_value=TrismikResponseMocker.run_summary())
+        mock_client.post = AsyncMock(return_value=TrismikResponseMocker.run_replay())
+
+        client = TrismikAsyncClient(http_client=mock_client)
+        metadata = TrismikRunMetadata(
+            model_metadata=TrismikRunMetadata.ModelMetadata(name="test_model"),
+            test_configuration={},
+            inference_setup={},
+        )
+
+        def processor(item):
+            return item.choices[0].id
+
+        # Should not raise when on_progress is None
+        results = await client.run_replay(
+            previous_run_id="run_123",
+            run_metadata=metadata,
+            item_processor=processor,
+            on_progress=None,
+        )
+
+        assert results["run_id"] == "replay_run_id"

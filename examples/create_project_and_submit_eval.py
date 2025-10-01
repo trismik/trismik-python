@@ -1,7 +1,7 @@
 """
 Example usage of project creation and classic evaluation through Trismik API.
 
-This file demonstrates how to use the AdaptiveTest class to:
+This file demonstrates how to use the Trismik client to:
 - Create a new project with auto-generated names
 - Submit a classic evaluation run to that newly created project
 
@@ -22,7 +22,7 @@ from typing import Any, Dict, Optional
 
 from dotenv import load_dotenv
 
-from trismik.adaptive_test import AdaptiveTest
+from trismik import TrismikAsyncClient, TrismikClient
 from trismik.types import (
     TrismikClassicEvalItem,
     TrismikClassicEvalMetric,
@@ -61,37 +61,6 @@ def generate_random_hash() -> str:
         str: Random 8-character string suitable for project/experiment names.
     """
     return secrets.token_hex(4)  # 4 bytes = 8 hex characters
-
-
-async def find_user_default_team_account_id_async(runner: AdaptiveTest) -> str:
-    """
-    Find the user's default team account ID asynchronously.
-
-    The default team is the one where team.name == user.email.
-
-    Args:
-        runner (AdaptiveTest): AdaptiveTest instance to use for API calls.
-
-    Returns:
-        str: Account ID of the user's default team.
-
-    Raises:
-        ValueError: If no default team is found.
-    """
-    me_response = await runner.me_async()
-    user_email = me_response.user.email
-
-    for team in me_response.teams:
-        if team.name == user_email:
-            return team.account_id
-
-    # If no match found, raise an error with helpful information
-    team_names = [team.name for team in me_response.teams]
-    raise ValueError(
-        f"No default team found for user {user_email}. "
-        f"Available teams: {', '.join(team_names)}. "
-        "Expected to find a team where team.name == user.email."
-    )
 
 
 def create_classic_eval_request(
@@ -146,83 +115,83 @@ def create_classic_eval_request(
 def run_sync_example(project_description: Optional[str] = None) -> None:
     """Create a project and submit a classic evaluation synchronously."""
     print("\n=== Running Synchronous Example ===")
-    runner = AdaptiveTest(lambda x: None)
 
-    # Get user information
-    me_response = runner.me()
-    print(
-        f"User: {me_response.user.firstname} {me_response.user.lastname} "
-        f"({me_response.user.email})"
-    )
-    team_names = [team.name for team in me_response.teams]
-    print(f"Teams: {', '.join(team_names)}")
+    with TrismikClient() as client:
+        # Get user information
+        me_response = client.me()
+        print(
+            f"User: {me_response.user.firstname} {me_response.user.lastname} "
+            f"({me_response.user.email})"
+        )
+        team_names = [team.name for team in me_response.teams]
+        print(f"Teams: {', '.join(team_names)}")
 
-    # Generate random names for project and experiment
-    project_name = f"example_{generate_random_hash()}"
-    experiment = f"example_{generate_random_hash()}"
-    print(f"Generated project name: {project_name}")
-    print(f"Generated experiment name: {experiment}")
+        # Generate random names for project and experiment
+        project_name = f"example_{generate_random_hash()}"
+        experiment = f"example_{generate_random_hash()}"
+        print(f"Generated project name: {project_name}")
+        print(f"Generated experiment name: {experiment}")
 
-    # Create a new project
-    description = (
-        project_description or f"Auto-generated project for {experiment} evaluation example"
-    )
-    print(f"Creating new project '{project_name}'...")
-    project: TrismikProject = runner.create_project(
-        name=project_name,
-        description=description,
-    )
-    print(f"Project created successfully: {project.name} (ID: {project.id})")
+        # Create a new project
+        description = (
+            project_description or f"Auto-generated project for {experiment} evaluation example"
+        )
+        print(f"Creating new project '{project_name}'...")
+        project: TrismikProject = client.create_project(
+            name=project_name,
+            description=description,
+        )
+        print(f"Project created successfully: {project.name} (ID: {project.id})")
 
-    # Load mock data and create request using the new project
-    mock_data = load_mock_data()
-    classic_eval_request = create_classic_eval_request(mock_data, project.id, experiment)
+        # Load mock data and create request using the new project
+        mock_data = load_mock_data()
+        classic_eval_request = create_classic_eval_request(mock_data, project.id, experiment)
 
-    # Submit the evaluation
-    print("Submitting mock output of classic eval run...")
-    response = runner.submit_classic_eval(classic_eval_request)
-    print(f"Run {response.id} submitted to project {project.name}.")
+        # Submit the evaluation
+        print("Submitting mock output of classic eval run...")
+        response = client.submit_classic_eval(classic_eval_request)
+        print(f"Run {response.id} submitted to project {project.name}.")
 
 
 async def run_async_example(project_description: Optional[str] = None) -> None:
     """Create a project and submit a classic evaluation asynchronously."""
     print("\n=== Running Asynchronous Example ===")
-    runner = AdaptiveTest(lambda x: None)
 
-    # Get user information
-    me_response = await runner.me_async()
-    print(
-        f"User: {me_response.user.firstname} {me_response.user.lastname} "
-        f"({me_response.user.email})"
-    )
-    team_names = [team.name for team in me_response.teams]
-    print(f"Teams: {', '.join(team_names)}")
+    async with TrismikAsyncClient() as client:
+        # Get user information
+        me_response = await client.me()
+        print(
+            f"User: {me_response.user.firstname} {me_response.user.lastname} "
+            f"({me_response.user.email})"
+        )
+        team_names = [team.name for team in me_response.teams]
+        print(f"Teams: {', '.join(team_names)}")
 
-    # Generate random names for project and experiment
-    project_name = f"example_{generate_random_hash()}"
-    experiment = f"example_{generate_random_hash()}"
-    print(f"Generated project name: {project_name}")
-    print(f"Generated experiment name: {experiment}")
+        # Generate random names for project and experiment
+        project_name = f"example_{generate_random_hash()}"
+        experiment = f"example_{generate_random_hash()}"
+        print(f"Generated project name: {project_name}")
+        print(f"Generated experiment name: {experiment}")
 
-    # Create a new project
-    description = (
-        project_description or f"Auto-generated project for {experiment} evaluation example"
-    )
-    print(f"Creating new project '{project_name}'...")
-    project: TrismikProject = await runner.create_project_async(
-        name=project_name,
-        description=description,
-    )
-    print(f"Project created successfully: {project.name} (ID: {project.id})")
+        # Create a new project
+        description = (
+            project_description or f"Auto-generated project for {experiment} evaluation example"
+        )
+        print(f"Creating new project '{project_name}'...")
+        project: TrismikProject = await client.create_project(
+            name=project_name,
+            description=description,
+        )
+        print(f"Project created successfully: {project.name} (ID: {project.id})")
 
-    # Load mock data and create request using the new project
-    mock_data = load_mock_data()
-    classic_eval_request = create_classic_eval_request(mock_data, project.id, experiment)
+        # Load mock data and create request using the new project
+        mock_data = load_mock_data()
+        classic_eval_request = create_classic_eval_request(mock_data, project.id, experiment)
 
-    # Submit the evaluation
-    print("Submitting mock output of classic eval run...")
-    response = await runner.submit_classic_eval_async(classic_eval_request)
-    print(f"Run {response.id} submitted to project {project.name}.")
+        # Submit the evaluation
+        print("Submitting mock output of classic eval run...")
+        response = await client.submit_classic_eval(classic_eval_request)
+        print(f"Run {response.id} submitted to project {project.name}.")
 
 
 async def main() -> None:

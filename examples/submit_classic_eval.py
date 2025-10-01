@@ -1,7 +1,7 @@
 """
 Example usage of classic evaluation through the Trismik API.
 
-This file demonstrates how to use the AdaptiveTest class to submit a classic
+This file demonstrates how to use the Trismik client to submit a classic
 evaluation run with pre-computed model outputs and metrics. Unlike adaptive
 testing, classic evaluation allows you to submit all results at once rather
 than answering questions iteratively.
@@ -18,7 +18,7 @@ from typing import Any, Dict
 
 from dotenv import load_dotenv
 
-from trismik.adaptive_test import AdaptiveTest
+from trismik import TrismikAsyncClient, TrismikClient
 from trismik.types import (
     TrismikClassicEvalItem,
     TrismikClassicEvalMetric,
@@ -100,49 +100,49 @@ def create_classic_eval_request(
 def run_sync_example(project_id: str, experiment: str) -> None:
     """Submit a classic evaluation synchronously."""
     print("\n=== Running Synchronous Example ===")
-    runner = AdaptiveTest(lambda x: None)
 
-    # Get user information
-    me_response = runner.me()
-    print(
-        f"User: {me_response.user.firstname} {me_response.user.lastname} "
-        f"({me_response.user.email})"
-    )
-    team_names = [team.name for team in me_response.teams]
-    print(f"Teams: {', '.join(team_names)}")
+    with TrismikClient() as client:
+        # Get user information
+        me_response = client.me()
+        print(
+            f"User: {me_response.user.firstname} {me_response.user.lastname} "
+            f"({me_response.user.email})"
+        )
+        team_names = [team.name for team in me_response.teams]
+        print(f"Teams: {', '.join(team_names)}")
 
-    # Load mock data and create request
-    mock_data = load_mock_data()
-    classic_eval_request = create_classic_eval_request(mock_data, project_id, experiment)
+        # Load mock data and create request
+        mock_data = load_mock_data()
+        classic_eval_request = create_classic_eval_request(mock_data, project_id, experiment)
 
-    # Submit the evaluation
-    print("Submitting mock output of classic eval run...")
-    response = runner.submit_classic_eval(classic_eval_request)
-    print(f"Run {response.id} submitted.")
+        # Submit the evaluation
+        print("Submitting mock output of classic eval run...")
+        response = client.submit_classic_eval(classic_eval_request)
+        print(f"Run {response.id} submitted.")
 
 
 async def run_async_example(project_id: str, experiment: str) -> None:
     """Submit a classic evaluation asynchronously."""
     print("\n=== Running Asynchronous Example ===")
-    runner = AdaptiveTest(lambda x: None)
 
-    # Get user information
-    me_response = await runner.me_async()
-    print(
-        f"User: {me_response.user.firstname} {me_response.user.lastname} "
-        f"({me_response.user.email})"
-    )
-    team_names = [team.name for team in me_response.teams]
-    print(f"Team: {', '.join(team_names)}")
+    async with TrismikAsyncClient() as client:
+        # Get user information
+        me_response = await client.me()
+        print(
+            f"User: {me_response.user.firstname} {me_response.user.lastname} "
+            f"({me_response.user.email})"
+        )
+        team_names = [team.name for team in me_response.teams]
+        print(f"Teams: {', '.join(team_names)}")
 
-    # Load mock data and create request
-    mock_data = load_mock_data()
-    classic_eval_request = create_classic_eval_request(mock_data, project_id, experiment)
+        # Load mock data and create request
+        mock_data = load_mock_data()
+        classic_eval_request = create_classic_eval_request(mock_data, project_id, experiment)
 
-    # Submit the evaluation
-    print("Submitting mock output of classic eval run...")
-    response = await runner.submit_classic_eval_async(classic_eval_request)
-    print(f"Run {response.id} submitted.")
+        # Submit the evaluation
+        print("Submitting mock output of classic eval run...")
+        response = await client.submit_classic_eval(classic_eval_request)
+        print(f"Run {response.id} submitted.")
 
 
 async def main() -> None:
