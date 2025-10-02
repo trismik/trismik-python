@@ -69,9 +69,7 @@ class TestTrismikResponseMapper:
         assert isinstance(project, TrismikProject)
         assert project.id == "project456"
         assert project.name == "Project Missing Desc Key"
-        assert (
-            project.description is None
-        )  # .get() should return None for missing key
+        assert project.description is None  # .get() should return None for missing key
         assert project.accountId == "org777"
         assert project.createdAt == "2025-09-12T13:00:00.000Z"
         assert project.updatedAt == "2025-09-12T13:00:00.000Z"
@@ -135,10 +133,7 @@ class TestTrismikResponseMapper:
         assert isinstance(project, TrismikProject)
         assert project.id == "project_special"
         assert project.name == "Test Project with Special Chars: éñ中文"
-        assert (
-            project.description
-            == 'Description with symbols: @#$%^&*()[]{}|\\:;"'
-        )
+        assert project.description == 'Description with symbols: @#$%^&*()[]{}|\\:;"'
         assert project.accountId == "org_special_123"
         assert project.createdAt == "2025-09-12T17:00:00.000Z"
         assert project.updatedAt == "2025-09-12T17:00:00.000Z"
@@ -147,8 +142,7 @@ class TestTrismikResponseMapper:
         """Test that the mapper handles long string values."""
         long_description = (
             "This is a very long description that contains many words and "
-            "should test the mapper's ability to handle longer text content. "
-            * 10
+            "should test the mapper's ability to handle longer text content. " * 10
         )
 
         json_data = {

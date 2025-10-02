@@ -42,8 +42,18 @@ Thank you for your interest in contributing to Trismik! This document provides g
    poetry install --with examples
    ```
 
-   This will include additional dependences we need for running examples (
-   `openai`, `transformers`, and so on ).
+   This will include additional dependences we need for running examples (`openai`, `transformers`, and so on).
+
+4. **Set Up API Key**
+
+   Create a `.env` file in the project root with your Trismik API key:
+
+   ```bash
+   # .env
+   TRISMIK_API_KEY=your-api-key-here
+   ```
+
+   The SDK will automatically load this via `python-dotenv` when running tests and examples.
 
 
 
@@ -57,13 +67,29 @@ poetry run pytest
 
 ## Pre-commit Hooks
 
-This project uses pre-commit hooks to ensure code quality. To set up pre-commit hooks, run:
+This project uses pre-commit hooks to ensure code quality and automate code generation. To set up pre-commit hooks, run:
 
 ```bash
 poetry run pre-commit install
 ```
 
 This will install the pre-commit hooks, which will run automatically on every git commit.
+
+**What runs on each commit:**
+- **black**: Code formatting (100 character line length)
+- **autoflake**: Remove unused imports
+- **isort**: Sort imports (black profile)
+- **flake8**: Linting and docstring checks
+- **mypy**: Type checking
+- **unasync**: Generate sync code from async source (critical!)
+- **pytest**: Full test suite
+
+You can run all hooks manually:
+```bash
+poetry run pre-commit run --all-files
+```
+
+**Important**: Always use `poetry run` for all commands to ensure you're using the Poetry-managed environment.
 
 ## Submitting Changes
 
@@ -93,5 +119,34 @@ Before submitting any changes, please ensure:
 4. Create a pull request
 
 **Important**: Pull requests will only be merged if all tests pass and the code meets our quality standards. Make sure to run the test suite locally before submitting your changes.
+
+## Development Guidelines
+
+### Code Architecture
+
+This project uses an **async-first, sync-generated** pattern:
+- All client code lives in `src/trismik/_async/`
+- **NEVER edit `src/trismik/_sync/` directly** - it's auto-generated via `unasync`
+- The pre-commit hook automatically generates sync code from async source
+- Transformation rules are defined in `pyproject.toml` under `[tool.unasync]`
+
+### Testing Strategy
+
+**Async tests are the source of truth.** Write comprehensive async tests for all functionality.
+
+Sync tests should be **strategic, not comprehensive**:
+- Test the async-to-sync transformation mechanism
+- Test sync-specific behaviors (e.g., event loop handling)
+- Don't duplicate every async test case in sync
+
+This approach avoids redundant test maintenance while ensuring both interfaces work correctly.
+
+### Project Principles
+
+Follow these software engineering principles:
+
+- **SOLID**: Single responsibility, open/closed, and dependency inversion
+- **KISS (Keep It Simple)**: Favor simplicity over cleverness
+- **DRY (Don't Repeat Yourself)**: Share code via the `_async/` → `_sync/` generation pattern
 
 Thank you for contributing to Trismik!

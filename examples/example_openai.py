@@ -12,15 +12,18 @@ The content of the .env file should look like this:
 TRISMIK_API_KEY=your-trismik-api-key
 OPENAI_API_KEY=your-openai-api-key
 ```
+
+This example demonstrates asynchronous usage with AsyncOpenAI, which is
+appropriate for API-based inference to maximize I/O concurrency.
 """
 
-import argparse
 import asyncio
 
+from _cli_helpers import create_base_parser, create_progress_callback, generate_random_hash
 from dotenv import load_dotenv
-from openai import OpenAI
+from openai import AsyncOpenAI
 
-from trismik.adaptive_test import AdaptiveTest
+from trismik import TrismikAsyncClient
 from trismik.types import (
     AdaptiveTestScore,
     TrismikItem,
@@ -46,12 +49,12 @@ def create_run_metadata(dataset_name: str) -> TrismikRunMetadata:
     )
 
 
-def inference(client: OpenAI, item: TrismikItem, max_retries: int = 5) -> str:
+async def inference(client: AsyncOpenAI, item: TrismikItem, max_retries: int = 5) -> str:
     """
-    Run inference on an item using the OpenAI API.
+    Run inference on an item using the OpenAI API asynchronously.
 
     Args:
-        client (OpenAI): OpenAI client.
+        client (AsyncOpenAI): AsyncOpenAI client.
         item (TrismikItem): Item to run inference on.
         max_retries (int): Maximum number of retries.
     """
@@ -98,7 +101,7 @@ Please adhere strictly to the instructions.
 
     while final_answer is None and tries < max_retries:
 
-        response = client.responses.create(
+        response = await client.responses.create(
             model=model_name,
             input=messages,
         )
@@ -126,136 +129,101 @@ def print_score(score: AdaptiveTestScore) -> None:
     print(f"Final standard error: {score.std_error}")
 
 
-def run_sync_example(
-    client: OpenAI, dataset_name: str, project_id: str, experiment: str
+async def run_example(
+    client: AsyncOpenAI, dataset_name: str, project_id: str, experiment: str
 ) -> None:
-    """Run an adaptive test synchronously using the AdaptiveTest class."""
-    print("\n=== Running Synchronous Example ===")
-    runner = AdaptiveTest(lambda item: inference(client, item))
-
-    # Get user information
-    me_response = runner.me()
-    print(
-        f"User: {me_response.user.firstname} {me_response.user.lastname} "
-        f"({me_response.user.email})"
-    )
-    team_names = [team.name for team in me_response.teams]
-    print(f"Teams: {', '.join(team_names)}")
-
-    print(f"\nStarting run with dataset name: {dataset_name}")
-    results = runner.run(
-        dataset_name,
-        project_id,
-        experiment,
-        run_metadata=create_run_metadata(dataset_name),
-        return_dict=False,
-    )
-
-    print(f"Run {results.run_id} completed.")
-
-    if results.score is not None:
-        print_score(results.score)
-    else:
-        print("No score available.")
-
-    # Uncomment to replay the exact same questions from the previous run.
-    # This is useful to test the stability of the model - note that this
-    # works best with temperature > 0.
-
-    # print("\nReplay run")
-    # results = runner.run_replay(
-    #     results.run_id, run_metadata, with_responses=True
-    # )
-    # print_results(results.results)
-
-
-async def run_async_example(
-    client: OpenAI, dataset_name: str, project_id: str, experiment: str
-) -> None:
-    """Run an adaptive test asynchronously using the AdaptiveTest class."""
+    """Run an adaptive test asynchronously using the TrismikAsyncClient."""
     print("\n=== Running Asynchronous Example ===")
-    runner = AdaptiveTest(lambda item: inference(client, item))
 
-    # Get user information
-    me_response = await runner.me_async()
-    print(
-        f"User: {me_response.user.firstname} {me_response.user.lastname} "
-        f"({me_response.user.email})"
-    )
-    team_names = [team.name for team in me_response.teams]
-    print(f"Teams: {', '.join(team_names)}")
+    async def process_item(item: TrismikItem) -> str:
+        """Async wrapper for inference."""
+        return await inference(client, item)
 
-    print(f"\nStarting run with dataset name: {dataset_name}")
-    results = await runner.run_async(
-        dataset_name,
-        project_id,
-        experiment,
-        run_metadata=create_run_metadata(dataset_name),
-        return_dict=False,
-    )
+    async with TrismikAsyncClient() as trismik_client:
+        # Get user information
+        me_response = await trismik_client.me()
+        print(
+            f"User: {me_response.user.firstname} {me_response.user.lastname} "
+            f"({me_response.user.email})"
+        )
+        team_names = [team.name for team in me_response.teams]
+        print(f"Teams: {', '.join(team_names)}")
 
-    print(f"Run {results.run_id} completed.")
+        print(f"\nStarting run with dataset name: {dataset_name}")
+        results = await trismik_client.run(
+            dataset_name,
+            project_id,
+            experiment,
+            run_metadata=create_run_metadata(dataset_name),
+            item_processor=process_item,
+            on_progress=create_progress_callback("Running test"),
+            return_dict=False,
+        )
 
-    if results.score is not None:
-        print_score(results.score)
-    else:
-        print("No score available.")
+        print(f"Run {results.run_id} completed.")
 
-    # Uncomment to replay the exact same questions from the previous run.
-    # This is useful to test the stability of the model - note that this
-    # works best with temperature > 0.
+        if results.score is not None:
+            print_score(results.score)
+        else:
+            print("No score available.")
 
-    # print("\nReplay run")
-    # results = await runner.run_replay_async(
-    #     results.run_id, run_metadata, with_responses=True
-    # )
-    # print_results(results.results)
+        # Uncomment to replay the exact same questions from the previous run.
+        # This is useful to test the stability of the model - note that this
+        # works best with temperature > 0.
+
+        # print("\nReplay run")
+        # replay_results = await trismik_client.run_replay(
+        #     results.run_id,
+        #     create_run_metadata(dataset_name),
+        #     item_processor=process_item,
+        #     on_progress=create_progress_callback("Replaying test"),
+        #     with_responses=True,
+        #     return_dict=False,
+        # )
+        # print(f"Replay run {replay_results.run_id} completed.")
+        # if replay_results.score is not None:
+        #     print_score(replay_results.score)
 
 
 async def main() -> None:
     """
-    Run both synchronous and asynchronous examples.
+    Run asynchronous adaptive testing example with OpenAI API.
 
     Assumes TRISMIK_SERVICE_URL and TRISMIK_API_KEY are set either in
     environment or in .env file.
+
+    Project and experiment names are auto-generated if not specified via CLI.
     """
-    # Parse command line arguments
-    parser = argparse.ArgumentParser(
-        description="Run adaptive testing examples with Trismik API"
-    )
-    parser.add_argument(
-        "--dataset-name",
-        type=str,
-        default="MMLUPro2024",
-        help="Name of the dataset to run (default: FinRAG2025)",
-    )
-    parser.add_argument(
-        "--project-id",
-        type=str,
-        required=True,
-        help="Project ID for the Trismik run",
-    )
-    parser.add_argument(
-        "--experiment",
-        type=str,
-        required=True,
-        help="Experiment name for the Trismik run",
-    )
+    # Parse command line arguments using base parser
+    parser = create_base_parser("Run adaptive testing example with Trismik API")
     args = parser.parse_args()
 
     load_dotenv()
 
-    client = OpenAI()
+    # Handle project creation or use provided ID
+    if args.project_id is None:
+        project_name = f"example_project_{generate_random_hash()}"
+        print(f"Creating new project: {project_name}")
+        async with TrismikAsyncClient() as temp_client:
+            project = await temp_client.create_project(name=project_name)
+            project_id = project.id
+            print(f"Created project: {project.name} (ID: {project.id})")
+    else:
+        project_id = args.project_id
+        print(f"Using existing project ID: {project_id}")
 
-    # Run sync example
-    run_sync_example(
-        client, args.dataset_name, args.project_id, args.experiment
-    )
+    # Handle experiment name
+    if args.experiment is None:
+        experiment = f"example_experiment_{generate_random_hash()}"
+        print(f"Generated experiment name: {experiment}")
+    else:
+        experiment = args.experiment
+
+    # Initialize AsyncOpenAI client
+    client = AsyncOpenAI()
 
     # Run async example
-    await run_async_example(
-        client, args.dataset_name, args.project_id, args.experiment
-    )
+    await run_example(client, args.dataset_name, project_id, experiment)
 
 
 if __name__ == "__main__":

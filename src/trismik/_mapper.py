@@ -115,9 +115,7 @@ class TrismikResponseMapper:
             run_info=TrismikResponseMapper.to_run_info(json["runInfo"]),
             state=TrismikResponseMapper.to_run_state(json["state"]),
             next_item=(
-                TrismikResponseMapper.to_item(json["nextItem"])
-                if json.get("nextItem")
-                else None
+                TrismikResponseMapper.to_item(json["nextItem"]) if json.get("nextItem") else None
             ),
             completed=json.get("completed", False),
         )
@@ -137,13 +135,8 @@ class TrismikResponseMapper:
             id=json["id"],
             dataset_id=json["datasetId"],
             state=TrismikResponseMapper.to_run_state(json["state"]),
-            dataset=[
-                TrismikResponseMapper.to_item(item)
-                for item in json.get("dataset", [])
-            ],
-            responses=TrismikResponseMapper.to_responses(
-                json.get("responses", [])
-            ),
+            dataset=[TrismikResponseMapper.to_item(item) for item in json.get("dataset", [])],
+            responses=TrismikResponseMapper.to_responses(json.get("responses", [])),
             metadata=json.get("metadata", {}),
         )
 
@@ -175,9 +168,7 @@ class TrismikResponseMapper:
             )
         else:
             item_type = json.get("type", "unknown")
-            raise TrismikApiError(
-                f"API has returned unrecognized item type: {item_type}"
-            )
+            raise TrismikApiError(f"API has returned unrecognized item type: {item_type}")
 
     @staticmethod
     def to_results(json: List[Dict[str, Any]]) -> List[TrismikResult]:
@@ -235,15 +226,11 @@ class TrismikResponseMapper:
         # Parse datetime strings if they exist
         completed_at = None
         if "completedAt" in json and json["completedAt"]:
-            completed_at = datetime.fromisoformat(
-                json["completedAt"].replace("Z", "+00:00")
-            )
+            completed_at = datetime.fromisoformat(json["completedAt"].replace("Z", "+00:00"))
 
         created_at = None
         if "createdAt" in json and json["createdAt"]:
-            created_at = datetime.fromisoformat(
-                json["createdAt"].replace("Z", "+00:00")
-            )
+            created_at = datetime.fromisoformat(json["createdAt"].replace("Z", "+00:00"))
 
         return TrismikReplayResponse(
             id=json["id"],
@@ -253,13 +240,8 @@ class TrismikResponseMapper:
             completedAt=completed_at,
             createdAt=created_at,
             metadata=json.get("metadata", {}),
-            dataset=[
-                TrismikResponseMapper.to_item(item)
-                for item in json.get("dataset", [])
-            ],
-            responses=TrismikResponseMapper.to_responses(
-                json.get("responses", [])
-            ),
+            dataset=[TrismikResponseMapper.to_item(item) for item in json.get("dataset", [])],
+            responses=TrismikResponseMapper.to_responses(json.get("responses", [])),
         )
 
     @staticmethod
@@ -299,9 +281,7 @@ class TrismikResponseMapper:
         return TrismikMeResponse(user=user_info, teams=teams)
 
     @staticmethod
-    def to_classic_eval_response(
-        json: Dict[str, Any]
-    ) -> TrismikClassicEvalResponse:
+    def to_classic_eval_response(json: Dict[str, Any]) -> TrismikClassicEvalResponse:
         """
         Convert JSON response to a TrismikClassicEvalResponse object.
 

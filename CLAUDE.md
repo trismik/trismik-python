@@ -8,14 +8,22 @@ This is the Trismik Python SDK, a client library for accessing Trismik's adversa
 
 ### Core Architecture
 
-- **`src/trismik/adaptive_test.py`**: Main entry point containing the `AdaptiveTest` class that provides both sync and async interfaces for running tests
-- **`src/trismik/client_async.py`**: Core async HTTP client (`TrismikAsyncClient`) that handles API communication
+The codebase follows an **async-first, sync-generated** pattern using the `unasync` library:
+
+- **`src/trismik/_async/`**: Source of truth for all client code (async implementations)
+  - **`client.py`**: Core async HTTP client (`TrismikAsyncClient`) that handles all API communication
+  - **`helpers.py`**: Async helper functions for test item processing
+  - **`_test_transform.py`**: Test transformation utilities
+- **`src/trismik/_sync/`**: Auto-generated sync code (DO NOT EDIT DIRECTLY)
+  - Generated via `unasync` from `_async/` on every commit via pre-commit hook
+  - Contains sync versions: `TrismikClient`, sync helpers, etc.
 - **`src/trismik/types.py`**: Type definitions for all API request/response objects, test items, and results
 - **`src/trismik/_mapper.py`**: Response mapping utilities for converting API responses to internal types
-- **`src/trismik/settings.py`**: Configuration settings for client behavior and evaluation parameters
+- **`src/trismik/settings.py`**: Configuration settings (client, environment, evaluation parameters)
 - **`src/trismik/exceptions.py`**: Custom exception classes for API errors
+- **`src/trismik/_utils.py`**: Utility functions (headers, error handling, etc.)
 
-The async client is the foundation - sync methods in `AdaptiveTest` wrap the async implementations using `nest_asyncio` to handle event loop management.
+**Critical**: All development happens in `_async/`. The sync client is automatically generated via `unasync` transformations defined in `pyproject.toml`. The pre-commit hook runs `run_unasync.py` to generate sync code before each commit.
 
 ## Development Commands
 
@@ -29,7 +37,12 @@ poetry install --with examples
 
 # Use Python 3.9 environment
 poetry env use 3.9
+
+# Install pre-commit hooks (required for development)
+poetry run pre-commit install
 ```
+
+**API Key Setup**: Create a `.env` file with `TRISMIK_API_KEY=your-key` for local development. The SDK will automatically load it via `python-dotenv`.
 
 ### Testing
 ```bash
@@ -93,13 +106,24 @@ Settings are centralized in `settings.py` with environment variable support. API
 
 ## Code Style Requirements
 
-- Line length: 80 characters (enforced by black)
+- Line length: 100 characters (enforced by black)
 - Python 3.9+ compatibility required
 - Type hints mandatory for all public APIs (`disallow_untyped_defs = true`)
 - Import sorting via isort with black profile
 - Docstrings required for public functions (enforced by flake8-docstrings)
-- All async functions must be properly typed with `Awaitable` return types
+- All async functions must be properly typed with return type annotations
 
-## Testing Architecture
+## Testing Philosophy
 
-Tests use pytest with async support (`pytest-asyncio`). The `tests/_mocker.py` module provides mock utilities for HTTP responses. Test files follow the pattern `test_[module_name].py` and include both sync and async test variants where applicable.
+**Async tests are the source of truth.** Write comprehensive async tests for all functionality. Sync tests should be strategic:
+- Test the async-to-sync transformation mechanism
+- Test sync-specific behaviors (e.g., event loop handling)
+- Don't duplicate every async test case in sync
+
+The `tests/_mocker.py` module provides mock utilities for HTTP responses. Pre-commit hooks automatically run the full test suite before each commit.
+
+## Project Guidelines
+
+- **SOLID Principles**: Follow single responsibility, open/closed, and dependency inversion principles
+- **KISS (Keep It Simple)**: Favor simplicity over cleverness
+- **DRY (Don't Repeat Yourself)**: Share code via the `_async/` → `_sync/` generation pattern

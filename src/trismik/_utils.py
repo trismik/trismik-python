@@ -33,9 +33,7 @@ class TrismikUtils:
                 return title + ": " + message
             return title
         except (httpx.RequestError, ValueError):
-            error_message: str = response.content.decode(
-                "utf-8", errors="ignore"
-            )
+            error_message: str = response.content.decode("utf-8", errors="ignore")
             return error_message
 
     @staticmethod
