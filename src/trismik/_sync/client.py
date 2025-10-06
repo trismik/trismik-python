@@ -229,8 +229,8 @@ class TrismikClient:
             TrismikApiError: If API request fails.
         """
         try:
-            url = "/runs/continue"
-            body = {"itemChoiceId": item_choice_id, "runId": run_id}
+            url = f"/runs/{run_id}/continue"
+            body = {"itemChoiceId": item_choice_id}
             response = self._http_client.post(url, json=body)
             response.raise_for_status()
             json = response.json()
