@@ -76,7 +76,9 @@ class TestTrismikAsyncClient:
             test_configuration={},
             inference_setup={},
         )
-        response = await client.start_run("test_id", "project_id", "experiment", metadata)
+        response = await client.start_run(
+            "test_id", "test_split", "project_id", "experiment", metadata
+        )
         assert response.run_info.id == "run_id"
         assert response.completed is False
         assert response.next_item is not None
@@ -94,7 +96,7 @@ class TestTrismikAsyncClient:
                 test_configuration={},
                 inference_setup={},
             )
-            await client.start_run("test_id", "project_id", "experiment", metadata)
+            await client.start_run("test_id", "test_split", "project_id", "experiment", metadata)
 
     @pytest.mark.asyncio
     async def test_should_fail_start_run_when_payload_too_large(
@@ -107,7 +109,7 @@ class TestTrismikAsyncClient:
                 test_configuration={},
                 inference_setup={},
             )
-            await client.start_run("test_id", "project_id", "experiment", metadata)
+            await client.start_run("test_id", "test_split", "project_id", "experiment", metadata)
 
     @pytest.mark.asyncio
     async def test_should_continue_run(self) -> None:
@@ -253,13 +255,14 @@ class TestTrismikAsyncClient:
             inference_setup={"temperature": 0.7},
         )
 
-        await client.start_run("test_id", "project_id", "experiment", metadata)
+        await client.start_run("test_id", "test_split", "project_id", "experiment", metadata)
 
         # Verify the request was made with the correct body
         mock_client.post.assert_called_once()
         call_args = mock_client.post.call_args
         assert call_args[1]["json"] == {
             "datasetId": "test_id",
+            "split": "test_split",
             "projectId": "project_id",
             "experiment": "experiment",
             "metadata": metadata.toDict(),
@@ -288,13 +291,14 @@ class TestTrismikAsyncClient:
 
         client = TrismikAsyncClient(http_client=mock_client)
 
-        await client.start_run("test_id", "project_id", "experiment")
+        await client.start_run("test_id", "test_split", "project_id", "experiment")
 
         # Verify the request was made with empty metadata
         mock_client.post.assert_called_once()
         call_args = mock_client.post.call_args
         assert call_args[1]["json"] == {
             "datasetId": "test_id",
+            "split": "test_split",
             "projectId": "project_id",
             "experiment": "experiment",
             "metadata": {},
@@ -830,6 +834,7 @@ class TestTrismikAsyncClient:
 
         results = await client.run(
             test_id="test_123",
+            split="test_split",
             project_id="proj_456",
             experiment="exp_1",
             run_metadata=metadata,
@@ -856,6 +861,7 @@ class TestTrismikAsyncClient:
 
         results = await client.run(
             test_id="test_123",
+            split="test_split",
             project_id="proj_456",
             experiment="exp_1",
             run_metadata=metadata,
@@ -944,6 +950,7 @@ class TestTrismikAsyncClient:
 
         await client.run(
             test_id="test_123",
+            split="test_split",
             project_id="proj_456",
             experiment="exp_1",
             run_metadata=metadata,
@@ -974,6 +981,7 @@ class TestTrismikAsyncClient:
         # Should not raise when on_progress is None
         results = await client.run(
             test_id="test_123",
+            split="test_split",
             project_id="proj_456",
             experiment="exp_1",
             run_metadata=metadata,

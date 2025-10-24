@@ -176,6 +176,7 @@ class TrismikClient:
     def start_run(
         self,
         dataset_id: str,
+        split: str,
         project_id: str,
         experiment: str,
         metadata: Optional[TrismikRunMetadata] = None,
@@ -185,6 +186,7 @@ class TrismikClient:
 
         Args:
             dataset_id (str): ID of the dataset.
+            split (str): Split of the dataset to use (e.g., "train", "test", "val").
             project_id (str): ID of the project.
             experiment (str): Name of the experiment.
             metadata (Optional[TrismikRunMetadata]): Run metadata.
@@ -201,6 +203,7 @@ class TrismikClient:
             url = "/runs/start"
             body = {
                 "datasetId": dataset_id,
+                "split": split,
                 "projectId": project_id,
                 "experiment": experiment,
                 "metadata": metadata.toDict() if metadata else {},
@@ -444,6 +447,7 @@ class TrismikClient:
     def run(  # noqa: E704
         self,
         test_id: str,
+        split: str,
         project_id: str,
         experiment: str,
         run_metadata: TrismikRunMetadata,
@@ -457,6 +461,7 @@ class TrismikClient:
     def run(  # noqa: E704
         self,
         test_id: str,
+        split: str,
         project_id: str,
         experiment: str,
         run_metadata: TrismikRunMetadata,
@@ -469,6 +474,7 @@ class TrismikClient:
     def run(
         self,
         test_id: str,
+        split: str,
         project_id: str,
         experiment: str,
         run_metadata: TrismikRunMetadata,
@@ -482,6 +488,7 @@ class TrismikClient:
 
         Args:
             test_id: ID of the test to run.
+            split: Split of the dataset to use (e.g., "train", "test", "val").
             project_id: ID of the project.
             experiment: Name of the experiment.
             run_metadata: Metadata for the run.
@@ -502,7 +509,7 @@ class TrismikClient:
             raise NotImplementedError("with_responses is not yet implemented for the new API flow")
 
         # Start run and get first item
-        start_response = self.start_run(test_id, project_id, experiment, run_metadata)
+        start_response = self.start_run(test_id, split, project_id, experiment, run_metadata)
 
         # Initialize state tracking
         states: List[TrismikAdaptiveTestState] = []

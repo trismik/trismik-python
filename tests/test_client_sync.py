@@ -52,7 +52,7 @@ class TestTrismikClient:
             test_configuration={},
             inference_setup={},
         )
-        response = client.start_run("test_id", "project_id", "experiment", metadata)
+        response = client.start_run("test_id", "test_split", "project_id", "experiment", metadata)
         assert response.run_info.id == "run_id"
         assert response.completed is False
         assert response.next_item is not None
@@ -161,6 +161,7 @@ class TestTrismikClient:
 
         results = client.run(
             test_id="test_123",
+            split="test_split",
             project_id="proj_456",
             experiment="exp_1",
             run_metadata=metadata,
@@ -194,6 +195,7 @@ class TestTrismikClient:
 
         client.run(
             test_id="test_123",
+            split="test_split",
             project_id="proj_456",
             experiment="exp_1",
             run_metadata=metadata,
@@ -223,6 +225,7 @@ class TestTrismikClient:
         # Should not raise when on_progress is None
         results = client.run(
             test_id="test_123",
+            split="test_split",
             project_id="proj_456",
             experiment="exp_1",
             run_metadata=metadata,
@@ -337,6 +340,7 @@ class TestTrismikClient:
         with pytest.raises(TypeError) as exc_info:
             client.run(
                 test_id="test_123",
+                split="test_split",
                 project_id="proj_456",
                 experiment="exp_1",
                 run_metadata=metadata,
