@@ -20,6 +20,7 @@ from trismik.types import (
     TrismikClassicEvalRequest,
     TrismikClassicEvalResponse,
     TrismikDataset,
+    TrismikDatasetInfo,
     TrismikItem,
     TrismikMeResponse,
     TrismikProject,
@@ -168,6 +169,31 @@ class TrismikAsyncClient:
             response.raise_for_status()
             json = response.json()
             return TrismikResponseMapper.to_datasets(json)
+        except httpx.HTTPStatusError as e:
+            raise TrismikApiError(TrismikUtils.get_error_message(e.response)) from e
+        except httpx.HTTPError as e:
+            raise TrismikApiError(str(e)) from e
+
+    async def get_dataset_info(self, dataset_id: str) -> TrismikDatasetInfo:
+        """
+        Get detailed information about a specific dataset.
+
+        Args:
+            dataset_id (str): ID of the dataset to retrieve.
+
+        Returns:
+            TrismikDatasetInfo: Detailed dataset information including datacard.
+
+        Raises:
+            TrismikApiError: If API request fails.
+        """
+        try:
+            url = "/datasets/get-dataset"
+            body = {"datasetId": dataset_id}
+            response = await self._http_client.post(url, json=body)
+            response.raise_for_status()
+            json = response.json()
+            return TrismikResponseMapper.to_dataset_info(json)
         except httpx.HTTPStatusError as e:
             raise TrismikApiError(TrismikUtils.get_error_message(e.response)) from e
         except httpx.HTTPError as e:

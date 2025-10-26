@@ -4,7 +4,10 @@ from typing import Any, Dict, List
 from trismik.exceptions import TrismikApiError
 from trismik.types import (
     TrismikClassicEvalResponse,
+    TrismikDatacard,
     TrismikDataset,
+    TrismikDatasetInfo,
+    TrismikDatasetVersion,
     TrismikItem,
     TrismikMeResponse,
     TrismikMultipleChoiceTextItem,
@@ -40,16 +43,63 @@ class TrismikResponseMapper:
             json (Dict[str, Any]): JSON response containing dataset data.
 
         Returns:
-            List[TrismikDataset]: List of
-            dataset objects with IDs and names.
+            List[TrismikDataset]: List of dataset objects with IDs, names,
+                adaptive status, and splits.
         """
         return [
             TrismikDataset(
                 id=item["id"],
                 name=item["name"],
+                isAdaptive=item["isAdaptive"],
+                splits=item["splits"],
             )
             for item in json["data"]
         ]
+
+    @staticmethod
+    def to_dataset_info(json: Dict[str, Any]) -> TrismikDatasetInfo:
+        """
+        Convert JSON response to a TrismikDatasetInfo object.
+
+        Args:
+            json (Dict[str, Any]): JSON response containing detailed dataset
+                information.
+
+        Returns:
+            TrismikDatasetInfo: Dataset info object with complete metadata
+                including datacard.
+        """
+        version = TrismikDatasetVersion(
+            year=json["datacard"]["version"]["year"],
+            month=json["datacard"]["version"]["month"],
+            revision=json["datacard"]["version"]["revision"],
+        )
+
+        datacard = TrismikDatacard(
+            task=json["datacard"]["task"],
+            license=json["datacard"]["license"],
+            version=version,
+            datasetHf=json["datacard"]["datasetHf"],
+            languages=json["datacard"]["languages"],
+            datasetUrl=json["datacard"]["datasetUrl"],
+            itemsCount=json["datacard"]["itemsCount"],
+            splitsUsed=json["datacard"]["splitsUsed"],
+            datasetName=json["datacard"]["datasetName"],
+            description=json["datacard"]["description"],
+            exampleItem=json["datacard"]["exampleItem"],
+            originalReadmeUrl=json["datacard"]["originalReadmeUrl"],
+            originalReadmeDownloadedAt=json["datacard"]["originalReadmeDownloadedAt"],
+            originalItemCount=json["datacard"]["originalItemCount"],
+            difficultyEstimators=json["datacard"]["difficultyEstimators"],
+        )
+
+        return TrismikDatasetInfo(
+            id=json["id"],
+            name=json["name"],
+            isAdaptive=json["isAdaptive"],
+            splits=json["splits"],
+            datacard=datacard,
+        )
 
     @staticmethod
     def to_run(json: Dict[str, Any]) -> TrismikRun:

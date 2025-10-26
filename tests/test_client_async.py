@@ -59,6 +59,12 @@ class TestTrismikAsyncClient:
         assert len(datasets) == 5
         assert datasets[0].id == "fluency"
         assert datasets[0].name == "Fluency"
+        assert datasets[0].isAdaptive is True
+        assert datasets[0].splits == ["validation", "test"]
+        # Verify a non-adaptive dataset as well
+        assert datasets[3].id == "memorization"
+        assert datasets[3].isAdaptive is False
+        assert datasets[3].splits == ["train", "test"]
 
     @pytest.mark.asyncio
     async def test_should_fail_list_datasets_when_api_returned_error(
@@ -67,6 +73,39 @@ class TestTrismikAsyncClient:
         with pytest.raises(TrismikApiError, match="message"):
             client = TrismikAsyncClient(http_client=self._mock_error_response(401))
             await client.list_datasets()
+
+    @pytest.mark.asyncio
+    async def test_should_get_dataset_info(self) -> None:
+        client = TrismikAsyncClient(http_client=self._mock_dataset_info_response())
+        dataset_info = await client.get_dataset_info("trismik/medQA:adaptive")
+
+        # Check basic properties
+        assert dataset_info.id == "trismik/medQA:adaptive"
+        assert dataset_info.name == "medQA2025"
+        assert dataset_info.isAdaptive is True
+        assert dataset_info.splits == ["validation", "validation_test"]
+
+        # Check datacard
+        assert dataset_info.datacard.task == "multiple-choice"
+        assert dataset_info.datacard.license == "mit"
+        assert dataset_info.datacard.itemsCount == 1145
+        assert dataset_info.datacard.datasetName == "med_qa"
+        assert dataset_info.datacard.languages == ["en"]
+        assert dataset_info.datacard.splitsUsed == ["test", "validation"]
+        assert dataset_info.datacard.difficultyEstimators == ["gpt-4o-mini"]
+
+        # Check version
+        assert dataset_info.datacard.version.year == 2025
+        assert dataset_info.datacard.version.month == 10
+        assert dataset_info.datacard.version.revision == 0
+
+    @pytest.mark.asyncio
+    async def test_should_fail_get_dataset_info_when_api_returned_error(
+        self,
+    ) -> None:
+        with pytest.raises(TrismikApiError, match="message"):
+            client = TrismikAsyncClient(http_client=self._mock_error_response(404))
+            await client.get_dataset_info("invalid_dataset_id")
 
     @pytest.mark.asyncio
     async def test_should_start_run(self) -> None:
@@ -414,6 +453,13 @@ class TestTrismikAsyncClient:
         http_client = MagicMock(httpx.AsyncClient)
         response = TrismikResponseMocker.tests()
         http_client.get.return_value = response
+        return http_client
+
+    @staticmethod
+    def _mock_dataset_info_response() -> httpx.AsyncClient:
+        http_client = MagicMock(httpx.AsyncClient)
+        response = TrismikResponseMocker.dataset_info()
+        http_client.post.return_value = response
         return http_client
 
     @staticmethod

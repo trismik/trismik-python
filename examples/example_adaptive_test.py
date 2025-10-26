@@ -87,9 +87,15 @@ def run_sync_example(dataset_name: str, project_id: str, experiment: str) -> Non
     print("\n=== Running Synchronous Example ===")
 
     with TrismikClient() as client:
+        # Get dataset info to retrieve available splits
+        dataset_info = client.get_dataset_info(dataset_name)
+        # Use the first available split
+        split = dataset_info.splits[0]
+
         print(f"\nStarting run with dataset name: {dataset_name}")
         results = client.run(
             dataset_name,
+            split,
             project_id,
             experiment,
             run_metadata=sample_metadata,
@@ -149,9 +155,15 @@ async def run_async_example(dataset_name: str, project_id: str, experiment: str)
         for dataset in available_datasets:
             print(f"- {dataset.id}")
 
+        # Get dataset info to retrieve available splits
+        dataset_info = await client.get_dataset_info(dataset_name)
+        # Use the first available split
+        split = dataset_info.splits[0]
+
         print(f"\nStarting run with dataset name: {dataset_name}")
         results = await client.run(
             dataset_name,
+            split,
             project_id,
             experiment,
             run_metadata=sample_metadata,
