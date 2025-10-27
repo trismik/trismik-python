@@ -16,6 +16,49 @@ class TrismikDataset:
 
     id: str
     name: str
+    isAdaptive: bool
+    splits: List[str]
+
+
+@dataclass
+class TrismikDatasetVersion:
+    """Version information for a dataset."""
+
+    year: int
+    month: int
+    revision: int
+
+
+@dataclass
+class TrismikDatacard:
+    """Detailed metadata card for a dataset."""
+
+    task: str
+    license: str
+    version: "TrismikDatasetVersion"
+    datasetHf: str
+    languages: List[str]
+    datasetUrl: str
+    itemsCount: int
+    splitsUsed: List[str]
+    datasetName: str
+    description: str
+    exampleItem: str
+    originalReadmeUrl: str
+    originalReadmeDownloadedAt: str
+    originalItemCount: int
+    difficultyEstimators: List[str]
+
+
+@dataclass
+class TrismikDatasetInfo:
+    """Complete dataset information including datacard."""
+
+    id: str
+    name: str
+    isAdaptive: bool
+    splits: List[str]
+    datacard: TrismikDatacard
 
 
 @dataclass

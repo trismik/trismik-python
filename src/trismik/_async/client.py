@@ -20,6 +20,7 @@ from trismik.types import (
     TrismikClassicEvalRequest,
     TrismikClassicEvalResponse,
     TrismikDataset,
+    TrismikDatasetInfo,
     TrismikItem,
     TrismikMeResponse,
     TrismikProject,
@@ -173,9 +174,35 @@ class TrismikAsyncClient:
         except httpx.HTTPError as e:
             raise TrismikApiError(str(e)) from e
 
+    async def get_dataset_info(self, dataset_id: str) -> TrismikDatasetInfo:
+        """
+        Get detailed information about a specific dataset.
+
+        Args:
+            dataset_id (str): ID of the dataset to retrieve.
+
+        Returns:
+            TrismikDatasetInfo: Detailed dataset information including datacard.
+
+        Raises:
+            TrismikApiError: If API request fails.
+        """
+        try:
+            url = "/datasets/get-dataset"
+            body = {"datasetId": dataset_id}
+            response = await self._http_client.post(url, json=body)
+            response.raise_for_status()
+            json = response.json()
+            return TrismikResponseMapper.to_dataset_info(json)
+        except httpx.HTTPStatusError as e:
+            raise TrismikApiError(TrismikUtils.get_error_message(e.response)) from e
+        except httpx.HTTPError as e:
+            raise TrismikApiError(str(e)) from e
+
     async def start_run(
         self,
         dataset_id: str,
+        split: str,
         project_id: str,
         experiment: str,
         metadata: Optional[TrismikRunMetadata] = None,
@@ -185,6 +212,7 @@ class TrismikAsyncClient:
 
         Args:
             dataset_id (str): ID of the dataset.
+            split (str): Split of the dataset to use (e.g., "train", "test", "val").
             project_id (str): ID of the project.
             experiment (str): Name of the experiment.
             metadata (Optional[TrismikRunMetadata]): Run metadata.
@@ -201,6 +229,7 @@ class TrismikAsyncClient:
             url = "/runs/start"
             body = {
                 "datasetId": dataset_id,
+                "split": split,
                 "projectId": project_id,
                 "experiment": experiment,
                 "metadata": metadata.toDict() if metadata else {},
@@ -444,6 +473,7 @@ class TrismikAsyncClient:
     async def run(  # noqa: E704
         self,
         test_id: str,
+        split: str,
         project_id: str,
         experiment: str,
         run_metadata: TrismikRunMetadata,
@@ -457,6 +487,7 @@ class TrismikAsyncClient:
     async def run(  # noqa: E704
         self,
         test_id: str,
+        split: str,
         project_id: str,
         experiment: str,
         run_metadata: TrismikRunMetadata,
@@ -469,6 +500,7 @@ class TrismikAsyncClient:
     async def run(
         self,
         test_id: str,
+        split: str,
         project_id: str,
         experiment: str,
         run_metadata: TrismikRunMetadata,
@@ -482,6 +514,7 @@ class TrismikAsyncClient:
 
         Args:
             test_id: ID of the test to run.
+            split: Split of the dataset to use (e.g., "train", "test", "val").
             project_id: ID of the project.
             experiment: Name of the experiment.
             run_metadata: Metadata for the run.
@@ -502,7 +535,7 @@ class TrismikAsyncClient:
             raise NotImplementedError("with_responses is not yet implemented for the new API flow")
 
         # Start run and get first item
-        start_response = await self.start_run(test_id, project_id, experiment, run_metadata)
+        start_response = await self.start_run(test_id, split, project_id, experiment, run_metadata)
 
         # Initialize state tracking
         states: List[TrismikAdaptiveTestState] = []

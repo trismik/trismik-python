@@ -41,11 +41,36 @@ class TrismikResponseMocker:
             status_code=200,
             json={
                 "data": [
-                    {"id": "fluency", "name": "Fluency"},
-                    {"id": "hallucination", "name": "Hallucination"},
-                    {"id": "layman-medical", "name": "Layman Medical"},
-                    {"id": "memorization", "name": "Memorization"},
-                    {"id": "toxicity", "name": "Toxicity"},
+                    {
+                        "id": "fluency",
+                        "name": "Fluency",
+                        "isAdaptive": True,
+                        "splits": ["validation", "test"],
+                    },
+                    {
+                        "id": "hallucination",
+                        "name": "Hallucination",
+                        "isAdaptive": True,
+                        "splits": ["validation", "test"],
+                    },
+                    {
+                        "id": "layman-medical",
+                        "name": "Layman Medical",
+                        "isAdaptive": True,
+                        "splits": ["validation"],
+                    },
+                    {
+                        "id": "memorization",
+                        "name": "Memorization",
+                        "isAdaptive": False,
+                        "splits": ["train", "test"],
+                    },
+                    {
+                        "id": "toxicity",
+                        "name": "Toxicity",
+                        "isAdaptive": True,
+                        "splits": ["validation", "test"],
+                    },
                 ],
                 "meta": {
                     "page": 1,
@@ -296,5 +321,35 @@ class TrismikResponseMocker:
                 "accountId": "org123",
                 "createdAt": "2025-09-12T10:00:00.000Z",
                 "updatedAt": "2025-09-12T10:00:00.000Z",
+            },
+        )
+
+    @staticmethod
+    def dataset_info() -> httpx.Response:
+        return httpx.Response(
+            request=httpx.Request("method", "url"),
+            status_code=200,
+            json={
+                "id": "trismik/medQA:adaptive",
+                "name": "medQA2025",
+                "isAdaptive": True,
+                "splits": ["validation", "validation_test"],
+                "datacard": {
+                    "task": "multiple-choice",
+                    "license": "mit",
+                    "version": {"year": 2025, "month": 10, "revision": 0},
+                    "datasetHf": "https://huggingface.co/datasets/fzkuji/MedQA",
+                    "languages": ["en"],
+                    "datasetUrl": "https://github.com/jind11/MedQA",
+                    "itemsCount": 1145,
+                    "splitsUsed": ["test", "validation"],
+                    "datasetName": "med_qa",
+                    "description": "Medical QA dataset for testing medical knowledge",
+                    "exampleItem": "Sample medical question",
+                    "originalReadmeUrl": "https://github.com/jind11/MedQA/README.md",
+                    "originalReadmeDownloadedAt": "2025-09-01T00:00:00.000Z",
+                    "originalItemCount": 2545,
+                    "difficultyEstimators": ["gpt-4o-mini"],
+                },
             },
         )

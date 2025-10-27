@@ -37,12 +37,40 @@ class TestTrismikClient:
         assert len(datasets) == 5
         assert datasets[0].id == "fluency"
         assert datasets[0].name == "Fluency"
+        assert datasets[0].isAdaptive is True
+        assert datasets[0].splits == ["validation", "test"]
+        # Verify a non-adaptive dataset as well
+        assert datasets[3].id == "memorization"
+        assert datasets[3].isAdaptive is False
+        assert datasets[3].splits == ["train", "test"]
 
     def test_should_fail_list_datasets_when_api_returned_error(self) -> None:
         """Test error handling in sync variant."""
         with pytest.raises(TrismikApiError, match="message"):
             client = TrismikClient(http_client=self._mock_error_response(401))
             client.list_datasets()
+
+    def test_should_get_dataset_info(self) -> None:
+        """Test get_dataset_info (verify sync transformation works)."""
+        client = TrismikClient(http_client=self._mock_dataset_info_response())
+        dataset_info = client.get_dataset_info("trismik/medQA:adaptive")
+
+        # Check basic properties
+        assert dataset_info.id == "trismik/medQA:adaptive"
+        assert dataset_info.name == "medQA2025"
+        assert dataset_info.isAdaptive is True
+        assert dataset_info.splits == ["validation", "validation_test"]
+
+        # Check datacard
+        assert dataset_info.datacard.task == "multiple-choice"
+        assert dataset_info.datacard.license == "mit"
+        assert dataset_info.datacard.itemsCount == 1145
+        assert dataset_info.datacard.datasetName == "med_qa"
+
+        # Check version
+        assert dataset_info.datacard.version.year == 2025
+        assert dataset_info.datacard.version.month == 10
+        assert dataset_info.datacard.version.revision == 0
 
     def test_should_start_run(self) -> None:
         """Test start_run (verify sync transformation of complex types)."""
@@ -52,7 +80,7 @@ class TestTrismikClient:
             test_configuration={},
             inference_setup={},
         )
-        response = client.start_run("test_id", "project_id", "experiment", metadata)
+        response = client.start_run("test_id", "test_split", "project_id", "experiment", metadata)
         assert response.run_info.id == "run_id"
         assert response.completed is False
         assert response.next_item is not None
@@ -161,6 +189,7 @@ class TestTrismikClient:
 
         results = client.run(
             test_id="test_123",
+            split="test_split",
             project_id="proj_456",
             experiment="exp_1",
             run_metadata=metadata,
@@ -194,6 +223,7 @@ class TestTrismikClient:
 
         client.run(
             test_id="test_123",
+            split="test_split",
             project_id="proj_456",
             experiment="exp_1",
             run_metadata=metadata,
@@ -223,6 +253,7 @@ class TestTrismikClient:
         # Should not raise when on_progress is None
         results = client.run(
             test_id="test_123",
+            split="test_split",
             project_id="proj_456",
             experiment="exp_1",
             run_metadata=metadata,
@@ -337,6 +368,7 @@ class TestTrismikClient:
         with pytest.raises(TypeError) as exc_info:
             client.run(
                 test_id="test_123",
+                split="test_split",
                 project_id="proj_456",
                 experiment="exp_1",
                 run_metadata=metadata,
@@ -381,6 +413,13 @@ class TestTrismikClient:
         http_client = MagicMock(httpx.Client)
         response = TrismikResponseMocker.tests()
         http_client.get.return_value = response
+        return http_client
+
+    @staticmethod
+    def _mock_dataset_info_response() -> httpx.Client:
+        http_client = MagicMock(httpx.Client)
+        response = TrismikResponseMocker.dataset_info()
+        http_client.post.return_value = response
         return http_client
 
     @staticmethod

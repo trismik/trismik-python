@@ -75,7 +75,7 @@ def create_base_parser(description: str) -> argparse.ArgumentParser:
     parser.add_argument(
         "--dataset-name",
         type=str,
-        default="MMLUPro2024",
+        default="trismik/MMLUPro:adaptive",
         help="Name of the dataset to run (default: MMLUPro2024)",
     )
     parser.add_argument(

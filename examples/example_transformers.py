@@ -152,9 +152,15 @@ def run_example(
         team_names = [team.name for team in me_response.teams]
         print(f"Teams: {', '.join(team_names)}")
 
+        # Get dataset info to retrieve available splits
+        dataset_info = trismik_client.get_dataset_info(dataset_name)
+        # Use the first available split
+        split = dataset_info.splits[0]
+
         print(f"\nStarting run with dataset name: {dataset_name}")
         results = trismik_client.run(
             dataset_name,
+            split,
             project_id,
             experiment,
             run_metadata=create_run_metadata(dataset_name),
