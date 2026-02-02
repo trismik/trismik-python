@@ -206,6 +206,7 @@ class TrismikClient:
         project_id: str,
         experiment: str,
         metadata: Optional[TrismikRunMetadata] = None,
+        seed: Optional[int] = None,
     ) -> TrismikRunResponse:
         """
         Start a new run for a dataset and get the first item.
@@ -216,6 +217,9 @@ class TrismikClient:
             project_id (str): ID of the project.
             experiment (str): Name of the experiment.
             metadata (Optional[TrismikRunMetadata]): Run metadata.
+            seed (Optional[int]): Random seed for reproducibility. If provided,
+                the same seed with the same response history will produce the
+                same item sequence. Defaults to None (random).
 
         Returns:
             TrismikRunResponse: Run response.
@@ -227,13 +231,15 @@ class TrismikClient:
         """
         try:
             url = "/runs/start"
-            body = {
+            body: Dict[str, Any] = {
                 "datasetId": dataset_id,
                 "split": split,
                 "projectId": project_id,
                 "experiment": experiment,
                 "metadata": metadata.toDict() if metadata else {},
             }
+            if seed is not None:
+                body["seed"] = seed
             response = self._http_client.post(url, json=body)
             response.raise_for_status()
             json = response.json()
@@ -481,6 +487,7 @@ class TrismikClient:
         on_progress: Optional[Callable[[int, int], None]] = None,
         return_dict: Literal[True] = True,
         with_responses: bool = False,
+        seed: Optional[int] = None,
     ) -> Dict[str, Any]: ...
 
     @overload
@@ -495,6 +502,7 @@ class TrismikClient:
         on_progress: Optional[Callable[[int, int], None]] = None,
         return_dict: Literal[False] = False,
         with_responses: bool = False,
+        seed: Optional[int] = None,
     ) -> TrismikRunResults: ...
 
     def run(
@@ -508,6 +516,7 @@ class TrismikClient:
         on_progress: Optional[Callable[[int, int], None]] = None,
         return_dict: bool = True,
         with_responses: bool = False,
+        seed: Optional[int] = None,
     ) -> Union[TrismikRunResults, Dict[str, Any]]:
         """
         Run an adaptive test.
@@ -523,6 +532,9 @@ class TrismikClient:
             return_dict: If True, return dict instead of TrismikRunResults.
                 Defaults to True.
             with_responses: If True, include responses in results.
+            seed: Random seed for reproducibility. If provided, the same seed
+                with the same response history will produce the same item
+                sequence. Defaults to None (random).
 
         Returns:
             Test results as TrismikRunResults or dict.
@@ -535,7 +547,7 @@ class TrismikClient:
             raise NotImplementedError("with_responses is not yet implemented for the new API flow")
 
         # Start run and get first item
-        start_response = self.start_run(test_id, split, project_id, experiment, run_metadata)
+        start_response = self.start_run(test_id, split, project_id, experiment, run_metadata, seed)
 
         # Initialize state tracking
         states: List[TrismikAdaptiveTestState] = []
