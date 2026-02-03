@@ -547,7 +547,9 @@ class TrismikClient:
             raise NotImplementedError("with_responses is not yet implemented for the new API flow")
 
         # Start run and get first item
-        start_response = self.start_run(test_id, split, project_id, experiment, run_metadata, seed)
+        start_response = self.start_run(
+            test_id, split, project_id, experiment, run_metadata, seed
+        )
 
         # Initialize state tracking
         states: List[TrismikAdaptiveTestState] = []
