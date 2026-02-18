@@ -350,6 +350,41 @@ class TestTrismikClient:
 
         assert results["run_id"] == "replay_run_id"
 
+    def test_should_continue_run_with_text_response(self) -> None:
+        """Test continue_run with text_response (sync)."""
+        client = TrismikClient(http_client=self._mock_run_end_response())
+        response = client.continue_run("run_id", text_response="my answer")
+        assert response.run_info.id == "run_id"
+        assert response.completed is True
+
+    def test_should_run_complete_open_ended_test_flow(self) -> None:
+        """Test full adaptive test flow with open-ended items (sync)."""
+        client = TrismikClient(
+            http_client=self._mock_complete_open_ended_run_flow()
+        )
+        metadata = TrismikRunMetadata(
+            model_metadata=TrismikRunMetadata.ModelMetadata(name="test_model"),
+            test_configuration={},
+            inference_setup={},
+        )
+
+        def processor(item):
+            return f"Answer to: {item.question}"
+
+        results = client.run(
+            test_id="test_123",
+            split="test_split",
+            project_id="proj_456",
+            experiment="exp_1",
+            run_metadata=metadata,
+            item_processor=processor,
+        )
+
+        assert results["run_id"] == "run_id"
+        assert results["score"] is not None
+        assert results["score"]["theta"] == 1.3
+        assert results["score"]["std_error"] == 0.3
+
     # ===== Sync-Specific Behavior Tests =====
 
     def test_run_should_reject_async_processor(self) -> None:
@@ -445,6 +480,13 @@ class TestTrismikClient:
         return http_client
 
     @staticmethod
+    def _mock_run_end_response() -> httpx.Client:
+        http_client = MagicMock(httpx.Client)
+        response = TrismikResponseMocker.run_end()
+        http_client.post.return_value = response
+        return http_client
+
+    @staticmethod
     def _mock_complete_run_flow() -> httpx.Client:
         """Mock HTTP client for complete run flow."""
         mock_client = MagicMock(spec=httpx.Client)
@@ -453,6 +495,19 @@ class TestTrismikClient:
         mock_client.post.side_effect = [
             TrismikResponseMocker.run_start(),
             TrismikResponseMocker.run_continue(),
+            TrismikResponseMocker.run_end(),
+        ]
+
+        return mock_client
+
+    @staticmethod
+    def _mock_complete_open_ended_run_flow() -> httpx.Client:
+        """Mock HTTP client for complete open-ended run flow."""
+        mock_client = MagicMock(spec=httpx.Client)
+
+        mock_client.post.side_effect = [
+            TrismikResponseMocker.run_start_open_ended(),
+            TrismikResponseMocker.run_continue_open_ended(),
             TrismikResponseMocker.run_end(),
         ]
 

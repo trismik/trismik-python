@@ -145,6 +145,15 @@ class TrismikMultipleChoiceTextItem(TrismikItem):
 
 
 @dataclass
+class TrismikOpenEndedTextItem(TrismikItem):
+    """Open-ended text question (no choices)."""
+
+    question: str
+    reference: Optional[str] = None
+    responseText: Optional[str] = None
+
+
+@dataclass
 class TrismikResult:
     """Test result for a specific trait."""
 
@@ -181,6 +190,7 @@ class TrismikRunSummary:
     dataset: List[TrismikItem]
     responses: List[TrismikResponse]
     metadata: dict
+    dataset_item_type: Optional[str] = None
 
     @property
     def theta(self) -> float:
@@ -239,7 +249,8 @@ class TrismikReplayRequestItem:
     """Item in a replay request."""
 
     itemId: str
-    itemChoiceId: str
+    itemChoiceId: Optional[str] = None
+    textResponse: Optional[str] = None
 
 
 @dataclass

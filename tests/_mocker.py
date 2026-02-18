@@ -170,6 +170,7 @@ class TrismikResponseMocker:
             json={
                 "id": "run_id",
                 "datasetId": "test_id",
+                "datasetItemType": "multiple_choice_text",
                 "state": {
                     "responses": ["item_1"],
                     "thetas": [1.0],
@@ -210,6 +211,7 @@ class TrismikResponseMocker:
             json={
                 "id": "replay_run_id",
                 "datasetId": "test_id",
+                "datasetItemType": "multiple_choice_text",
                 "state": {
                     "responses": ["item_1"],
                     "thetas": [1.0],
@@ -321,6 +323,127 @@ class TrismikResponseMocker:
                 "accountId": "org123",
                 "createdAt": "2025-09-12T10:00:00.000Z",
                 "updatedAt": "2025-09-12T10:00:00.000Z",
+            },
+        )
+
+    @staticmethod
+    def run_start_open_ended() -> httpx.Response:
+        return httpx.Response(
+            request=httpx.Request("method", "url"),
+            status_code=201,
+            json={
+                "runInfo": {"id": "run_id"},
+                "state": {
+                    "responses": ["item_1"],
+                    "thetas": [1.0],
+                    "std_error_history": [0.5],
+                    "kl_info_history": [0.1],
+                    "effective_difficulties": [0.2],
+                },
+                "nextItem": {
+                    "id": "item_1",
+                    "question": "question 1",
+                    "choices": None,
+                },
+                "completed": False,
+            },
+        )
+
+    @staticmethod
+    def run_continue_open_ended() -> httpx.Response:
+        return httpx.Response(
+            request=httpx.Request("method", "url"),
+            status_code=200,
+            json={
+                "runInfo": {"id": "run_id"},
+                "state": {
+                    "responses": ["item_1", "item_2"],
+                    "thetas": [1.0, 1.2],
+                    "std_error_history": [0.5, 0.4],
+                    "kl_info_history": [0.1, 0.12],
+                    "effective_difficulties": [0.2, 0.25],
+                },
+                "nextItem": {
+                    "id": "item_2",
+                    "question": "question 2",
+                    "choices": None,
+                },
+                "completed": False,
+            },
+        )
+
+    @staticmethod
+    def run_summary_open_ended() -> httpx.Response:
+        return httpx.Response(
+            request=httpx.Request("method", "url"),
+            status_code=200,
+            json={
+                "id": "run_id",
+                "datasetId": "test_id",
+                "datasetItemType": "open_ended_text",
+                "state": {
+                    "responses": ["item_1"],
+                    "thetas": [1.0],
+                    "std_error_history": [0.5],
+                    "kl_info_history": [0.1],
+                    "effective_difficulties": [0.2],
+                },
+                "dataset": [
+                    {
+                        "id": "item_id",
+                        "question": "Test open-ended question",
+                        "choices": None,
+                        "reference": "expected answer",
+                        "responseText": "model response",
+                    }
+                ],
+                "responses": [
+                    {
+                        "datasetItemId": "item_id",
+                        "value": "text answer",
+                        "correct": True,
+                    }
+                ],
+                "metadata": {"foo": "bar"},
+            },
+        )
+
+    @staticmethod
+    def run_replay_open_ended() -> httpx.Response:
+        return httpx.Response(
+            request=httpx.Request("method", "url"),
+            status_code=200,
+            json={
+                "id": "replay_run_id",
+                "datasetId": "test_id",
+                "datasetItemType": "open_ended_text",
+                "state": {
+                    "responses": ["item_1"],
+                    "thetas": [1.0],
+                    "std_error_history": [0.5],
+                    "kl_info_history": [0.1],
+                    "effective_difficulties": [0.2],
+                },
+                "replayOfRun": "original_run_id",
+                "completedAt": "2025-06-26T10:56:03.356Z",
+                "createdAt": "2025-06-26T10:56:03.356Z",
+                "metadata": {"foo": "bar"},
+                "dataset": [
+                    {
+                        "id": "item_id",
+                        "question": "Test open-ended question",
+                        "choices": None,
+                        "reference": "expected answer",
+                        "responseText": "model response",
+                    }
+                ],
+                "responses": [
+                    {
+                        "datasetItemId": "item_id",
+                        "value": "text answer",
+                        "correct": True,
+                    }
+                ],
             },
         )
 
