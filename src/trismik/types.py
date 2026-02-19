@@ -150,7 +150,7 @@ class TrismikOpenEndedTextItem(TrismikItem):
 
     question: str
     reference: Optional[str] = None
-    responseText: Optional[str] = None
+    response_text: Optional[str] = None
 
 
 @dataclass

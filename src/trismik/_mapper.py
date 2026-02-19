@@ -223,7 +223,7 @@ class TrismikResponseMapper:
                 id=json["id"],
                 question=json["question"],
                 reference=json.get("reference"),
-                responseText=json.get("responseText"),
+                response_text=json.get("responseText"),
             )
         else:
             item_type = json.get("type", "unknown")

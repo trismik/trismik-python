@@ -270,6 +270,9 @@ class TrismikAsyncClient:
         if item_choice_id is None and text_response is None:
             raise ValueError("Either item_choice_id or text_response must be provided.")
 
+        if item_choice_id is not None and text_response is not None:
+            raise ValueError("Only one of item_choice_id or text_response should be provided.")
+
         try:
             url = f"/runs/{run_id}/continue"
             if item_choice_id is not None:
@@ -647,7 +650,7 @@ class TrismikAsyncClient:
             elif isinstance(item, TrismikOpenEndedTextItem):
                 continue_response = await self.continue_run(run_id, text_response=response)
             else:
-                continue_response = await self.continue_run(run_id, item_choice_id=response)
+                raise TrismikApiError(f"Unknown item type: {type(item).__name__}")
 
             # Update state tracking
             states.append(
@@ -739,7 +742,7 @@ class TrismikAsyncClient:
             elif isinstance(item, TrismikOpenEndedTextItem):
                 replay_item = TrismikReplayRequestItem(itemId=item.id, textResponse=response)
             else:
-                replay_item = TrismikReplayRequestItem(itemId=item.id, itemChoiceId=response)
+                raise TrismikApiError(f"Unknown item type: {type(item).__name__}")
             replay_items.append(replay_item)
 
         # Final progress update

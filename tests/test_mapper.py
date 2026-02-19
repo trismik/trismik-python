@@ -205,7 +205,7 @@ class TestTrismikResponseMapper:
         assert item.id == "item_2"
         assert item.question == "Explain gravity."
         assert item.reference is None
-        assert item.responseText is None
+        assert item.response_text is None
 
     def test_should_map_open_ended_text_item_without_choices_key(self) -> None:
         """Test mapping an open-ended text item without choices key."""
@@ -220,7 +220,7 @@ class TestTrismikResponseMapper:
         assert item.id == "item_3"
         assert item.question == "Describe photosynthesis."
         assert item.reference is None
-        assert item.responseText is None
+        assert item.response_text is None
 
     def test_should_map_open_ended_text_item_with_reference_and_response(self) -> None:
         """Test mapping an open-ended text item with reference and responseText."""
@@ -238,7 +238,7 @@ class TestTrismikResponseMapper:
         assert item.id == "item_4"
         assert item.question == "What is photosynthesis?"
         assert item.reference == "expected answer"
-        assert item.responseText == "model response"
+        assert item.response_text == "model response"
 
     def test_should_map_run_summary_with_dataset_item_type(self) -> None:
         """Test mapping run summary with datasetItemType."""

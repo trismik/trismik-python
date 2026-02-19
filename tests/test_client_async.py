@@ -981,6 +981,15 @@ class TestTrismikAsyncClient:
             await client.continue_run("run_id")
 
     @pytest.mark.asyncio
+    async def test_should_fail_continue_run_with_both_responses(self) -> None:
+        """Test that continue_run raises ValueError when both responses given."""
+        client = TrismikAsyncClient(http_client=MagicMock(httpx.AsyncClient))
+        with pytest.raises(ValueError, match="Only one of item_choice_id or text_response"):
+            await client.continue_run(
+                "run_id", item_choice_id="choice_1", text_response="my answer"
+            )
+
+    @pytest.mark.asyncio
     async def test_should_run_complete_open_ended_test_flow(self) -> None:
         """Test full adaptive test flow with open-ended items."""
         client = TrismikAsyncClient(http_client=self._mock_complete_open_ended_run_flow())
