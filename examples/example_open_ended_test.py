@@ -94,10 +94,10 @@ def mock_inference(item: TrismikItem) -> Any:
 
         if roll < 1 / 3:
             # Good response: well-formed answer
-            return f"The answer to '{item.question}' is a well-formed response."
+            return item.reference
         elif roll < 2 / 3:
             # Almost correct response: introduce typos
-            good_response = f"The answer to '{item.question}' is a well-formed response."
+            good_response = item.reference
             return _add_typos(good_response)
         else:
             # Bad response: completely unrelated
@@ -106,35 +106,6 @@ def mock_inference(item: TrismikItem) -> Any:
         return item.choices[0].id
     else:
         raise RuntimeError("Encountered unknown item type")
-
-
-async def mock_inference_async(item: TrismikItem) -> Any:
-    """
-    Process a test item asynchronously and return a response.
-
-    Args:
-        item (TrismikItem): Test item to process.
-
-    Returns:
-        Any: Response to the test item (depends on item type).
-    """
-    # Same implementation as sync version, but async.
-    # See mock_inference for more details.
-    if isinstance(item, TrismikOpenEndedTextItem):
-        roll = random.random()
-
-        if roll < 1 / 3:
-            return f"The answer to '{item.question}' is a well-formed response."
-        elif roll < 2 / 3:
-            good_response = f"The answer to '{item.question}' is a well-formed response."
-            return _add_typos(good_response)
-        else:
-            return "I don't know, here's a random thought about bananas."
-    elif isinstance(item, TrismikMultipleChoiceTextItem):
-        return item.choices[0].id
-    else:
-        raise RuntimeError("Encountered unknown item type")
-
 
 def print_score(score: AdaptiveTestScore) -> None:
     """Print adaptive test score with thetas, standard errors, and KL info."""
@@ -228,7 +199,7 @@ async def run_async_example(dataset_name: str, project_id: str, experiment: str)
             project_id,
             experiment,
             run_metadata=sample_metadata,
-            item_processor=mock_inference_async,
+            item_processor=mock_inference,
             on_progress=create_progress_callback("Running test"),
             return_dict=False,
         )
@@ -251,7 +222,7 @@ async def run_async_example(dataset_name: str, project_id: str, experiment: str)
         replay_results = await client.run_replay(
             results.run_id,
             replay_metadata,
-            item_processor=mock_inference_async,
+            item_processor=mock_inference,
             on_progress=create_progress_callback("Replaying test"),
             with_responses=True,
             return_dict=False,
