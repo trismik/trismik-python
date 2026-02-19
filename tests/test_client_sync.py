@@ -359,9 +359,7 @@ class TestTrismikClient:
 
     def test_should_run_complete_open_ended_test_flow(self) -> None:
         """Test full adaptive test flow with open-ended items (sync)."""
-        client = TrismikClient(
-            http_client=self._mock_complete_open_ended_run_flow()
-        )
+        client = TrismikClient(http_client=self._mock_complete_open_ended_run_flow())
         metadata = TrismikRunMetadata(
             model_metadata=TrismikRunMetadata.ModelMetadata(name="test_model"),
             test_configuration={},

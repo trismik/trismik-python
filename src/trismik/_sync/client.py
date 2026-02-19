@@ -268,15 +268,13 @@ class TrismikClient:
             TrismikApiError: If API request fails.
         """
         if item_choice_id is None and text_response is None:
-            raise ValueError(
-                "Either item_choice_id or text_response must be provided."
-            )
+            raise ValueError("Either item_choice_id or text_response must be provided.")
 
         try:
             url = f"/runs/{run_id}/continue"
             if item_choice_id is not None:
                 body = {"itemChoiceId": item_choice_id}
-            else:
+            elif text_response is not None:
                 body = {"textResponse": text_response}
             response = self._http_client.post(url, json=body)
             response.raise_for_status()
@@ -645,17 +643,11 @@ class TrismikClient:
 
             # Continue run with response based on item type
             if isinstance(item, TrismikMultipleChoiceTextItem):
-                continue_response = self.continue_run(
-                    run_id, item_choice_id=response
-                )
+                continue_response = self.continue_run(run_id, item_choice_id=response)
             elif isinstance(item, TrismikOpenEndedTextItem):
-                continue_response = self.continue_run(
-                    run_id, text_response=response
-                )
+                continue_response = self.continue_run(run_id, text_response=response)
             else:
-                continue_response = self.continue_run(
-                    run_id, item_choice_id=response
-                )
+                continue_response = self.continue_run(run_id, item_choice_id=response)
 
             # Update state tracking
             states.append(
@@ -743,17 +735,11 @@ class TrismikClient:
 
             # Create replay request item based on item type
             if isinstance(item, TrismikMultipleChoiceTextItem):
-                replay_item = TrismikReplayRequestItem(
-                    itemId=item.id, itemChoiceId=response
-                )
+                replay_item = TrismikReplayRequestItem(itemId=item.id, itemChoiceId=response)
             elif isinstance(item, TrismikOpenEndedTextItem):
-                replay_item = TrismikReplayRequestItem(
-                    itemId=item.id, textResponse=response
-                )
+                replay_item = TrismikReplayRequestItem(itemId=item.id, textResponse=response)
             else:
-                replay_item = TrismikReplayRequestItem(
-                    itemId=item.id, itemChoiceId=response
-                )
+                replay_item = TrismikReplayRequestItem(itemId=item.id, itemChoiceId=response)
             replay_items.append(replay_item)
 
         # Final progress update

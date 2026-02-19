@@ -15,7 +15,6 @@ from trismik.types import (
     TrismikClassicEvalItem,
     TrismikClassicEvalMetric,
     TrismikClassicEvalRequest,
-    TrismikOpenEndedTextItem,
     TrismikProject,
     TrismikReplayRequest,
     TrismikReplayRequestItem,
@@ -977,18 +976,14 @@ class TestTrismikAsyncClient:
     @pytest.mark.asyncio
     async def test_should_fail_continue_run_without_response(self) -> None:
         """Test that continue_run raises ValueError when no response given."""
-        client = TrismikAsyncClient(
-            http_client=MagicMock(httpx.AsyncClient)
-        )
+        client = TrismikAsyncClient(http_client=MagicMock(httpx.AsyncClient))
         with pytest.raises(ValueError, match="Either item_choice_id or text_response"):
             await client.continue_run("run_id")
 
     @pytest.mark.asyncio
     async def test_should_run_complete_open_ended_test_flow(self) -> None:
         """Test full adaptive test flow with open-ended items."""
-        client = TrismikAsyncClient(
-            http_client=self._mock_complete_open_ended_run_flow()
-        )
+        client = TrismikAsyncClient(http_client=self._mock_complete_open_ended_run_flow())
         metadata = TrismikRunMetadata(
             model_metadata=TrismikRunMetadata.ModelMetadata(name="test_model"),
             test_configuration={},
@@ -1016,12 +1011,8 @@ class TestTrismikAsyncClient:
     async def test_should_run_replay_with_open_ended_items(self) -> None:
         """Test replay flow with open-ended items."""
         mock_client = MagicMock(httpx.AsyncClient)
-        mock_client.get = AsyncMock(
-            return_value=TrismikResponseMocker.run_summary_open_ended()
-        )
-        mock_client.post = AsyncMock(
-            return_value=TrismikResponseMocker.run_replay_open_ended()
-        )
+        mock_client.get = AsyncMock(return_value=TrismikResponseMocker.run_summary_open_ended())
+        mock_client.post = AsyncMock(return_value=TrismikResponseMocker.run_replay_open_ended())
 
         client = TrismikAsyncClient(http_client=mock_client)
         metadata = TrismikRunMetadata(

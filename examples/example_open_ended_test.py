@@ -97,7 +97,7 @@ def mock_inference(item: TrismikItem) -> Any:
             return item.reference
         elif roll < 2 / 3:
             # Almost correct response: introduce typos
-            good_response = item.reference
+            good_response = item.reference or ""
             return _add_typos(good_response)
         else:
             # Bad response: completely unrelated
@@ -106,6 +106,7 @@ def mock_inference(item: TrismikItem) -> Any:
         return item.choices[0].id
     else:
         raise RuntimeError("Encountered unknown item type")
+
 
 def print_score(score: AdaptiveTestScore) -> None:
     """Print adaptive test score with thetas, standard errors, and KL info."""
