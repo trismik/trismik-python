@@ -15,6 +15,10 @@ OPENAI_API_KEY=your-openai-api-key
 
 This example demonstrates asynchronous usage with AsyncOpenAI, which is
 appropriate for API-based inference to maximize I/O concurrency.
+
+It supports both multiple-choice and open-ended text datasets. Use the
+--open-ended-dataset-name flag to run an open-ended text test after the
+multiple-choice test.
 """
 
 import asyncio
@@ -28,13 +32,14 @@ from trismik.types import (
     AdaptiveTestScore,
     TrismikItem,
     TrismikMultipleChoiceTextItem,
+    TrismikOpenEndedTextItem,
     TrismikRunMetadata,
 )
 
-model_name = "gpt-4.1-nano-2025-04-14"
+model_name = "gpt-5-nano-2025-08-07"
 
 
-def create_run_metadata(dataset_name: str) -> TrismikRunMetadata:
+def create_run_metadata(dataset_name: str, response_format: str) -> TrismikRunMetadata:
     """Create run metadata for the given dataset."""
     return TrismikRunMetadata(
         model_metadata=TrismikRunMetadata.ModelMetadata(
@@ -43,15 +48,15 @@ def create_run_metadata(dataset_name: str) -> TrismikRunMetadata:
         ),
         test_configuration={
             "task_name": dataset_name,
-            "response_format": "Multiple-choice",
+            "response_format": response_format,
         },
         inference_setup={},
     )
 
 
-async def inference(client: AsyncOpenAI, item: TrismikItem, max_retries: int = 5) -> str:
+async def mc_inference(client: AsyncOpenAI, item: TrismikItem, max_retries: int = 5) -> str:
     """
-    Run inference on an item using the OpenAI API asynchronously.
+    Run inference on a multiple-choice item using the OpenAI API asynchronously.
 
     Args:
         client (AsyncOpenAI): AsyncOpenAI client.
@@ -122,6 +127,53 @@ Please adhere strictly to the instructions.
     return final_answer
 
 
+async def open_ended_inference(client: AsyncOpenAI, item: TrismikItem) -> str:
+    """
+    Run inference on an open-ended text item using the OpenAI API asynchronously.
+
+    Args:
+        client (AsyncOpenAI): AsyncOpenAI client.
+        item (TrismikItem): Item to run inference on.
+    """
+    assert isinstance(item, TrismikOpenEndedTextItem)
+
+    messages = [
+        {
+            "role": "developer",
+            "content": """
+Answer the question you are given. You may reason through the problem, \
+but you MUST place your final answer between <answer> and </answer> tags \
+at the end of your response.
+
+The final answer should be just the answer value between XML tags with no extra text, \
+formatting, or explanation.
+
+For example:
+- If the answer is a number: <answer>42</answer>
+- If the answer is a word: <answer>Paris</answer>
+- If the answer is a phrase: <answer>the mitochondria</answer>
+""".strip(),
+        },
+        {"role": "user", "content": item.question},
+    ]
+
+    response = await client.responses.create(
+        model=model_name,
+        input=messages,
+    )
+
+    text = response.output_text.strip()
+
+    # Extract the content between <answer> and </answer> tags
+    start = text.rfind("<answer>")
+    end = text.rfind("</answer>")
+    if start != -1 and end != -1:
+        return str(text[start + len("<answer>") : end].strip())
+
+    # Fallback: return the full output if the model didn't follow the format
+    return str(text)
+
+
 def print_score(score: AdaptiveTestScore) -> None:
     """Print adaptive test score with thetas, standard errors, and KL info."""
     print("\nAdaptive Test Score...")
@@ -129,15 +181,15 @@ def print_score(score: AdaptiveTestScore) -> None:
     print(f"Final standard error: {score.std_error}")
 
 
-async def run_example(
+async def run_mc_example(
     client: AsyncOpenAI, dataset_name: str, project_id: str, experiment: str
 ) -> None:
-    """Run an adaptive test asynchronously using the TrismikAsyncClient."""
-    print("\n=== Running Asynchronous Example ===")
+    """Run a multiple-choice test asynchronously using the TrismikAsyncClient."""
+    print("\n=== Running Multiple-Choice Example ===")
 
     async def process_item(item: TrismikItem) -> str:
-        """Async wrapper for inference."""
-        return await inference(client, item)
+        """Async wrapper for multiple-choice inference."""
+        return await mc_inference(client, item)
 
     async with TrismikAsyncClient() as trismik_client:
         # Get user information
@@ -160,9 +212,9 @@ async def run_example(
             split,
             project_id,
             experiment,
-            run_metadata=create_run_metadata(dataset_name),
+            run_metadata=create_run_metadata(dataset_name, "Multiple-choice"),
             item_processor=process_item,
-            on_progress=create_progress_callback("Running test"),
+            on_progress=create_progress_callback("Running MC test"),
             return_dict=False,
         )
 
@@ -180,9 +232,9 @@ async def run_example(
         # print("\nReplay run")
         # replay_results = await trismik_client.run_replay(
         #     results.run_id,
-        #     create_run_metadata(dataset_name),
+        #     create_run_metadata(dataset_name, "Multiple-choice"),
         #     item_processor=process_item,
-        #     on_progress=create_progress_callback("Replaying test"),
+        #     on_progress=create_progress_callback("Replaying MC test"),
         #     with_responses=True,
         #     return_dict=False,
         # )
@@ -191,9 +243,48 @@ async def run_example(
         #     print_score(replay_results.score)
 
 
+async def run_open_ended_example(
+    client: AsyncOpenAI, dataset_name: str, project_id: str, experiment: str
+) -> None:
+    """Run an open-ended text test asynchronously using the TrismikAsyncClient."""
+    print("\n=== Running Open-Ended Text Example ===")
+
+    async def process_item(item: TrismikItem) -> str:
+        """Async wrapper for open-ended inference."""
+        return await open_ended_inference(client, item)
+
+    async with TrismikAsyncClient() as trismik_client:
+        # Get dataset info to retrieve available splits
+        dataset_info = await trismik_client.get_dataset_info(dataset_name)
+        # Use the first available split
+        split = dataset_info.splits[0]
+
+        print(f"\nStarting run with dataset name: {dataset_name}")
+        results = await trismik_client.run(
+            dataset_name,
+            split,
+            project_id,
+            experiment,
+            run_metadata=create_run_metadata(dataset_name, "Open-ended text"),
+            item_processor=process_item,
+            on_progress=create_progress_callback("Running open-ended test"),
+            return_dict=False,
+        )
+
+        print(f"Run {results.run_id} completed.")
+
+        if results.score is not None:
+            print_score(results.score)
+        else:
+            print("No score available.")
+
+
 async def main() -> None:
     """
-    Run asynchronous adaptive testing example with OpenAI API.
+    Run asynchronous adaptive testing examples with OpenAI API.
+
+    Runs a multiple-choice test and optionally an open-ended text test
+    in succession.
 
     Assumes TRISMIK_SERVICE_URL and TRISMIK_API_KEY are set either in
     environment or in .env file.
@@ -202,6 +293,12 @@ async def main() -> None:
     """
     # Parse command line arguments using base parser
     parser = create_base_parser("Run adaptive testing example with Trismik API")
+    parser.add_argument(
+        "--open-ended-dataset-name",
+        type=str,
+        default="fingpt_convfinqa_test",
+        help="Name of the open-ended text dataset to run (optional)",
+    )
     args = parser.parse_args()
 
     load_dotenv()
@@ -228,8 +325,12 @@ async def main() -> None:
     # Initialize AsyncOpenAI client
     client = AsyncOpenAI()
 
-    # Run async example
-    await run_example(client, args.dataset_name, project_id, experiment)
+    # Run multiple-choice example
+    await run_mc_example(client, args.dataset_name, project_id, experiment)
+
+    # Run open-ended text example if dataset provided
+    if args.open_ended_dataset_name is not None:
+        await run_open_ended_example(client, args.open_ended_dataset_name, project_id, experiment)
 
 
 if __name__ == "__main__":
