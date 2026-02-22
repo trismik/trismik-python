@@ -23,6 +23,8 @@ from trismik.types import (
     TrismikDatasetInfo,
     TrismikItem,
     TrismikMeResponse,
+    TrismikMultipleChoiceTextItem,
+    TrismikOpenEndedTextItem,
     TrismikProject,
     TrismikReplayRequest,
     TrismikReplayRequestItem,
@@ -243,23 +245,40 @@ class TrismikAsyncClient:
         except httpx.HTTPError as e:
             raise TrismikApiError(str(e)) from e
 
-    async def continue_run(self, run_id: str, item_choice_id: str) -> TrismikRunResponse:
+    async def continue_run(
+        self,
+        run_id: str,
+        item_choice_id: Optional[str] = None,
+        text_response: Optional[str] = None,
+    ) -> TrismikRunResponse:
         """
         Continue a run: respond to the current item and get the next one.
 
         Args:
             run_id (str): ID of the run.
-            item_choice_id (str): ID of the chosen item response.
+            item_choice_id (Optional[str]): ID of the chosen item response
+                (for multiple choice items).
+            text_response (Optional[str]): Text response (for open-ended items).
 
         Returns:
             TrismikRunResponse: Run response.
 
         Raises:
+            ValueError: If neither item_choice_id nor text_response is provided.
             TrismikApiError: If API request fails.
         """
+        if item_choice_id is None and text_response is None:
+            raise ValueError("Either item_choice_id or text_response must be provided.")
+
+        if item_choice_id is not None and text_response is not None:
+            raise ValueError("Only one of item_choice_id or text_response should be provided.")
+
         try:
             url = f"/runs/{run_id}/continue"
-            body = {"itemChoiceId": item_choice_id}
+            if item_choice_id is not None:
+                body = {"itemChoiceId": item_choice_id}
+            elif text_response is not None:
+                body = {"textResponse": text_response}
             response = await self._http_client.post(url, json=body)
             response.raise_for_status()
             json = response.json()
@@ -323,10 +342,14 @@ class TrismikAsyncClient:
             url = f"runs/{run_id}/replay"
 
             # Convert TrismikReplayRequestItem objects to dictionaries
-            responses_dict = [
-                {"itemId": item.itemId, "itemChoiceId": item.itemChoiceId}
-                for item in replay_request.responses
-            ]
+            responses_dict = []
+            for item in replay_request.responses:
+                item_dict: Dict[str, Any] = {"itemId": item.itemId}
+                if item.itemChoiceId is not None:
+                    item_dict["itemChoiceId"] = item.itemChoiceId
+                if item.textResponse is not None:
+                    item_dict["textResponse"] = item.textResponse
+                responses_dict.append(item_dict)
 
             body = {
                 "responses": responses_dict,
@@ -621,8 +644,13 @@ class TrismikAsyncClient:
             # Process item with helper (handles both sync and async processors)
             response = await process_item(item_processor, item)
 
-            # Continue run with response
-            continue_response = await self.continue_run(run_id, response)
+            # Continue run with response based on item type
+            if isinstance(item, TrismikMultipleChoiceTextItem):
+                continue_response = await self.continue_run(run_id, item_choice_id=response)
+            elif isinstance(item, TrismikOpenEndedTextItem):
+                continue_response = await self.continue_run(run_id, text_response=response)
+            else:
+                raise TrismikApiError(f"Unknown item type: {type(item).__name__}")
 
             # Update state tracking
             states.append(
@@ -708,8 +736,13 @@ class TrismikAsyncClient:
             # Process item with helper (handles both sync and async processors)
             response = await process_item(item_processor, item)
 
-            # Create replay request item
-            replay_item = TrismikReplayRequestItem(itemId=item.id, itemChoiceId=response)
+            # Create replay request item based on item type
+            if isinstance(item, TrismikMultipleChoiceTextItem):
+                replay_item = TrismikReplayRequestItem(itemId=item.id, itemChoiceId=response)
+            elif isinstance(item, TrismikOpenEndedTextItem):
+                replay_item = TrismikReplayRequestItem(itemId=item.id, textResponse=response)
+            else:
+                raise TrismikApiError(f"Unknown item type: {type(item).__name__}")
             replay_items.append(replay_item)
 
         # Final progress update

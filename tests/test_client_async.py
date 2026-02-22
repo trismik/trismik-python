@@ -205,6 +205,9 @@ class TestTrismikAsyncClient:
         # Check metadata
         assert summary.metadata == {"foo": "bar"}
 
+        # Check dataset_item_type
+        assert summary.dataset_item_type == "multiple_choice_text"
+
     @pytest.mark.asyncio
     async def test_should_fail_get_run_summary_when_api_returned_error(
         self,
@@ -943,6 +946,108 @@ class TestTrismikAsyncClient:
         assert results["run_id"] == "replay_run_id"
         assert results["score"] is not None
 
+    @pytest.mark.asyncio
+    async def test_should_continue_run_with_text_response(self) -> None:
+        """Test that continue_run sends textResponse in body."""
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.raise_for_status.return_value = None
+        mock_response.json.return_value = {
+            "runInfo": {"id": "run_id"},
+            "state": {
+                "responses": ["item_1"],
+                "thetas": [1.0],
+                "std_error_history": [0.5],
+                "kl_info_history": [0.1],
+                "effective_difficulties": [0.2],
+            },
+            "nextItem": None,
+            "completed": True,
+        }
+        mock_client.post = AsyncMock(return_value=mock_response)
+
+        client = TrismikAsyncClient(http_client=mock_client)
+        await client.continue_run("run_id", text_response="my text answer")
+
+        mock_client.post.assert_called_once()
+        call_args = mock_client.post.call_args
+        assert call_args[1]["json"] == {"textResponse": "my text answer"}
+
+    @pytest.mark.asyncio
+    async def test_should_fail_continue_run_without_response(self) -> None:
+        """Test that continue_run raises ValueError when no response given."""
+        client = TrismikAsyncClient(http_client=MagicMock(httpx.AsyncClient))
+        with pytest.raises(ValueError, match="Either item_choice_id or text_response"):
+            await client.continue_run("run_id")
+
+    @pytest.mark.asyncio
+    async def test_should_fail_continue_run_with_both_responses(self) -> None:
+        """Test that continue_run raises ValueError when both responses given."""
+        client = TrismikAsyncClient(http_client=MagicMock(httpx.AsyncClient))
+        with pytest.raises(ValueError, match="Only one of item_choice_id or text_response"):
+            await client.continue_run(
+                "run_id", item_choice_id="choice_1", text_response="my answer"
+            )
+
+    @pytest.mark.asyncio
+    async def test_should_run_complete_open_ended_test_flow(self) -> None:
+        """Test full adaptive test flow with open-ended items."""
+        client = TrismikAsyncClient(http_client=self._mock_complete_open_ended_run_flow())
+        metadata = TrismikRunMetadata(
+            model_metadata=TrismikRunMetadata.ModelMetadata(name="test_model"),
+            test_configuration={},
+            inference_setup={},
+        )
+
+        def processor(item):
+            return f"Answer to: {item.question}"
+
+        results = await client.run(
+            test_id="test_123",
+            split="test_split",
+            project_id="proj_456",
+            experiment="exp_1",
+            run_metadata=metadata,
+            item_processor=processor,
+        )
+
+        assert results["run_id"] == "run_id"
+        assert results["score"] is not None
+        assert results["score"]["theta"] == 1.3
+        assert results["score"]["std_error"] == 0.3
+
+    @pytest.mark.asyncio
+    async def test_should_run_replay_with_open_ended_items(self) -> None:
+        """Test replay flow with open-ended items."""
+        mock_client = MagicMock(httpx.AsyncClient)
+        mock_client.get = AsyncMock(return_value=TrismikResponseMocker.run_summary_open_ended())
+        mock_client.post = AsyncMock(return_value=TrismikResponseMocker.run_replay_open_ended())
+
+        client = TrismikAsyncClient(http_client=mock_client)
+        metadata = TrismikRunMetadata(
+            model_metadata=TrismikRunMetadata.ModelMetadata(name="test_model"),
+            test_configuration={},
+            inference_setup={},
+        )
+
+        def processor(item):
+            return "my text answer"
+
+        results = await client.run_replay(
+            previous_run_id="run_123",
+            run_metadata=metadata,
+            item_processor=processor,
+        )
+
+        assert results["run_id"] == "replay_run_id"
+        assert results["score"] is not None
+
+        # Verify the replay request used textResponse
+        call_args = mock_client.post.call_args
+        body = call_args[1]["json"]
+        assert body["responses"][0]["textResponse"] == "my text answer"
+        assert "itemChoiceId" not in body["responses"][0]
+
     @staticmethod
     def _mock_complete_run_flow() -> httpx.AsyncClient:
         """Mock HTTP client for complete run flow."""
@@ -953,6 +1058,21 @@ class TestTrismikAsyncClient:
             side_effect=[
                 TrismikResponseMocker.run_start(),
                 TrismikResponseMocker.run_continue(),
+                TrismikResponseMocker.run_end(),
+            ]
+        )
+
+        return mock_client
+
+    @staticmethod
+    def _mock_complete_open_ended_run_flow() -> httpx.AsyncClient:
+        """Mock HTTP client for complete open-ended run flow."""
+        mock_client = MagicMock(spec=httpx.AsyncClient)
+
+        mock_client.post = AsyncMock(
+            side_effect=[
+                TrismikResponseMocker.run_start_open_ended(),
+                TrismikResponseMocker.run_continue_open_ended(),
                 TrismikResponseMocker.run_end(),
             ]
         )

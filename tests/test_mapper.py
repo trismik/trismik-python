@@ -6,7 +6,12 @@ JSON API responses to internal type objects.
 """
 
 from trismik._mapper import TrismikResponseMapper
-from trismik.types import TrismikProject
+from trismik.types import (
+    TrismikMultipleChoiceTextItem,
+    TrismikOpenEndedTextItem,
+    TrismikProject,
+    TrismikRunSummary,
+)
 
 
 class TestTrismikResponseMapper:
@@ -163,3 +168,119 @@ class TestTrismikResponseMapper:
         assert project.accountId == "org_long"
         assert project.createdAt == "2025-09-12T18:00:00.000Z"
         assert project.updatedAt == "2025-09-12T18:00:00.000Z"
+
+    def test_should_map_multiple_choice_text_item(self) -> None:
+        """Test mapping a multiple choice text item with choices."""
+        json_data = {
+            "id": "item_1",
+            "question": "What is 2+2?",
+            "choices": [
+                {"id": "A", "value": "3"},
+                {"id": "B", "value": "4"},
+            ],
+        }
+
+        item = TrismikResponseMapper.to_item(json_data)
+
+        assert isinstance(item, TrismikMultipleChoiceTextItem)
+        assert item.id == "item_1"
+        assert item.question == "What is 2+2?"
+        assert len(item.choices) == 2
+        assert item.choices[0].id == "A"
+        assert item.choices[0].text == "3"
+        assert item.choices[1].id == "B"
+        assert item.choices[1].text == "4"
+
+    def test_should_map_open_ended_text_item_with_null_choices(self) -> None:
+        """Test mapping an open-ended text item with choices: null."""
+        json_data = {
+            "id": "item_2",
+            "question": "Explain gravity.",
+            "choices": None,
+        }
+
+        item = TrismikResponseMapper.to_item(json_data)
+
+        assert isinstance(item, TrismikOpenEndedTextItem)
+        assert item.id == "item_2"
+        assert item.question == "Explain gravity."
+        assert item.reference is None
+        assert item.response_text is None
+
+    def test_should_map_open_ended_text_item_without_choices_key(self) -> None:
+        """Test mapping an open-ended text item without choices key."""
+        json_data = {
+            "id": "item_3",
+            "question": "Describe photosynthesis.",
+        }
+
+        item = TrismikResponseMapper.to_item(json_data)
+
+        assert isinstance(item, TrismikOpenEndedTextItem)
+        assert item.id == "item_3"
+        assert item.question == "Describe photosynthesis."
+        assert item.reference is None
+        assert item.response_text is None
+
+    def test_should_map_open_ended_text_item_with_reference_and_response(self) -> None:
+        """Test mapping an open-ended text item with reference and responseText."""
+        json_data = {
+            "id": "item_4",
+            "question": "What is photosynthesis?",
+            "choices": None,
+            "reference": "expected answer",
+            "responseText": "model response",
+        }
+
+        item = TrismikResponseMapper.to_item(json_data)
+
+        assert isinstance(item, TrismikOpenEndedTextItem)
+        assert item.id == "item_4"
+        assert item.question == "What is photosynthesis?"
+        assert item.reference == "expected answer"
+        assert item.response_text == "model response"
+
+    def test_should_map_run_summary_with_dataset_item_type(self) -> None:
+        """Test mapping run summary with datasetItemType."""
+        json_data = {
+            "id": "run_id",
+            "datasetId": "test_id",
+            "datasetItemType": "open_ended_text",
+            "state": {
+                "responses": [],
+                "thetas": [],
+                "std_error_history": [],
+                "kl_info_history": [],
+                "effective_difficulties": [],
+            },
+            "dataset": [],
+            "responses": [],
+            "metadata": {},
+        }
+
+        summary = TrismikResponseMapper.to_run_summary(json_data)
+
+        assert isinstance(summary, TrismikRunSummary)
+        assert summary.dataset_item_type == "open_ended_text"
+
+    def test_should_map_run_summary_without_dataset_item_type(self) -> None:
+        """Test mapping run summary without datasetItemType for backward compat."""
+        json_data = {
+            "id": "run_id",
+            "datasetId": "test_id",
+            "state": {
+                "responses": [],
+                "thetas": [],
+                "std_error_history": [],
+                "kl_info_history": [],
+                "effective_difficulties": [],
+            },
+            "dataset": [],
+            "responses": [],
+            "metadata": {},
+        }
+
+        summary = TrismikResponseMapper.to_run_summary(json_data)
+
+        assert isinstance(summary, TrismikRunSummary)
+        assert summary.dataset_item_type is None

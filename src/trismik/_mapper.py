@@ -11,6 +11,7 @@ from trismik.types import (
     TrismikItem,
     TrismikMeResponse,
     TrismikMultipleChoiceTextItem,
+    TrismikOpenEndedTextItem,
     TrismikProject,
     TrismikReplayResponse,
     TrismikResponse,
@@ -188,6 +189,7 @@ class TrismikResponseMapper:
             dataset=[TrismikResponseMapper.to_item(item) for item in json.get("dataset", [])],
             responses=TrismikResponseMapper.to_responses(json.get("responses", [])),
             metadata=json.get("metadata", {}),
+            dataset_item_type=json.get("datasetItemType"),
         )
 
     @staticmethod
@@ -204,7 +206,7 @@ class TrismikResponseMapper:
         Raises:
             TrismikApiError: If the item type is not recognized.
         """
-        if "question" in json and "choices" in json:
+        if "question" in json and "choices" in json and json["choices"] is not None:
             return TrismikMultipleChoiceTextItem(
                 id=json["id"],
                 question=json["question"],
@@ -215,6 +217,13 @@ class TrismikResponseMapper:
                     )
                     for choice in json["choices"]
                 ],
+            )
+        elif "question" in json and ("choices" not in json or json["choices"] is None):
+            return TrismikOpenEndedTextItem(
+                id=json["id"],
+                question=json["question"],
+                reference=json.get("reference"),
+                response_text=json.get("responseText"),
             )
         else:
             item_type = json.get("type", "unknown")
