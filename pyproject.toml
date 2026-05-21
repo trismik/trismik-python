@@ -103,3 +103,5 @@ exclude = [
 "AsyncClient" = "Client"
 "_async" = "_sync"
 "aclose" = "close"
+"asyncio" = "time"
+"TrismikQuickCompareAsyncClient" = "TrismikQuickCompareClient"
