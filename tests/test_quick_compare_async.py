@@ -95,9 +95,7 @@ class TestUserDatasets:
         not_found_error = httpx.HTTPStatusError(
             "not found", request=not_found.request, response=not_found
         )
-        http.get.return_value = MagicMock(
-            raise_for_status=MagicMock(side_effect=not_found_error)
-        )
+        http.get.return_value = MagicMock(raise_for_status=MagicMock(side_effect=not_found_error))
         client = TrismikQuickCompareAsyncClient(http_client=http)
         with pytest.raises(TrismikNotFoundError):
             await client.get_user_dataset("missing")
@@ -136,9 +134,7 @@ class TestUploadWrapper:
         monkeypatch.setenv(environment_settings["trismik_api_key"], "api_key")
 
     @pytest.mark.asyncio
-    async def test_upload_with_bytes_calls_init_s3_finalize(
-        self, monkeypatch
-    ) -> None:
+    async def test_upload_with_bytes_calls_init_s3_finalize(self, monkeypatch) -> None:
         http = MagicMock(httpx.AsyncClient)
         http.post = AsyncMock(side_effect=[M.user_dataset_init(), M.user_dataset()])
         client = TrismikQuickCompareAsyncClient(http_client=http)
@@ -150,13 +146,9 @@ class TestUploadWrapper:
             captured["data_len"] = len(data)
             captured["content_type"] = content_type
 
-        monkeypatch.setattr(
-            "trismik._async.quick_compare.upload_to_presigned", fake_upload
-        )
+        monkeypatch.setattr("trismik._async.quick_compare.upload_to_presigned", fake_upload)
         payload = b"hello,world\n1,2\n"
-        ds = await client.upload_user_dataset(
-            payload, name="x", file_type="csv"
-        )
+        ds = await client.upload_user_dataset(payload, name="x", file_type="csv")
         assert ds.id == "ds-1"
         assert captured["data_len"] == len(payload)
         assert captured["content_type"] == "text/csv"
@@ -184,13 +176,9 @@ class TestUploadWrapper:
         async def fake_upload_fail(presigned, data, *, content_type):
             raise TrismikApiError("S3 boom")
 
-        monkeypatch.setattr(
-            "trismik._async.quick_compare.upload_to_presigned", fake_upload_fail
-        )
+        monkeypatch.setattr("trismik._async.quick_compare.upload_to_presigned", fake_upload_fail)
         with pytest.raises(TrismikApiError, match="S3 boom"):
-            await client.upload_user_dataset(
-                b"x", name="x", file_type="csv"
-            )
+            await client.upload_user_dataset(b"x", name="x", file_type="csv")
         assert http.post.await_count == 1  # only init, finalize NOT called
 
 
@@ -260,9 +248,7 @@ class TestEvaluations:
             dataset=TrismikEvaluationDatasetUser(dataset_id="ds-1"),
             model_input=TrismikEvaluationModelInputColumn(column="q"),
             metrics=[
-                TrismikEvaluationMetricLLMAJ(
-                    judge_model="gpt-4o-mini", rubric="r"
-                ),
+                TrismikEvaluationMetricLLMAJ(judge_model="gpt-4o-mini", rubric="r"),
                 TrismikEvaluationMetricAccuracy(gold_column="a"),
                 TrismikEvaluationMetricExactMatch(gold_column="a", normalize=False),
                 TrismikEvaluationMetricRougeL(gold_column="a"),
@@ -328,9 +314,7 @@ class TestEvaluations:
         http = MagicMock(httpx.AsyncClient)
         rl = M.rate_limited(retry_after=15)
         rl_error = httpx.HTTPStatusError("rate", request=rl.request, response=rl)
-        http.get.return_value = MagicMock(
-            raise_for_status=MagicMock(side_effect=rl_error)
-        )
+        http.get.return_value = MagicMock(raise_for_status=MagicMock(side_effect=rl_error))
         client = TrismikQuickCompareAsyncClient(http_client=http)
         with pytest.raises(TrismikRateLimitedError) as exc_info:
             await client.get_evaluation("ev-1")
@@ -410,9 +394,7 @@ class TestWaitForEvaluation:
             )
         )
         client = TrismikQuickCompareAsyncClient(http_client=http)
-        monkeypatch.setattr(
-            "trismik._async.quick_compare.asyncio.sleep", AsyncMock()
-        )
+        monkeypatch.setattr("trismik._async.quick_compare.asyncio.sleep", AsyncMock())
         with pytest.raises(TrismikApiError, match="boom"):
             await client.wait_for_evaluation("ev-1", poll_interval=6.0)
 
@@ -421,18 +403,12 @@ class TestWaitForEvaluation:
         http = MagicMock(httpx.AsyncClient)
         http.get = AsyncMock(return_value=M.evaluation(status="processing"))
         client = TrismikQuickCompareAsyncClient(http_client=http)
-        monkeypatch.setattr(
-            "trismik._async.quick_compare.asyncio.sleep", AsyncMock()
-        )
+        monkeypatch.setattr("trismik._async.quick_compare.asyncio.sleep", AsyncMock())
         # Fake monotonic to force timeout immediately after first iteration
         times = iter([0.0, 0.0, 100.0])
-        monkeypatch.setattr(
-            "trismik._async.quick_compare._now", lambda: next(times)
-        )
+        monkeypatch.setattr("trismik._async.quick_compare._now", lambda: next(times))
         with pytest.raises(TimeoutError):
-            await client.wait_for_evaluation(
-                "ev-1", poll_interval=6.0, timeout=10.0
-            )
+            await client.wait_for_evaluation("ev-1", poll_interval=6.0, timeout=10.0)
 
     @pytest.mark.asyncio
     async def test_poll_interval_too_small(self) -> None:
@@ -445,12 +421,8 @@ class TestWaitForEvaluation:
         http = MagicMock(httpx.AsyncClient)
         rl = M.rate_limited(retry_after=8)
         rl_error = httpx.HTTPStatusError("rate", request=rl.request, response=rl)
-        rl_response = MagicMock(
-            raise_for_status=MagicMock(side_effect=rl_error)
-        )
-        http.get = AsyncMock(
-            side_effect=[rl_response, M.evaluation(status="completed")]
-        )
+        rl_response = MagicMock(raise_for_status=MagicMock(side_effect=rl_error))
+        http.get = AsyncMock(side_effect=[rl_response, M.evaluation(status="completed")])
         client = TrismikQuickCompareAsyncClient(http_client=http)
         sleeps = []
         monkeypatch.setattr(

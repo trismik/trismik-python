@@ -32,11 +32,7 @@ Rules:
 
 
 def _log_progress(evaluation: TrismikEvaluation) -> None:
-    pct = (
-        evaluation.progress.percentage
-        if evaluation.progress is not None
-        else 0.0
-    )
+    pct = evaluation.progress.percentage if evaluation.progress is not None else 0.0
     print(f"  [{evaluation.status}] {pct:.1f}%")
 
 
@@ -80,9 +76,7 @@ async def main() -> None:
             print(f"  {score.model} | {score.metric}: {score.value:.3f}")
 
         # Export results
-        export = await quick_compare.get_evaluation_export_url(
-            completed.id, format="parquet"
-        )
+        export = await quick_compare.get_evaluation_export_url(completed.id, format="parquet")
         print(f"Export ({export.status}): {export.url}")
 
 

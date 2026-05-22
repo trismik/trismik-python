@@ -6,21 +6,10 @@ from typing import Any, Dict, List, Literal, Optional, Union
 
 import httpx
 
-from trismik._async._upload import (
-    _default_content_type,
-    _read_source_to_bytes,
-    upload_to_presigned,
-)
-from trismik._quick_compare_mapper import (
-    TrismikQuickCompareResponseMapper,
-    evaluation_request_body,
-)
+from trismik._async._upload import _default_content_type, _read_source_to_bytes, upload_to_presigned
+from trismik._quick_compare_mapper import TrismikQuickCompareResponseMapper, evaluation_request_body
 from trismik._utils import TrismikUtils, handle_http_error
-from trismik.exceptions import (
-    TrismikApiError,
-    TrismikRateLimitedError,
-    TrismikValidationError,
-)
+from trismik.exceptions import TrismikApiError, TrismikRateLimitedError, TrismikValidationError
 from trismik.settings import client_settings, environment_settings
 from trismik.types import (
     TrismikAccountBalance,
@@ -131,9 +120,7 @@ class TrismikQuickCompareAsyncClient:
         """
         params = _build_list_params(page, limit, sort_by, sort_order, search)
         try:
-            response = await self._http_client.get(
-                "/bank-maker-api/public/datasets", params=params
-            )
+            response = await self._http_client.get("/bank-maker-api/public/datasets", params=params)
             response.raise_for_status()
             return TrismikQuickCompareResponseMapper.to_user_dataset_page(response.json())
         except httpx.HTTPStatusError as e:
@@ -156,9 +143,7 @@ class TrismikQuickCompareAsyncClient:
             TrismikApiError: For other API failures.
         """
         try:
-            response = await self._http_client.get(
-                f"/bank-maker-api/public/datasets/{dataset_id}"
-            )
+            response = await self._http_client.get(f"/bank-maker-api/public/datasets/{dataset_id}")
             response.raise_for_status()
             return TrismikQuickCompareResponseMapper.to_user_dataset_detail(response.json())
         except httpx.HTTPStatusError as e:
@@ -232,9 +217,7 @@ class TrismikQuickCompareAsyncClient:
             "sizeBytes": size_bytes,
         }
         try:
-            response = await self._http_client.post(
-                "/bank-maker-api/user-datasets", json=body
-            )
+            response = await self._http_client.post("/bank-maker-api/user-datasets", json=body)
             response.raise_for_status()
             return TrismikQuickCompareResponseMapper.to_user_dataset_init(response.json())
         except httpx.HTTPStatusError as e:
@@ -290,7 +273,7 @@ class TrismikQuickCompareAsyncClient:
             The finalized dataset detail.
 
         Raises:
-            TrismikError: If ``file_type`` cannot be inferred.
+            TrismikValidationError: If ``file_type`` cannot be inferred.
             TrismikApiError: If init, S3 upload, or finalize fail. If S3 fails,
                 ``finalize`` is **not** invoked.
         """
@@ -360,9 +343,7 @@ class TrismikQuickCompareAsyncClient:
             sample_limit=sample_limit,
         )
         try:
-            response = await self._http_client.post(
-                "/bank-maker-api/evaluations", json=body
-            )
+            response = await self._http_client.post("/bank-maker-api/evaluations", json=body)
             response.raise_for_status()
             return TrismikQuickCompareResponseMapper.to_evaluation(response.json())
         except httpx.HTTPStatusError as e:
@@ -385,9 +366,7 @@ class TrismikQuickCompareAsyncClient:
             TrismikApiError: For other API failures.
         """
         try:
-            response = await self._http_client.get(
-                f"/bank-maker-api/evaluations/{evaluation_id}"
-            )
+            response = await self._http_client.get(f"/bank-maker-api/evaluations/{evaluation_id}")
             response.raise_for_status()
             return TrismikQuickCompareResponseMapper.to_evaluation(response.json())
         except httpx.HTTPStatusError as e:
@@ -421,9 +400,7 @@ class TrismikQuickCompareAsyncClient:
         """
         params = _build_list_params(page, limit, sort_by, sort_order, search)
         try:
-            response = await self._http_client.get(
-                "/bank-maker-api/evaluations", params=params
-            )
+            response = await self._http_client.get("/bank-maker-api/evaluations", params=params)
             response.raise_for_status()
             return TrismikQuickCompareResponseMapper.to_evaluation_page(response.json())
         except httpx.HTTPStatusError as e:
@@ -508,13 +485,9 @@ class TrismikQuickCompareAsyncClient:
                 return evaluation
             if evaluation.status == "failed":
                 message = evaluation.error_message or "no error message provided"
-                raise TrismikApiError(
-                    f"Evaluation {evaluation_id} failed: {message}"
-                )
+                raise TrismikApiError(f"Evaluation {evaluation_id} failed: {message}")
             if deadline is not None and _now() >= deadline:
-                raise TimeoutError(
-                    f"Timed out waiting for evaluation {evaluation_id} to complete."
-                )
+                raise TimeoutError(f"Timed out waiting for evaluation {evaluation_id} to complete.")
             await asyncio.sleep(poll_interval)
 
     # ------------------------------------------------------------------
@@ -562,10 +535,6 @@ def _validate_metrics(metrics: List[TrismikEvaluationMetric]) -> None:
         i for i, m in enumerate(metrics) if isinstance(m, TrismikEvaluationMetricLLMAJ)
     ]
     if len(llmaj_indices) > 1:
-        raise TrismikValidationError(
-            "At most one LLM-as-judge metric is allowed per evaluation."
-        )
+        raise TrismikValidationError("At most one LLM-as-judge metric is allowed per evaluation.")
     if llmaj_indices and llmaj_indices[0] != 0:
-        raise TrismikValidationError(
-            "LLM-as-judge metric must be the first metric in the list."
-        )
+        raise TrismikValidationError("LLM-as-judge metric must be the first metric in the list.")

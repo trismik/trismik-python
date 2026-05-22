@@ -199,11 +199,7 @@ class TrismikQuickCompareResponseMapper:
             if isinstance(col, str):
                 out.append(TrismikUserDatasetColumn(name=col))
             elif isinstance(col, dict):
-                out.append(
-                    TrismikUserDatasetColumn(
-                        name=col["name"], type=col.get("type", "")
-                    )
-                )
+                out.append(TrismikUserDatasetColumn(name=col["name"], type=col.get("type", "")))
         return out
 
     @staticmethod

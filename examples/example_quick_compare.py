@@ -29,11 +29,7 @@ from trismik import (
 
 
 def _log_progress(evaluation: TrismikEvaluation) -> None:
-    pct = (
-        evaluation.progress.percentage
-        if evaluation.progress is not None
-        else 0.0
-    )
+    pct = evaluation.progress.percentage if evaluation.progress is not None else 0.0
     print(f"  [{evaluation.status}] {pct:.1f}%")
 
 
@@ -59,10 +55,7 @@ async def main() -> None:
             dataset_csv,
             name=f"example-qa-{run_suffix}",
         )
-        print(
-            f"Uploaded dataset {dataset.id} "
-            f"({dataset.status}, {dataset.row_count} rows)"
-        )
+        print(f"Uploaded dataset {dataset.id} " f"({dataset.status}, {dataset.row_count} rows)")
 
         # 3) Create evaluation
         evaluation = await quick_compare.create_evaluation(
@@ -93,9 +86,7 @@ async def main() -> None:
             print(f"  {score.model} | {score.metric}: {score.value:.3f}")
 
         # 5) Export URL
-        export = await quick_compare.get_evaluation_export_url(
-            completed.id, format="parquet"
-        )
+        export = await quick_compare.get_evaluation_export_url(completed.id, format="parquet")
         print(f"Export ({export.status}): {export.url}")
 
 

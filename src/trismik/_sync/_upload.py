@@ -5,7 +5,7 @@ from typing import BinaryIO, Optional, Tuple, Union
 
 import httpx
 
-from trismik.exceptions import TrismikApiError
+from trismik.exceptions import TrismikApiError, TrismikValidationError
 from trismik.types import TrismikUserDatasetPresignedPost
 
 UploadSource = Union[str, Path, bytes, BinaryIO]
@@ -46,7 +46,7 @@ def _read_source_to_bytes(source: UploadSource) -> Tuple[bytes, Optional[str]]:
         return source, None
     data = source.read()
     if not isinstance(data, bytes):
-        raise TrismikApiError("Binary file-like source must return bytes from read().")
+        raise TrismikValidationError("Binary file-like source must return bytes from read().")
     return data, None
 
 
@@ -86,6 +86,5 @@ def upload_to_presigned(
             )
     if response.status_code >= 400:
         raise TrismikApiError(
-            f"S3 upload failed with status {response.status_code}: "
-            f"{response.text[:500]}"
+            f"S3 upload failed with status {response.status_code}: " f"{response.text[:500]}"
         )
