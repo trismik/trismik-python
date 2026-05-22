@@ -7,7 +7,7 @@ library.
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Generic, List, Literal, Optional, TypeVar, Union
 
 
 @dataclass
@@ -374,3 +374,314 @@ class TrismikProject:
     accountId: str
     createdAt: str
     updatedAt: str
+
+
+# ---------------------------------------------------------------------------
+# Quick-Compare feature: user datasets, evaluations, export, account balance.
+# ---------------------------------------------------------------------------
+
+T = TypeVar("T")
+
+
+@dataclass
+class TrismikPageMeta:
+    """Pagination metadata returned by paginated list endpoints."""
+
+    page: int
+    limit: int
+    total_items: int
+    total_pages: int
+    has_next_page: bool
+    has_previous_page: bool
+
+
+@dataclass
+class TrismikPage(Generic[T]):
+    """Generic paginated page of items."""
+
+    data: List[T]
+    meta: TrismikPageMeta
+
+
+# --- User datasets ---------------------------------------------------------
+
+
+FileType = Literal["csv", "tsv", "json", "jsonl", "parquet"]
+
+
+@dataclass
+class TrismikUserDatasetPresignedPost:
+    """Presigned S3 endpoint for uploading a user dataset payload."""
+
+    url: str
+    fields: Dict[str, str]
+    method: Literal["POST", "PUT"] = "POST"
+    expires_at: Optional[datetime] = None
+
+
+@dataclass
+class TrismikUserDatasetInitResponse:
+    """Response from initializing a user dataset upload."""
+
+    dataset_id: str
+    name: str
+    status: str
+    upload: TrismikUserDatasetPresignedPost
+
+
+@dataclass
+class TrismikUserDatasetColumn:
+    """Column metadata for a user dataset (name and inferred type)."""
+
+    name: str
+    type: str = ""
+
+
+@dataclass
+class TrismikUserDataset:
+    """User dataset summary."""
+
+    id: str
+    name: str
+    created_at: datetime
+    status: Optional[str] = None
+    s3_path: Optional[str] = None
+    row_count: Optional[int] = None
+    size_bytes: Optional[int] = None
+    uploaded_by: Optional[str] = None
+    updated_at: Optional[datetime] = None
+
+
+@dataclass
+class TrismikUserDatasetDetail:
+    """User dataset with full column metadata."""
+
+    id: str
+    name: str
+    created_at: datetime
+    status: Optional[str] = None
+    s3_path: Optional[str] = None
+    file_type: Optional[str] = None
+    row_count: Optional[int] = None
+    size_bytes: Optional[int] = None
+    uploaded_by: Optional[str] = None
+    updated_at: Optional[datetime] = None
+    finalized_at: Optional[datetime] = None
+    columns: List[TrismikUserDatasetColumn] = field(default_factory=list)
+    preview: List[Dict[str, Any]] = field(default_factory=list)
+
+
+# --- Evaluation dataset variants (polymorphic) -----------------------------
+
+
+@dataclass
+class TrismikEvaluationDatasetHF:
+    """HuggingFace-hosted dataset reference for an evaluation."""
+
+    repo: str
+    sub_dataset: Optional[str] = None
+    splits: Optional[List[str]] = None
+
+
+@dataclass
+class TrismikEvaluationDatasetUser:
+    """User-uploaded dataset reference for an evaluation."""
+
+    dataset_id: str
+
+
+TrismikEvaluationDataset = Union[TrismikEvaluationDatasetHF, TrismikEvaluationDatasetUser]
+
+
+# --- Evaluation model input variants (polymorphic) ------------------------
+
+
+@dataclass
+class TrismikEvaluationModelInputColumn:
+    """Use a single dataset column as the model input."""
+
+    column: str
+
+
+@dataclass
+class TrismikEvaluationModelInputTemplate:
+    """Use a Mustache-style template to compose the model input."""
+
+    template: str
+
+
+TrismikEvaluationModelInput = Union[
+    TrismikEvaluationModelInputColumn,
+    TrismikEvaluationModelInputTemplate,
+]
+
+
+# --- Evaluation metric variants (polymorphic) ------------------------------
+
+
+@dataclass
+class TrismikEvaluationMetricAccuracy:
+    """Accuracy metric against a gold column."""
+
+    gold_column: str
+
+
+@dataclass
+class TrismikEvaluationMetricExactMatch:
+    """Exact-match metric against a gold column."""
+
+    gold_column: str
+    normalize: bool = True
+
+
+@dataclass
+class TrismikEvaluationMetricBleu:
+    """BLEU metric against a gold column."""
+
+    gold_column: str
+
+
+@dataclass
+class TrismikEvaluationMetricRougeL:
+    """ROUGE-L metric against a gold column."""
+
+    gold_column: str
+
+
+@dataclass
+class TrismikEvaluationMetricLLMAJ:
+    """LLM-as-judge metric.
+
+    The judge model evaluates each model output against the provided rubric.
+    Must be the first metric in an evaluation when present (server constraint).
+    """
+
+    judge_model: str
+    rubric: str
+    gold_column: Optional[str] = None
+    scale_min: int = 1
+    scale_max: int = 5
+
+
+TrismikEvaluationMetric = Union[
+    TrismikEvaluationMetricAccuracy,
+    TrismikEvaluationMetricExactMatch,
+    TrismikEvaluationMetricBleu,
+    TrismikEvaluationMetricRougeL,
+    TrismikEvaluationMetricLLMAJ,
+]
+
+
+# --- Evaluation model configuration ---------------------------------------
+
+
+@dataclass
+class TrismikEvaluationModelConfig:
+    """Configuration for a single model in an evaluation."""
+
+    id: str
+    thinking: bool = False
+    reasoning_effort: Optional[Literal["low", "medium", "high"]] = None
+    max_tokens: Optional[int] = None
+    temperature: Optional[float] = None
+
+
+# --- Evaluation core types -------------------------------------------------
+
+
+@dataclass
+class TrismikEvaluationBatch:
+    """One model/split batch inside an evaluation."""
+
+    id: str
+    model: str
+    status: str
+    split: Optional[str] = None
+    items_processed: Optional[int] = None
+    items_total: Optional[int] = None
+    failed_count: Optional[int] = None
+    cost_usd: Optional[float] = None
+
+
+@dataclass
+class TrismikEvaluationScore:
+    """Aggregated score for a single (model, metric) pair."""
+
+    model: str
+    metric: str
+    value: float
+    min_value: Optional[float] = None
+    max_value: Optional[float] = None
+
+
+@dataclass
+class TrismikEvaluationProgress:
+    """Progress snapshot for a running evaluation."""
+
+    percentage: float
+    cost_usd_used: float
+    cost_usd_budget: float
+    items_processed: Optional[int] = None
+    items_total: Optional[int] = None
+
+
+@dataclass
+class TrismikEvaluationSummary:
+    """Slim evaluation view used by list endpoints."""
+
+    id: str
+    name: str
+    status: str
+    created_at: datetime
+    models: List[str] = field(default_factory=list)
+    dataset_name: Optional[str] = None
+    progress_percentage: Optional[float] = None
+    budget_limit_usd: Optional[float] = None
+    is_demo: bool = False
+    updated_at: Optional[datetime] = None
+
+
+@dataclass
+class TrismikEvaluation:
+    """Detailed evaluation view used by create / get / wait endpoints."""
+
+    id: str
+    name: str
+    status: str
+    created_at: datetime
+    models: List[str] = field(default_factory=list)
+    dataset_name: Optional[str] = None
+    progress: Optional[TrismikEvaluationProgress] = None
+    batches: List[TrismikEvaluationBatch] = field(default_factory=list)
+    scores: List[TrismikEvaluationScore] = field(default_factory=list)
+    error_message: Optional[str] = None
+    budget_limit_usd: Optional[float] = None
+    sample_limit: Optional[Dict[str, int]] = None
+    total_cost_usd: Optional[float] = None
+    is_demo: bool = False
+    updated_at: Optional[datetime] = None
+
+
+# --- Evaluation export -----------------------------------------------------
+
+
+@dataclass
+class TrismikEvaluationExportUrl:
+    """Presigned download URL for evaluation results."""
+
+    status: str
+    format: Literal["parquet", "csv", "jsonl"]
+    url: Optional[str] = None
+    expires_at: Optional[datetime] = None
+
+
+# --- Account balance -------------------------------------------------------
+
+
+@dataclass
+class TrismikAccountBalance:
+    """Account balance including in-flight holds."""
+
+    balance_usd: float
+    held_usd: float
+    available_usd: float

@@ -726,7 +726,7 @@ class TestTrismikAsyncClient:
         call_args = mock_client.post.call_args
 
         # Check URL
-        assert call_args[0][0] == "../admin/public/projects"
+        assert call_args[0][0] == "/admin/public/projects"
 
         # Check request body
         assert call_args[1]["json"] == {

@@ -5,14 +5,17 @@ This module provides an asynchronous client for interacting with the Trismik
 API. It uses httpx for making HTTP requests.
 """
 
-from typing import Any, Callable, Dict, List, Literal, Optional, Union, overload
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Literal, Optional, Union, overload
 
 import httpx
 
+if TYPE_CHECKING:
+    from trismik._sync.quick_compare import TrismikQuickCompareClient
+
 from trismik._sync.helpers import process_item
 from trismik._mapper import TrismikResponseMapper
-from trismik._utils import TrismikUtils
-from trismik.exceptions import TrismikApiError, TrismikPayloadTooLargeError, TrismikValidationError
+from trismik._utils import TrismikUtils, handle_http_error
+from trismik.exceptions import TrismikApiError
 from trismik.settings import client_settings, environment_settings, evaluation_settings
 from trismik.types import (
     AdaptiveTestScore,
@@ -91,6 +94,30 @@ class TrismikClient:
             base_url=self._service_url, headers=default_headers, timeout=30.0
         )
         self._max_items = max_items
+        self._quick_compare: Optional["TrismikQuickCompareClient"] = None
+
+    @property
+    def quick_compare(self) -> "TrismikQuickCompareClient":
+        """Lazily-instantiated Quick Compare sub-client sharing the HTTP client.
+
+        Returns:
+            The Quick Compare client bound to this instance's API key and
+            ``httpx.AsyncClient``. Successive accesses return the same object.
+
+        Note:
+            Do not call ``aclose()`` on the returned sub-client when obtained
+            via this accessor; the parent client owns the underlying HTTP
+            client and closes it on its own ``aclose()``.
+        """
+        if self._quick_compare is None:
+            from trismik._sync.quick_compare import TrismikQuickCompareClient
+
+            self._quick_compare = TrismikQuickCompareClient(
+                api_key=self._api_key,
+                service_url=self._service_url,
+                http_client=self._http_client,
+            )
+        return self._quick_compare
 
     def __enter__(self) -> "TrismikClient":
         """
@@ -138,22 +165,7 @@ class TrismikClient:
         Returns:
             Exception: The appropriate Trismik exception to raise.
         """
-        if e.response.status_code == 413:
-            # Handle payload too large error specifically
-            try:
-                backend_message = e.response.json().get("detail", "Payload too large.")
-            except Exception:
-                backend_message = "Payload too large."
-            return TrismikPayloadTooLargeError(backend_message)
-        elif e.response.status_code == 422:
-            # Handle validation error specifically
-            try:
-                backend_message = e.response.json().get("detail", "Validation failed.")
-            except Exception:
-                backend_message = "Validation failed."
-            return TrismikValidationError(backend_message)
-        else:
-            return TrismikApiError(TrismikUtils.get_error_message(e.response))
+        return handle_http_error(e)
 
     def list_datasets(self) -> List[TrismikDataset]:
         """
@@ -166,7 +178,7 @@ class TrismikClient:
             TrismikApiError: If API request fails.
         """
         try:
-            url = "/datasets"
+            url = "/adaptive-testing/datasets"
             response = self._http_client.get(url)
             response.raise_for_status()
             json = response.json()
@@ -190,7 +202,7 @@ class TrismikClient:
             TrismikApiError: If API request fails.
         """
         try:
-            url = "/datasets/get-dataset"
+            url = "/adaptive-testing/datasets/get-dataset"
             body = {"datasetId": dataset_id}
             response = self._http_client.post(url, json=body)
             response.raise_for_status()
@@ -232,7 +244,7 @@ class TrismikClient:
             TrismikApiError: If API request fails.
         """
         try:
-            url = "/runs/start"
+            url = "/adaptive-testing/runs/start"
             body: Dict[str, Any] = {
                 "datasetId": dataset_id,
                 "split": split,
@@ -280,7 +292,7 @@ class TrismikClient:
             raise ValueError("Only one of item_choice_id or text_response should be provided.")
 
         try:
-            url = f"/runs/{run_id}/continue"
+            url = f"/adaptive-testing/runs/{run_id}/continue"
             if item_choice_id is not None:
                 body = {"itemChoiceId": item_choice_id}
             elif text_response is not None:
@@ -309,7 +321,7 @@ class TrismikClient:
             TrismikApiError: If API request fails.
         """
         try:
-            url = f"/runs/adaptive/{run_id}"
+            url = f"/adaptive-testing/runs/adaptive/{run_id}"
             response = self._http_client.get(url)
             response.raise_for_status()
             json = response.json()
@@ -381,7 +393,7 @@ class TrismikClient:
             TrismikApiError: If API request fails.
         """
         try:
-            url = "../admin/api-keys/me"
+            url = "/admin/api-keys/me"
             response = self._http_client.get(url)
             response.raise_for_status()
             json = response.json()
@@ -412,7 +424,7 @@ class TrismikClient:
             TrismikApiError: If API request fails.
         """
         try:
-            url = "/runs/classic"
+            url = "/adaptive-testing/runs/classic"
 
             # Convert request object to dictionary
             items_dict = [
@@ -477,7 +489,7 @@ class TrismikClient:
             TrismikApiError: If API request fails.
         """
         try:
-            url = "../admin/public/projects"
+            url = "/admin/public/projects"
 
             body = {
                 "name": name,

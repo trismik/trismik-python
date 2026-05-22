@@ -28,7 +28,7 @@ repos:
     hooks:
     -   id: isort
         args: ["--profile", "black"]
-        exclude: "^src/trismik/_sync/client\\.py$"
+        exclude: "^src/trismik/_sync/"
 
 -   repo: https://github.com/pycqa/flake8
     rev: 7.0.0

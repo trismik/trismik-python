@@ -3,7 +3,14 @@ from typing import Optional, Union
 
 import httpx
 
-from trismik.exceptions import TrismikError
+from trismik.exceptions import (
+    TrismikApiError,
+    TrismikError,
+    TrismikNotFoundError,
+    TrismikPayloadTooLargeError,
+    TrismikRateLimitedError,
+    TrismikValidationError,
+)
 
 
 class TrismikUtils:
@@ -120,3 +127,44 @@ class TrismikUtils:
                 f"Unsupported metric value type: {type(value).__name__}. "
                 f"Supported types: str, float, int, bool"
             )
+
+
+def handle_http_error(e: httpx.HTTPStatusError) -> Exception:
+    """Map an httpx HTTPStatusError to the matching Trismik exception.
+
+    Args:
+        e (httpx.HTTPStatusError): The HTTP status error to translate.
+
+    Returns:
+        Exception: The Trismik exception subclass corresponding to the response
+            status code. Subclasses of TrismikApiError are returned for 404, 413,
+            422, and 429 responses; other failures fall back to TrismikApiError.
+    """
+    status = e.response.status_code
+    if status == 413:
+        try:
+            backend_message = e.response.json().get("detail", "Payload too large.")
+        except Exception:
+            backend_message = "Payload too large."
+        return TrismikPayloadTooLargeError(backend_message)
+    if status == 422:
+        try:
+            backend_message = e.response.json().get("detail", "Validation failed.")
+        except Exception:
+            backend_message = "Validation failed."
+        return TrismikValidationError(backend_message)
+    if status == 404:
+        return TrismikNotFoundError(TrismikUtils.get_error_message(e.response))
+    if status == 429:
+        retry_after_header = e.response.headers.get("Retry-After")
+        retry_after_seconds: Optional[float] = None
+        if retry_after_header:
+            try:
+                retry_after_seconds = float(retry_after_header)
+            except ValueError:
+                retry_after_seconds = None
+        return TrismikRateLimitedError(
+            TrismikUtils.get_error_message(e.response),
+            retry_after_seconds=retry_after_seconds,
+        )
+    return TrismikApiError(TrismikUtils.get_error_message(e.response))
