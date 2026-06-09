@@ -6,8 +6,8 @@ from typing import Any, Dict, List, Literal, Optional, Union
 
 import httpx
 
-from trismik._quick_compare_mapper import TrismikQuickCompareResponseMapper, evaluation_request_body
 from trismik._sync._upload import _default_content_type, _read_source_to_bytes, upload_to_presigned
+from trismik._quick_compare_mapper import TrismikQuickCompareResponseMapper, evaluation_request_body
 from trismik._utils import TrismikUtils, handle_http_error
 from trismik.exceptions import TrismikApiError, TrismikRateLimitedError, TrismikValidationError
 from trismik.settings import client_settings, environment_settings

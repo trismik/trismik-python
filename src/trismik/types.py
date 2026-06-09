@@ -590,6 +590,7 @@ class TrismikEvaluationMetricLLMAJ:
     judges: List[TrismikJudge] = field(default_factory=list)
 
     def __post_init__(self) -> None:
+        """Normalise single-judge shorthand into the ``judges`` list."""
         if not self.judges:
             if self.judge_model is None or self.rubric is None:
                 raise ValueError(
