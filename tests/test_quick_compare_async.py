@@ -25,6 +25,7 @@ from trismik.types import (
     TrismikEvaluationModelConfig,
     TrismikEvaluationModelInputColumn,
     TrismikEvaluationModelInputTemplate,
+    TrismikJudge,
 )
 
 from ._quick_compare_mocker import TrismikQuickCompareResponseMocker as M
@@ -260,6 +261,79 @@ class TestEvaluations:
         types = [m["type"] for m in body["metrics"]]
         assert types == ["llmaj", "accuracy", "exact_match", "rougel"]
         assert body["metrics"][2]["normalize"] is False
+        # Legacy single-judge construction is serialised as a one-element
+        # judges[] list (back-compat).
+        judges = body["metrics"][0]["judges"]
+        assert len(judges) == 1
+        assert judges[0]["judgeModel"] == "gpt-4o-mini"
+        assert judges[0]["judgePromptTemplate"] == "r"
+        assert judges[0]["name"] == "gpt-4o-mini"
+
+    @pytest.mark.asyncio
+    async def test_create_evaluation_multi_judge_body(self) -> None:
+        http = MagicMock(httpx.AsyncClient)
+        http.post = AsyncMock(return_value=M.evaluation(status="processing"))
+        client = TrismikQuickCompareAsyncClient(http_client=http)
+        await client.create_evaluation(
+            name="demo",
+            dataset=TrismikEvaluationDatasetUser(dataset_id="ds-1"),
+            model_input=TrismikEvaluationModelInputColumn(column="q"),
+            metrics=[
+                TrismikEvaluationMetricLLMAJ(
+                    judges=[
+                        TrismikJudge(
+                            name="strict",
+                            judge_model="gpt-4o",
+                            rubric="be strict",
+                            scale_min=1,
+                            scale_max=5,
+                            temperature=0.0,
+                        ),
+                        TrismikJudge(
+                            name="lenient",
+                            judge_model="claude",
+                            rubric="be lenient",
+                            scale_min=0,
+                            scale_max=10,
+                            thinking=True,
+                        ),
+                    ]
+                ),
+                TrismikEvaluationMetricAccuracy(gold_column="a"),
+            ],
+            models=["m1"],
+            budget_limit_usd=1.0,
+        )
+        judges = http.post.call_args.kwargs["json"]["metrics"][0]["judges"]
+        assert [j["name"] for j in judges] == ["strict", "lenient"]
+        assert judges[0]["judgeModel"] == "gpt-4o"
+        assert judges[0]["temperature"] == 0.0
+        assert "thinking" not in judges[0]
+        assert judges[1]["judgeScaleMax"] == 10
+        assert judges[1]["thinking"] is True
+
+    @pytest.mark.asyncio
+    async def test_create_evaluation_duplicate_judge_names_raises(self) -> None:
+        http = MagicMock(httpx.AsyncClient)
+        http.post = AsyncMock()
+        client = TrismikQuickCompareAsyncClient(http_client=http)
+        with pytest.raises(TrismikValidationError, match="unique"):
+            await client.create_evaluation(
+                name="demo",
+                dataset=TrismikEvaluationDatasetUser(dataset_id="ds-1"),
+                model_input=TrismikEvaluationModelInputColumn(column="q"),
+                metrics=[
+                    TrismikEvaluationMetricLLMAJ(
+                        judges=[
+                            TrismikJudge(name="dup", judge_model="a", rubric="r"),
+                            TrismikJudge(name="dup", judge_model="b", rubric="r"),
+                        ]
+                    ),
+                ],
+                models=["m1"],
+                budget_limit_usd=1.0,
+            )
+        http.post.assert_not_awaited()
 
     @pytest.mark.asyncio
     async def test_create_evaluation_llmaj_not_first_raises(self) -> None:

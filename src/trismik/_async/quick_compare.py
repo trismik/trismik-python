@@ -538,3 +538,11 @@ def _validate_metrics(metrics: List[TrismikEvaluationMetric]) -> None:
         raise TrismikValidationError("At most one LLM-as-judge metric is allowed per evaluation.")
     if llmaj_indices and llmaj_indices[0] != 0:
         raise TrismikValidationError("LLM-as-judge metric must be the first metric in the list.")
+    for m in metrics:
+        if not isinstance(m, TrismikEvaluationMetricLLMAJ):
+            continue
+        if len(m.judges) < 1:
+            raise TrismikValidationError("LLM-as-judge metric requires at least one judge.")
+        names = [j.name for j in m.judges]
+        if len(names) != len(set(names)):
+            raise TrismikValidationError("Judge names must be unique within an evaluation.")

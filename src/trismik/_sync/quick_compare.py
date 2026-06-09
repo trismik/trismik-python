@@ -6,8 +6,8 @@ from typing import Any, Dict, List, Literal, Optional, Union
 
 import httpx
 
-from trismik._sync._upload import _default_content_type, _read_source_to_bytes, upload_to_presigned
 from trismik._quick_compare_mapper import TrismikQuickCompareResponseMapper, evaluation_request_body
+from trismik._sync._upload import _default_content_type, _read_source_to_bytes, upload_to_presigned
 from trismik._utils import TrismikUtils, handle_http_error
 from trismik.exceptions import TrismikApiError, TrismikRateLimitedError, TrismikValidationError
 from trismik.settings import client_settings, environment_settings
@@ -538,3 +538,11 @@ def _validate_metrics(metrics: List[TrismikEvaluationMetric]) -> None:
         raise TrismikValidationError("At most one LLM-as-judge metric is allowed per evaluation.")
     if llmaj_indices and llmaj_indices[0] != 0:
         raise TrismikValidationError("LLM-as-judge metric must be the first metric in the list.")
+    for m in metrics:
+        if not isinstance(m, TrismikEvaluationMetricLLMAJ):
+            continue
+        if len(m.judges) < 1:
+            raise TrismikValidationError("LLM-as-judge metric requires at least one judge.")
+        names = [j.name for j in m.judges]
+        if len(names) != len(set(names)):
+            raise TrismikValidationError("Judge names must be unique within an evaluation.")
