@@ -549,18 +549,63 @@ class TrismikEvaluationMetricRougeL:
 
 
 @dataclass
+class TrismikJudge:
+    """A single LLM-as-judge configuration.
+
+    Each judge evaluates every model output and produces its own, independent
+    score. ``name`` is a user-facing label and must be unique among the judges
+    of an evaluation.
+    """
+
+    name: str
+    judge_model: str
+    rubric: str
+    scale_min: int = 1
+    scale_max: int = 5
+    temperature: Optional[float] = None
+    thinking: Optional[bool] = None
+
+
+@dataclass
 class TrismikEvaluationMetricLLMAJ:
     """LLM-as-judge metric.
 
-    The judge model evaluates each model output against the provided rubric.
-    Must be the first metric in an evaluation when present (server constraint).
+    Carries one or more judges; each judge evaluates every model output and
+    produces a separate score/difficulty. Must be the first metric in an
+    evaluation when present (server constraint).
+
+    Two ways to construct it:
+
+    - Multi-judge: pass ``judges=[TrismikJudge(...), ...]``.
+    - Single-judge (legacy, back-compatible): pass ``judge_model`` + ``rubric``
+      (and optionally ``scale_min``/``scale_max``); a single judge is
+      synthesised, named after the judge model.
     """
 
-    judge_model: str
-    rubric: str
+    judge_model: Optional[str] = None
+    rubric: Optional[str] = None
     gold_column: Optional[str] = None
     scale_min: int = 1
     scale_max: int = 5
+    judges: List[TrismikJudge] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        """Normalise single-judge shorthand into the ``judges`` list."""
+        if not self.judges:
+            if self.judge_model is None or self.rubric is None:
+                raise ValueError(
+                    "LLMAJ metric requires either judges=[TrismikJudge(...)] "
+                    "or judge_model + rubric."
+                )
+            self.judges = [
+                TrismikJudge(
+                    name=self.judge_model,
+                    judge_model=self.judge_model,
+                    rubric=self.rubric,
+                    scale_min=self.scale_min,
+                    scale_max=self.scale_max,
+                )
+            ]
 
 
 TrismikEvaluationMetric = Union[

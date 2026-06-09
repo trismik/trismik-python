@@ -42,6 +42,7 @@ from trismik.types import (
     TrismikEvaluationScore,
     TrismikEvaluationSummary,
     TrismikItem,
+    TrismikJudge,
     TrismikMeResponse,
     TrismikMultipleChoiceTextItem,
     TrismikOpenEndedTextItem,
@@ -105,6 +106,7 @@ __all__ = [
     "TrismikEvaluationMetricBleu",
     "TrismikEvaluationMetricRougeL",
     "TrismikEvaluationMetricLLMAJ",
+    "TrismikJudge",
     "TrismikEvaluationModelConfig",
     # Quick Compare - evaluation core
     "TrismikEvaluation",

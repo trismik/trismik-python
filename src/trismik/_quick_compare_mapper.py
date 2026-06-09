@@ -82,16 +82,21 @@ def _metric_to_dict(metric: TrismikEvaluationMetric) -> Dict[str, Any]:
     if isinstance(metric, TrismikEvaluationMetricRougeL):
         return {"type": "rougel", "truthColumn": metric.gold_column}
     if isinstance(metric, TrismikEvaluationMetricLLMAJ):
-        body: Dict[str, Any] = {
-            "type": "llmaj",
-            "judgeModel": metric.judge_model,
-            "judgePromptTemplate": metric.rubric,
-            "judgeScaleMin": metric.scale_min,
-            "judgeScaleMax": metric.scale_max,
-        }
-        if metric.gold_column is not None:
-            body["truthColumn"] = metric.gold_column
-        return body
+        judges: List[Dict[str, Any]] = []
+        for judge in metric.judges:
+            judge_body: Dict[str, Any] = {
+                "name": judge.name,
+                "judgeModel": judge.judge_model,
+                "judgePromptTemplate": judge.rubric,
+                "judgeScaleMin": judge.scale_min,
+                "judgeScaleMax": judge.scale_max,
+            }
+            if judge.temperature is not None:
+                judge_body["temperature"] = judge.temperature
+            if judge.thinking is not None:
+                judge_body["thinking"] = judge.thinking
+            judges.append(judge_body)
+        return {"type": "llmaj", "judges": judges}
     raise TypeError(f"Unsupported metric variant: {type(metric).__name__}")
 
 
