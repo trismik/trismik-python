@@ -24,13 +24,42 @@ from trismik import (
     TrismikEvaluationDatasetUser,
     TrismikEvaluationMetricAccuracy,
     TrismikEvaluationMetricLLMAJ,
-    TrismikEvaluationModelInputTemplate,
+    TrismikEvaluationModelInputColumn,
+)
+
+JUDGE_TEMPLATE = (
+    "You are an expert evaluator assessing the accuracy of model "
+    "predictions. Compare the prediction to the reference answer and rate "
+    "based on semantic equivalence and factual correctness.\n\n"
+    "Use the following scale:\n"
+    "1 - Completely incorrect: Factually wrong, irrelevant, or does not "
+    "address the question\n"
+    "2 - Mostly incorrect: Addresses the topic but contains major errors or "
+    "misses most key points\n"
+    "3 - Partially correct: Contains some correct information but has "
+    "significant gaps or errors in key points\n"
+    "4 - Mostly correct: All key points present and accurate, but minor "
+    "details missing or slightly imprecise\n"
+    "5 - Completely correct: Fully accurate, semantically equivalent, all "
+    "key points and details correct\n\n"
+    "Focus on semantic meaning rather than exact wording. Minor phrasing "
+    "differences are acceptable if the meaning is preserved.\n\n"
+    "Respond with ONLY the rating number (1-5).\n\n"
+    "Question: {{row.answer}}\n\n"
+    "Prediction: {{response}}\n\n"
+    "Rate the accuracy of the prediction:"
 )
 
 
 def _log_progress(evaluation: TrismikEvaluation) -> None:
-    pct = evaluation.progress.percentage if evaluation.progress is not None else 0.0
-    print(f"  [{evaluation.status}] {pct:.1f}%")
+    progress = evaluation.progress
+    pct = progress.percentage if progress is not None else 0.0
+    inf_pct = progress.inference_percentage if progress is not None else 0.0
+    judge_pct = progress.judge_percentage if progress is not None else None
+    line = f"  [{evaluation.status}] {pct:.1f}% - [Inference Progress] {inf_pct:.1f}%"
+    if judge_pct is not None:
+        line += f" - [Judge Progress] {judge_pct:.1f}%"
+    print(line)
 
 
 async def main() -> None:
@@ -61,13 +90,11 @@ async def main() -> None:
         evaluation = await quick_compare.create_evaluation(
             name=f"quick-compare-demo-{run_suffix}",
             dataset=TrismikEvaluationDatasetUser(dataset_id=dataset.id),
-            model_input=TrismikEvaluationModelInputTemplate(
-                template="Q: {question}\nA:",
-            ),
+            model_input=TrismikEvaluationModelInputColumn(column="question"),
             metrics=[
                 TrismikEvaluationMetricLLMAJ(
                     judge_model="openai/openai/gpt-5_nano",
-                    rubric="Rate factual accuracy from 1 to 5.",
+                    rubric=JUDGE_TEMPLATE,
                 ),
                 TrismikEvaluationMetricAccuracy(gold_column="answer"),
             ],

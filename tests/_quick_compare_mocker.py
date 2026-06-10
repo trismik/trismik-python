@@ -138,6 +138,8 @@ class TrismikQuickCompareResponseMocker:
         progress_percentage: Optional[float] = 50.0,
         error_message: Optional[str] = None,
         scores: Optional[List[Dict[str, Any]]] = None,
+        inference_progress_percentage: Optional[float] = None,
+        judge_progress_percentage: Optional[float] = None,
     ) -> httpx.Response:
         body: Dict[str, Any] = {
             "id": "ev-1",
@@ -151,6 +153,8 @@ class TrismikQuickCompareResponseMocker:
                 {"id": "claude-haiku-4-5", "thinking": False},
             ],
             "progressPercentage": progress_percentage,
+            "inferenceProgressPercentage": inference_progress_percentage,
+            "judgeProgressPercentage": judge_progress_percentage,
             "budgetLimit": 2.0,
             "sampleLimit": {"test": 50},
             "totalCost": 0.5,
