@@ -661,13 +661,24 @@ class TrismikEvaluationScore:
 
 @dataclass
 class TrismikEvaluationProgress:
-    """Progress snapshot for a running evaluation."""
+    """Progress snapshot for a running evaluation.
+
+    ``percentage`` is the overall (combined) progress across the whole run.
+    For an LLM-as-judge evaluation the work has two phases — model inference
+    followed by judge scoring — so the overall figure only reaches 100% once
+    both are done. ``inference_percentage`` and ``judge_percentage`` break it
+    down per phase. ``judge_percentage`` is ``None`` for evaluations without
+    an LLMAJ metric (or before judge scoring has started); use
+    ``status == "completed"`` as the authoritative completion signal.
+    """
 
     percentage: float
     cost_usd_used: float
     cost_usd_budget: float
     items_processed: Optional[int] = None
     items_total: Optional[int] = None
+    inference_percentage: Optional[float] = None
+    judge_percentage: Optional[float] = None
 
 
 @dataclass

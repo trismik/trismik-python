@@ -248,12 +248,16 @@ class TrismikQuickCompareResponseMapper:
     ) -> Optional[TrismikEvaluationProgress]:
         if json.get("progressPercentage") is None:
             return None
+        inference = json.get("inferenceProgressPercentage")
+        judge = json.get("judgeProgressPercentage")
         return TrismikEvaluationProgress(
             percentage=float(json["progressPercentage"]),
             cost_usd_used=float(json.get("totalCost") or 0.0),
             cost_usd_budget=float(budget or 0.0),
             items_processed=json.get("itemsProcessed"),
             items_total=json.get("itemsTotal"),
+            inference_percentage=float(inference) if inference is not None else None,
+            judge_percentage=float(judge) if judge is not None else None,
         )
 
     @staticmethod

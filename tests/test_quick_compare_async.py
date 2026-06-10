@@ -382,6 +382,26 @@ class TestEvaluations:
         assert ev.id == "ev-1"
         assert ev.progress is not None
         assert ev.progress.percentage == 42.0
+        # No per-phase figures in the payload → both default to None.
+        assert ev.progress.inference_percentage is None
+        assert ev.progress.judge_percentage is None
+
+    @pytest.mark.asyncio
+    async def test_get_evaluation_exposes_per_phase_progress(self) -> None:
+        """LLMAJ runs surface overall + inference + judge progress."""
+        http = MagicMock(httpx.AsyncClient)
+        http.get.return_value = M.evaluation(
+            status="processing",
+            progress_percentage=75.0,
+            inference_progress_percentage=100.0,
+            judge_progress_percentage=50.0,
+        )
+        client = TrismikQuickCompareAsyncClient(http_client=http)
+        ev = await client.get_evaluation("ev-1")
+        assert ev.progress is not None
+        assert ev.progress.percentage == 75.0
+        assert ev.progress.inference_percentage == 100.0
+        assert ev.progress.judge_percentage == 50.0
 
     @pytest.mark.asyncio
     async def test_get_evaluation_rate_limited(self) -> None:
