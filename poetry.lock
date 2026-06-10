@@ -1639,15 +1639,15 @@ test = ["jupyter-server (>=2.0.0)", "pytest (>=7.0)", "pytest-jupyter[server] (>
 
 [[package]]
 name = "jupyterlab"
-version = "4.5.3"
+version = "4.5.7"
 description = "JupyterLab computational environment"
 optional = true
 python-versions = ">=3.9"
 groups = ["main"]
 markers = "extra == \"examples\""
 files = [
-    {file = "jupyterlab-4.5.3-py3-none-any.whl", hash = "sha256:63c9f3a48de72ba00df766ad6eed416394f5bb883829f11eeff0872302520ba7"},
-    {file = "jupyterlab-4.5.3.tar.gz", hash = "sha256:4a159f71067cb38e4a82e86a42de8e7e926f384d7f2291964f282282096d27e8"},
+    {file = "jupyterlab-4.5.7-py3-none-any.whl", hash = "sha256:fba4cb0e2c44a52859669d8c98b45de029d5e515f8407bf8534d2a8fc5f0964d"},
+    {file = "jupyterlab-4.5.7.tar.gz", hash = "sha256:55a9822c4754da305f41e113452c68383e214dcf96de760146af89ce5d5117b0"},
 ]
 
 [package.dependencies]
@@ -4552,4 +4552,4 @@ examples = ["accelerate", "jupyterlab", "notebook", "openai", "torch", "tqdm", "
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10"
-content-hash = "ddae21255ce8a5a437e3537e0d340e3820d1fcdae6db48600fa6d29fd51055f2"
+content-hash = "f2a2570554ee7aabf7e585014661c3741cd88b2adcbe4c1a149c9ed40f8033f3"
