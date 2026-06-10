@@ -32,13 +32,15 @@ Rules:
 
 
 def _log_progress(evaluation: TrismikEvaluation) -> None:
-    pct = evaluation.progress.percentage if evaluation.progress is not None else 0.0
-    inf_pct = evaluation.progress.inference_percentage if evaluation.progress is not None else 0.0
-    judge_pct = evaluation.progress.judge_percentage
+    progress = evaluation.progress
+    pct = progress.percentage if progress is not None else 0.0
+    inf_pct = progress.inference_percentage if progress is not None else 0.0
+    judge_pct = progress.judge_percentage if progress is not None else None
+    line = f"  [{evaluation.status}] {pct:.1f}% - [Inference Progress] {inf_pct:.1f}%"
     if judge_pct is not None:
-        print(f"  [{evaluation.status}] {pct:.1f}% - [Inference Progress] {inf_pct:.1f}% - [Judge Progress] {judge_pct:.1f}%")
-    else:
-        print(f"  [{evaluation.status}] {pct:.1f}% - [Inference Progress] {inf_pct:.1f}%")
+        line += f" - [Judge Progress] {judge_pct:.1f}%"
+    print(line)
+
 
 async def main() -> None:
     """Run the quick-compare flow against allenai/winogrande on HF."""
