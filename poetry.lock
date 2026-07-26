@@ -1639,15 +1639,15 @@ test = ["jupyter-server (>=2.0.0)", "pytest (>=7.0)", "pytest-jupyter[server] (>
 
 [[package]]
 name = "jupyterlab"
-version = "4.5.3"
+version = "4.5.10"
 description = "JupyterLab computational environment"
 optional = true
 python-versions = ">=3.9"
 groups = ["main"]
 markers = "extra == \"examples\""
 files = [
-    {file = "jupyterlab-4.5.3-py3-none-any.whl", hash = "sha256:63c9f3a48de72ba00df766ad6eed416394f5bb883829f11eeff0872302520ba7"},
-    {file = "jupyterlab-4.5.3.tar.gz", hash = "sha256:4a159f71067cb38e4a82e86a42de8e7e926f384d7f2291964f282282096d27e8"},
+    {file = "jupyterlab-4.5.10-py3-none-any.whl", hash = "sha256:5967ca61e692e67a2f30b5a2b901c941dc6ce56c0b0e357bc6d34fed5ec095f6"},
+    {file = "jupyterlab-4.5.10.tar.gz", hash = "sha256:77e8d80b78be59b2eaba2154562e21caa6e79c2f1281d6f486584f7144ee2f47"},
 ]
 
 [package.dependencies]
@@ -1660,11 +1660,12 @@ jupyter-lsp = ">=2.0.0"
 jupyter-server = ">=2.4.0,<3"
 jupyterlab-server = ">=2.28.0,<3"
 notebook-shim = ">=0.2"
-packaging = "*"
+packaging = ">=23.2"
 setuptools = ">=41.1.0"
 tomli = {version = ">=1.2.2", markers = "python_version < \"3.11\""}
 tornado = ">=6.2.0"
 traitlets = "*"
+typing-extensions = {version = ">=4.4.0", markers = "python_version < \"3.12\""}
 
 [package.extras]
 dev = ["build", "bump2version", "coverage", "hatch", "pre-commit", "pytest-cov", "ruff (==0.11.12)"]
@@ -4552,4 +4553,4 @@ examples = ["accelerate", "jupyterlab", "notebook", "openai", "torch", "tqdm", "
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10"
-content-hash = "ddae21255ce8a5a437e3537e0d340e3820d1fcdae6db48600fa6d29fd51055f2"
+content-hash = "18288881381d1bf450df5de300bc59bb2a0270d79d85716c28f9640426d96e91"
