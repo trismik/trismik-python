@@ -17,7 +17,7 @@ dependencies = [
 
 [project.optional-dependencies]
 examples = [
-    "transformers>=5.0.0,<6.0.0",
+    "transformers>=5.10.1,<6.0.0",
     "torch>=2.10.0,<3.0.0; python_version < '3.15'",
     "accelerate>=1.7.0,<2.0.0",
     "openai>=2.16.0,<3.0.0",
